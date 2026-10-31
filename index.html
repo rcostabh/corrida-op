@@ -318,12 +318,16 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       <div class="sep"></div>
       <nav id="nav" aria-label="Seções" style="display:flex;flex-direction:column;gap:4px">
         <button type="button" data-r="inicio" title="Início"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/></svg><span class="tx">Início</span></button>
-        <button type="button" data-r="corrida" title="Corrida"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"/><path d="M5 4h12l-2 4 2 4H5"/></svg><span class="tx">Corrida</span></button>
-        <button type="button" data-r="diario" title="Lançamento diário"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg><span class="tx">Lançamento diário</span></button>
-        <button type="button" data-r="planilha" title="Planilha do mês"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M9.5 4.5v15M15 4.5v15"/></svg><span class="tx">Planilha do mês</span></button>
-        <button type="button" data-r="lancamentos" title="Lançamentos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg><span class="tx">Lançamentos</span></button>
+        <button type="button" data-g="camp" id="g-camp-btn" aria-expanded="false" aria-controls="g-camp" title="Campanhas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"/><path d="M5 4h12l-2 4 2 4H5"/></svg><span class="tx">Campanhas</span><svg class="seta" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+        <div class="grupo-lista" id="g-camp">
+          <button type="button" data-r="corrida">Corrida</button><button type="button" data-r="lancamentos">Lançamentos</button>
+        </div>
+        <button type="button" data-g="vend" id="g-vend-btn" aria-expanded="false" aria-controls="g-vend" title="Vendas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg><span class="tx">Vendas</span><svg class="seta" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+        <div class="grupo-lista" id="g-vend">
+          <button type="button" data-r="diario">Lançamento diário</button><button type="button" data-r="planilha">Planilha do mês</button>
+        </div>
         <button type="button" data-r="relatorios" title="Relatórios"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="tx">Relatórios</span></button>
-        <button type="button" data-r="externo" title="Relatório Looker"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><path d="M7 12l3-3 2.5 2 4-4"/></svg><span class="tx">Relatório Looker</span></button>
+        <button type="button" data-r="externo" title="Relatório NUV"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><path d="M7 12l3-3 2.5 2 4-4"/></svg><span class="tx">Relatório NUV</span></button>
         <div class="sep"></div>
         <button type="button" data-g="cad" id="g-cad-btn" aria-expanded="false" aria-controls="g-cad" title="Cadastros"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7.5a2 2 0 0 1 2-2H10l2 2.5h6.5a2 2 0 0 1 2 2V17.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></svg><span class="tx">Cadastros</span><svg class="seta" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
         <div class="grupo-lista" id="g-cad">
@@ -1442,29 +1446,34 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 
 
   /* ---------- menu lateral e início (dashboard) ---------- */
-  const TITULOS = { inicio: 'Início', corrida: 'Corrida', diario: 'Lançamento diário', planilha: 'Planilha do mês', lancamentos: 'Lançamentos', relatorios: 'Relatórios', externo: 'Relatório Looker',
+  const TITULOS = { inicio: 'Início', corrida: 'Corrida', diario: 'Lançamento diário', planilha: 'Planilha do mês', lancamentos: 'Lançamentos', relatorios: 'Relatórios', externo: 'Relatório NUV',
     clinicas: 'Clínicas', tipos: 'Tipos de lançamento', premios: 'Prêmios', pessoas: 'Pessoas', campanhas: 'Campanhas' };
   const CADASTROS = ['clinicas', 'tipos', 'premios', 'pessoas', 'campanhas'];
   const lerLS = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const gravarLS = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+  const GRUPOS = { cad: CADASTROS, camp: ['corrida', 'lancamentos'], vend: ['diario', 'planilha'] };
   function lateral(aberto){
     $('#v-app').classList.toggle('aberto', aberto); $('#side-toggle').setAttribute('aria-expanded', aberto);
     $('#side-toggle .tx').textContent = aberto ? 'Recolher menu' : 'Abrir menu';
-    if (!aberto){ $('#g-cad').classList.remove('on'); $('#g-cad-btn').setAttribute('aria-expanded', 'false'); }
+    if (!aberto) Object.keys(GRUPOS).forEach(k => grupo(k, false));
     gravarLS('menu-aberto', aberto ? '1' : '0');
   }
-  function grupoCad(abrir){ $('#g-cad').classList.toggle('on', abrir); $('#g-cad-btn').setAttribute('aria-expanded', abrir); }
+  function grupo(k, abrir){ $('#g-'+k).classList.toggle('on', abrir); $('#g-'+k+'-btn').setAttribute('aria-expanded', abrir); }
+  const grupoCad = abrir => grupo('cad', abrir);
   $('#side-toggle').addEventListener('click', () => lateral(!$('#v-app').classList.contains('aberto')));
-  $('#g-cad-btn').addEventListener('click', () => {
-    if (!$('#v-app').classList.contains('aberto')){ lateral(true); grupoCad(true); }
-    else grupoCad(!$('#g-cad').classList.contains('on'));
-  });
+  Object.keys(GRUPOS).forEach(k => $('#g-'+k+'-btn').addEventListener('click', () => {
+    if (!$('#v-app').classList.contains('aberto')){ lateral(true); grupo(k, true); }
+    else grupo(k, !$('#g-'+k).classList.contains('on'));
+  }));
   $('#nav').addEventListener('click', e => { if (e.target.closest('button[data-r]') && window.innerWidth <= 1000 && $('#v-app').classList.contains('aberto')) lateral(false); });
   function marcarMenu(){
     $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
     $('#titulo-tela').textContent = TITULOS[recurso] || '';
-    if (CADASTROS.includes(recurso) && $('#v-app').classList.contains('aberto')) grupoCad(true);
-    $('#g-cad-btn').setAttribute('aria-current', CADASTROS.includes(recurso) ? 'true' : 'false');
+    Object.keys(GRUPOS).forEach(k => {
+      const dentro = GRUPOS[k].includes(recurso);
+      if (dentro && $('#v-app').classList.contains('aberto')) grupo(k, true);
+      $('#g-'+k+'-btn').setAttribute('aria-current', dentro ? 'true' : 'false');
+    });
   }
 
   const DS = { ano: 0, mes: 0, tk: 0, base: null, geo: null, proj: null, filtro: null, vb: null, full: null, anim: 0, nomes: {} };
@@ -1734,9 +1743,9 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const lookerEmbed = u => u.replace(/^https:\/\/(datastudio|lookerstudio)\.google\.com\/reporting\//, 'https://lookerstudio.google.com/embed/reporting/');
   function externoCarregar(){
     marcarMenu(); $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
-    $('#area').innerHTML = '<div class="card" style="padding:14px 16px"><div class="pd-bar"><div><h2 style="margin:0">Relatório Looker</h2><p class="sub" style="margin:2px 0 0">Seu relatório do Looker Studio, aberto aqui dentro. Precisa estar com o login do Google que tem acesso a ele.</p></div>'
+    $('#area').innerHTML = '<div class="card" style="padding:14px 16px"><div class="pd-bar"><div><h2 style="margin:0">Relatório NUV</h2><p class="sub" style="margin:2px 0 0">Seu relatório do Looker Studio, aberto aqui dentro. Precisa estar com o login do Google que tem acesso a ele.</p></div>'
       + '<div class="grp"><a class="btn ghost sm" href="'+esc(LOOKER_LINK)+'" target="_blank" rel="noopener">Abrir em outra aba</a></div></div>'
-      + '<div class="ds-ext"><iframe id="ext-frame" title="Relatório Looker Studio" src="'+esc(lookerEmbed(LOOKER_LINK))+'" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>'
+      + '<div class="ds-ext"><iframe id="ext-frame" title="Relatório NUV" src="'+esc(lookerEmbed(LOOKER_LINK))+'" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>'
       + '<p class="sub" style="margin:10px 0 0">Se a área acima aparecer em branco ou pedir login, abra em outra aba. Para aparecer aqui, no Looker Studio use <b>Compartilhar › Incorporar relatório › Ativar incorporação</b>.</p></div>';
   }
 
@@ -1747,7 +1756,9 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     $('#eyebrow').textContent = ger ? 'Painel da gerência' : (eu && eu.papel === 'assistente' ? 'Painel de suporte' : 'Painel do gestor');
     $$('#modo button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === modoVisao));
     $$('#nav button[data-r]').forEach(b => { b.hidden = ger && !['diario', 'planilha'].includes(b.dataset.r); });
-    $$('#nav .sep').forEach(x => { x.hidden = ger; }); $('#g-cad-btn').hidden = ger; if (ger) grupoCad(false);
+    $$('#nav .sep').forEach(x => { x.hidden = ger; });
+    Object.keys(GRUPOS).forEach(k => { const esc_ = ger && k !== 'vend'; $('#g-'+k+'-btn').hidden = esc_; if (esc_) grupo(k, false); });
+    if (ger) grupo('vend', true);
     if (ger && !['diario', 'planilha'].includes(recurso)) recurso = 'diario';
     if (!ger && ['diario', 'planilha'].includes(recurso) && recarregar) recurso = 'inicio';
     PD.clinicas = []; PD.ano = 0;
