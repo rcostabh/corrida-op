@@ -233,7 +233,7 @@ input:focus,select:focus{outline:none;background:var(--surface);border-color:var
     const { data, error } = await sb.from('usuarios').select('*').eq('auth_id', authUid).maybeSingle();
     if (error || !data){ await sb.auth.signOut(); view('login'); $('#l-err').textContent = 'Seu login existe, mas ainda não foi cadastrado. Fale com o gestor.'; return; }
     if (!data.ativo){ await sb.auth.signOut(); view('login'); $('#l-err').textContent = 'Seu acesso está desativado. Fale com o gestor.'; return; }
-    if (data.papel === 'gestor'){ location.replace(urlPainel); return; }
+    if (data.papel === 'gestor' || data.papel === 'assistente'){ location.replace(urlPainel); return; }
     eu = data;
     const v = await sb.from('vinculos_clinica').select('*').eq('usuario_id', eu.id);
     minhasClin = (v.data || []).filter(x => !x.fim).map(x => x.clinica_id);

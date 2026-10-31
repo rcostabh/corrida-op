@@ -520,7 +520,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       sb.from('clinicas').select('*').order('nome')]);
     const er = a.error || b.error || c.error;
     if (er){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
-    pessoas = a.data.filter(p => p.papel !== 'gestor');
+    pessoas = a.data.filter(p => p.papel !== 'gestor' && (eu.papel === 'gestor' || p.papel !== 'assistente'));
     vincs = b.data.filter(v => !v.fim); clin = c.data;
     pessoasDesenhar();
   }
@@ -535,11 +535,11 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       '<div class="card"><h2>'+(atual ? 'Editar pessoa' : 'Nova pessoa')+'</h2>'
       + '<p class="sub">'+(atual ? 'Se trocar o e-mail, a pessoa recebe um link no novo endereço para criar a senha. Para tirar alguém de uso, desmarque "Pessoa ativa".' : 'A pessoa recebe um e-mail para criar a própria senha e colocar a foto.')+'</p>'
       + '<form class="form" id="f-pes" novalidate>'
-      + '<label class="field" for="p-papel">Função<select id="p-papel"'+(atual?' disabled':'')+'><option value="promotor"'+(papelForm==='promotor'?' selected':'')+'>Promotor</option><option value="gerente"'+(papelForm==='gerente'?' selected':'')+'>Gerente de clínica</option></select></label>'
+      + '<label class="field" for="p-papel">Função<select id="p-papel"'+(atual?' disabled':'')+'><option value="promotor"'+(papelForm==='promotor'?' selected':'')+'>Promotor</option><option value="gerente"'+(papelForm==='gerente'?' selected':'')+'>Gerente de clínica</option>'+(eu.papel === 'gestor' ? '<option value="assistente"'+(papelForm==='assistente'?' selected':'')+'>Assistente (suporte, vê tudo como o gestor)</option>' : '')+'</select></label>'
       + '<label class="field" for="p-nome">Nome<input id="p-nome" type="text" autocomplete="off" value="'+esc(atual?atual.nome:'')+'"></label>'
       + '<label class="field" for="p-email">E-mail<input id="p-email" type="email" inputmode="email" autocomplete="off" value="'+esc(atual?(atual.email||''):'')+'"'+'></label>'
       + '<label class="field" for="p-tel">Telefone com DDD<input id="p-tel" type="tel" inputmode="numeric" autocomplete="off" placeholder="(31) 99999-9999" value="'+esc(atual?fmtTel(atual.telefone):'')+'"></label>'
-      + '<label class="field" for="p-clin">Clínica<select id="p-clin"><option value="">Escolha...</option>'+opcClin.map(c => '<option value="'+c.id+'"'+(cAtual&&cAtual.id===c.id?' selected':'')+'>'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="field" for="p-clin" id="w-clin"'+(papelForm==='assistente'?' hidden':'')+'>Clínica<select id="p-clin"><option value="">Escolha...</option>'+opcClin.map(c => '<option value="'+c.id+'"'+(cAtual&&cAtual.id===c.id?' selected':'')+'>'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
       + '<label class="field" for="p-cargo" id="w-cargo"'+(papelForm==='promotor'?'':' hidden')+'>Cargo<select id="p-cargo"><option value="">Escolha...</option>'+CARGOS.map(g => '<option'+(atual&&atual.cargo===g?' selected':'')+'>'+g+'</option>').join('')+'</select></label>'
       + (atual ? '<label class="chk" for="p-ativo"><input id="p-ativo" type="checkbox"'+(atual.ativo?' checked':'')+'><span>Pessoa ativa</span></label>' : '')
       + '<div class="err" id="p-err" role="alert"></div>'
@@ -548,9 +548,9 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + '</div></form></div>'
       + '<div class="card"><h2>Pessoas</h2><label class="chk" style="margin-bottom:10px"><input type="checkbox" id="mostra-inat"'+(mostrarInativos?' checked':'')+'><span>Mostrar inativos</span></label>'
       + '<p class="sub">'+vis.length+' cadastrada'+(vis.length===1?'':'s')+'. Pessoas com lançamentos não são apagadas, só inativadas.</p>'
-      + '<ul class="items">'+(vis.map(p => { const c = clinicaDe(p); return '<li class="item"><div><div class="line"><b>'+esc(p.nome)+'</b><span class="badge">'+(p.papel==='gerente'?'Gerente':esc(p.cargo||'Promotor'))+'</span>'+(c?'<span class="sigla">'+esc(c.sigla)+'</span>':'<span class="chip off">Sem clínica</span>')+(p.ativo?'':'<span class="chip off">Inativa</span>')+'</div><div class="meta">'+esc(p.email||'sem e-mail')+(p.telefone?' · '+esc(fmtTel(p.telefone)):'')+'</div></div><div><button type="button" class="btn ghost sm" data-ped="'+p.id+'">Editar</button></div></li>'; }).join('') || '<li class="empty">Ninguém cadastrado ainda.</li>')+'</ul></div>';
+      + '<ul class="items">'+(vis.map(p => { const c = clinicaDe(p); return '<li class="item"><div><div class="line"><b>'+esc(p.nome)+'</b><span class="badge">'+(p.papel==='gerente'?'Gerente':p.papel==='assistente'?'Assistente':esc(p.cargo||'Promotor'))+'</span>'+(c?'<span class="sigla">'+esc(c.sigla)+'</span>':(p.papel==='assistente'?'':'<span class="chip off">Sem clínica</span>'))+(p.ativo?'':'<span class="chip off">Inativa</span>')+'</div><div class="meta">'+esc(p.email||'sem e-mail')+(p.telefone?' · '+esc(fmtTel(p.telefone)):'')+'</div></div><div><button type="button" class="btn ghost sm" data-ped="'+p.id+'">Editar</button></div></li>'; }).join('') || '<li class="empty">Ninguém cadastrado ainda.</li>')+'</ul></div>';
     $('#f-pes').addEventListener('submit', pessoaSalvar);
-    $('#p-papel').addEventListener('change', e => { papelForm = e.target.value; $('#w-cargo').hidden = papelForm !== 'promotor'; });
+    $('#p-papel').addEventListener('change', e => { papelForm = e.target.value; $('#w-cargo').hidden = papelForm !== 'promotor'; $('#w-clin').hidden = papelForm === 'assistente'; });
     $('#mostra-inat').addEventListener('change', e => { mostrarInativos = e.target.checked; pessoasDesenhar(); });
     $$('[data-ped]').forEach(b => b.addEventListener('click', () => { editId = Number(b.dataset.ped); pessoasDesenhar(); }));
     const cn = $('#p-cancel'); if (cn) cn.addEventListener('click', () => { editId = null; pessoasDesenhar(); });
@@ -567,7 +567,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       telefone: soDigitos($('#p-tel').value), clinica_id: Number($('#p-clin').value) || null, cargo: $('#p-cargo').value };
     if (d.papel !== 'promotor') d.cargo = null;
     const erro = !d.nome ? 'Informe o nome.' : (!atual && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) ? 'Informe um e-mail válido.'
-      : !/^[0-9]{10,11}$/.test(d.telefone) ? 'Telefone com DDD, 10 ou 11 números.' : !d.clinica_id ? 'Escolha a clínica.'
+      : !/^[0-9]{10,11}$/.test(d.telefone) ? 'Telefone com DDD, 10 ou 11 números.' : (!d.clinica_id && d.papel !== 'assistente') ? 'Escolha a clínica.'
       : (d.papel === 'promotor' && !d.cargo) ? 'Escolha o cargo.' : '';
     if (erro){ $('#p-err').textContent = erro; return; }
     const btn = $('#p-btn'); btn.disabled = true; $('#p-err').textContent = '';
@@ -586,7 +586,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const { error } = await sb.from('usuarios').update({ nome: d.nome, telefone: d.telefone, cargo: d.cargo, ativo: $('#p-ativo').checked }).eq('id', atual.id);
     let err2 = error;
     const cAtual = clinicaDe(atual);
-    if (!err2 && (!cAtual || cAtual.id !== d.clinica_id)){
+    if (!err2 && atual.papel !== 'assistente' && (!cAtual || cAtual.id !== d.clinica_id)){
       const v = vincs.find(x => x.usuario_id === atual.id);
       if (v){ const r1 = await sb.from('vinculos_clinica').update({ fim: new Date().toISOString().slice(0,10) }).eq('id', v.id); err2 = r1.error; }
       if (!err2){ const r2 = await sb.from('vinculos_clinica').insert({ usuario_id: atual.id, clinica_id: d.clinica_id }); err2 = r2.error; }
@@ -1643,7 +1643,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   let modoVisao = 'gestor';
   function aplicarModo(recarregar){
     const ger = modoVisao === 'gerente';
-    $('#eyebrow').textContent = ger ? 'Painel da gerência' : 'Painel do gestor';
+    $('#eyebrow').textContent = ger ? 'Painel da gerência' : (eu && eu.papel === 'assistente' ? 'Painel de suporte' : 'Painel do gestor');
     $$('#modo button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === modoVisao));
     $$('#nav button[data-r]').forEach(b => { b.hidden = ger && !['diario', 'planilha'].includes(b.dataset.r); });
     $$('#nav .sep').forEach(x => { x.hidden = ger; }); $('#g-cad-btn').hidden = ger; if (ger) grupoCad(false);
@@ -1663,11 +1663,11 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       await sb.auth.signOut(); view('login');
       $('#l-err').textContent = 'Seu login existe, mas ainda não foi cadastrado no sistema. Fale com o gestor.'; return;
     }
-    if (data.papel !== 'gestor' && data.papel !== 'gerente'){ location.replace('app/'); return; }
+    if (!['gestor', 'gerente', 'assistente'].includes(data.papel)){ location.replace('app/'); return; }
     eu = data; $('#quem').textContent = data.nome;
-    $('#modo').hidden = data.papel !== 'gestor'; modoVisao = data.papel === 'gerente' ? 'gerente' : 'gestor';
+    $('#modo').hidden = data.papel === 'gerente'; modoVisao = data.papel === 'gerente' ? 'gerente' : 'gestor';
     aplicarModo(false);
-    lateral(lerLS('menu-aberto') === '1' && window.innerWidth > 1000); if (data.papel === 'gestor' && !recurso) recurso = 'inicio';
+    lateral(lerLS('menu-aberto') === '1' && window.innerWidth > 1000); if (data.papel !== 'gerente' && !recurso) recurso = 'inicio';
     view('app'); carregar();
   }
 

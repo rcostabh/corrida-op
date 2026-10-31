@@ -22,13 +22,20 @@ Deno.serve(async (req) => {
     const { data: u, error: ue } = await admin.auth.getUser(jwt);
     if (ue || !u?.user) return json({ erro: "Sessão inválida. Entre de novo." }, 401);
     const { data: eu } = await admin.from("usuarios").select("id,papel,ativo").eq("auth_id", u.user.id).maybeSingle();
-    if (!eu || eu.papel !== "gestor" || !eu.ativo) return json({ erro: "Apenas o gestor pode fazer isso." }, 403);
+    if (!eu || !["gestor", "assistente"].includes(eu.papel) || !eu.ativo) return json({ erro: "Apenas o gestor ou o assistente pode fazer isso." }, 403);
+    const master = eu.papel === "gestor";
+    // Gestor e assistente só podem ser mexidos pelo gestor master.
+    const protegido = async (id: unknown) => {
+      const { data: t } = await admin.from("usuarios").select("papel").eq("id", id).maybeSingle();
+      return !!t && ["gestor", "assistente"].includes(t.papel) && !master;
+    };
 
     const b = await req.json();
     const redirectTo = String(b.redirectTo || "");
 
     // 2. Enviar link de nova senha para uma pessoa já cadastrada.
     if (b.acao === "redefinir") {
+      if (await protegido(b.pessoa_id)) return json({ erro: "Só o gestor master mexe em gestores e assistentes." }, 403);
       const { data: p } = await admin.from("usuarios").select("email").eq("id", b.pessoa_id).maybeSingle();
       if (!p?.email) return json({ erro: "Pessoa sem e-mail cadastrado." }, 400);
       const { error } = await admin.auth.resetPasswordForEmail(p.email, { redirectTo });
@@ -40,6 +47,7 @@ Deno.serve(async (req) => {
     if (b.acao === "trocar_email") {
       const novo = String(b.email || "").trim().toLowerCase();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(novo)) return json({ erro: "E-mail inválido." }, 400);
+      if (await protegido(b.pessoa_id)) return json({ erro: "Só o gestor master mexe em gestores e assistentes." }, 403);
       const { data: p } = await admin.from("usuarios").select("id,auth_id").eq("id", b.pessoa_id).maybeSingle();
       if (!p?.auth_id) return json({ erro: "Pessoa não encontrada." }, 404);
       const { data: igual } = await admin.from("usuarios").select("id").eq("email", novo).neq("id", p.id).maybeSingle();
@@ -60,13 +68,18 @@ Deno.serve(async (req) => {
     const telefone = String(b.telefone || "").replace(/\D/g, "");
     const papel = b.papel;
     const cargo = papel === "promotor" ? b.cargo : null;
-    if (!["gerente", "promotor"].includes(papel)) return json({ erro: "Escolha gerente ou promotor." }, 400);
+    if (!["gerente", "promotor", "assistente"].includes(papel)) return json({ erro: "Escolha gerente, promotor ou assistente." }, 400);
+    if (papel === "assistente" && !master) return json({ erro: "Só o gestor master cadastra assistentes." }, 403);
     if (!nome) return json({ erro: "Informe o nome." }, 400);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ erro: "E-mail inválido." }, 400);
     if (!/^[0-9]{10,11}$/.test(telefone)) return json({ erro: "Telefone com DDD, 10 ou 11 números." }, 400);
     if (papel === "promotor" && !["Promotor", "Tele BH", "Tele interno", "Divulgador", "Luminoso"].includes(cargo)) return json({ erro: "Escolha o cargo." }, 400);
-    const { data: cl } = await admin.from("clinicas").select("id").eq("id", b.clinica_id).maybeSingle();
-    if (!cl) return json({ erro: "Escolha a clínica." }, 400);
+    let cl: { id: number } | null = null;
+    if (papel !== "assistente") {
+      const { data } = await admin.from("clinicas").select("id").eq("id", b.clinica_id).maybeSingle();
+      cl = data;
+      if (!cl) return json({ erro: "Escolha a clínica." }, 400);
+    }
     const { data: ja } = await admin.from("usuarios").select("id").eq("email", email).maybeSingle();
     if (ja) return json({ erro: "Já existe uma pessoa com este e-mail." }, 400);
 
@@ -86,6 +99,7 @@ Deno.serve(async (req) => {
       .select("id").single();
     if (ne) { await admin.auth.admin.deleteUser(inv.user.id); return json({ erro: ne.message }, 400); }
 
+    if (!cl) return json({ ok: true, id: novo.id });
     const { error: ve } = await admin.from("vinculos_clinica").insert({ usuario_id: novo.id, clinica_id: cl.id });
     if (ve) {
       await admin.from("usuarios").delete().eq("id", novo.id);
