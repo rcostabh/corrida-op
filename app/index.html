@@ -210,7 +210,12 @@ input:focus,select:focus{outline:none;background:var(--surface);border-color:var
   };
   const guarda = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k, v){ try { localStorage.setItem(k, v); } catch(e){} } };
 
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  const VERSAO = '2026-10-31 · jogo 1';
+  if ('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => { reg.update(); }).catch(() => {});
+    let recarregou = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (recarregou || !navigator.serviceWorker.controller) return; recarregou = true; });
+  }
 
   let definindoSenha = /type=(invite|recovery)/.test(location.hash);
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
@@ -717,7 +722,7 @@ input:focus,select:focus{outline:none;background:var(--surface);border-color:var
       + '<p class="meta">Clínica e cargo só o gestor altera.</p><div class="err" id="p-err" role="alert"></div><button class="btn block" type="submit">Salvar dados</button></form></div>'
       + '<div class="card"><h2>Trocar senha</h2><form class="form" id="f-senha" novalidate><label class="field" for="s-nova">Nova senha<input id="s-nova" type="password" autocomplete="new-password" placeholder="Mínimo de 8 caracteres"></label>'
       + '<label class="field" for="s-rep">Repita a senha<input id="s-rep" type="password" autocomplete="new-password"></label><div class="err" id="s-err" role="alert"></div><button class="btn block" type="submit">Trocar senha</button></form></div>'
-      + '<button class="btn ghost block" type="button" id="p-sair">Sair</button>';
+      + '<button class="btn ghost block" type="button" id="p-sair">Sair</button><p class="meta" style="text-align:center">Versão '+VERSAO+'</p>';
     const depois = () => { toast('Foto atualizada.'); $('#p-av').innerHTML = avatar(eu, 'xl'); $('#h-av').innerHTML = avatar(eu); };
     $('#p-cam').addEventListener('change', e => escolheuFoto(e.target, $('#p-ferr'), depois));
     $('#p-gal').addEventListener('change', e => escolheuFoto(e.target, $('#p-ferr'), depois));
