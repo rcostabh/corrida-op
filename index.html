@@ -121,7 +121,7 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
       <button type="button" data-r="clinicas">Clínicas</button>
       <button type="button" data-r="tipos">Tipos de lançamento</button>
       <button type="button" data-r="premios">Prêmios</button>
-      <button type="button" disabled title="Em construção">Pessoas</button>
+      <button type="button" data-r="pessoas">Pessoas</button>
       <button type="button" disabled title="Em construção">Campanhas</button>
     </nav>
     <section class="two" id="area" style="margin-top:18px"></section>
@@ -235,6 +235,7 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
   }
 
   async function carregar(){
+    if (recurso === 'pessoas') return pessoasCarregar();
     const R = RECURSOS[recurso];
     $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
     const { data, error } = await sb.from(R.tabela).select('*').order(R.ordem);
@@ -280,6 +281,106 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
     const b = e.target.closest('button[data-r]'); if (!b) return;
     recurso = b.dataset.r; editId = null; confirmaExcluir = false; carregar();
   });
+
+
+  /* ---------- pessoas (gerentes e promotores) ---------- */
+  let pessoas = [], vincs = [], clin = [], papelForm = 'promotor';
+  const CARGOS = ['Tele','Promotor','Tele BH'];
+  const soDigitos = v => String(v||'').replace(/\D/g,'');
+  const fmtTel = v => { const d = soDigitos(v); return d.length === 11 ? '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7) : d.length === 10 ? '('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6) : d; };
+  const clinicaDe = p => { const v = vincs.find(x => x.usuario_id === p.id); return v ? clin.find(c => c.id === v.clinica_id) : null; };
+
+  async function chamar(body){
+    body.redirectTo = location.origin + location.pathname;
+    const { data, error } = await sb.functions.invoke('bright-service', { body });
+    if (error){
+      let m = error.message || '';
+      try { const j = await error.context.json(); m = j.erro || m; } catch(e){}
+      if (/not found|404|Failed to send/i.test(m)) m = 'A função de convite ainda não está ativa no Supabase. Veja as instruções de instalação.';
+      return { erro: m };
+    }
+    if (data && data.erro) return { erro: data.erro };
+    return { data };
+  }
+
+  async function pessoasCarregar(){
+    $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const [a, b, c] = await Promise.all([
+      sb.from('usuarios').select('*').order('nome'),
+      sb.from('vinculos_clinica').select('*'),
+      sb.from('clinicas').select('*').order('nome')]);
+    const er = a.error || b.error || c.error;
+    if (er){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
+    pessoas = a.data.filter(p => p.papel !== 'gestor');
+    vincs = b.data.filter(v => !v.fim); clin = c.data;
+    pessoasDesenhar();
+  }
+
+  function pessoasDesenhar(){
+    const atual = pessoas.find(p => p.id === editId) || null;
+    if (atual) papelForm = atual.papel;
+    const cAtual = atual ? clinicaDe(atual) : null;
+    const opcClin = clin.filter(c => c.ativa || (cAtual && c.id === cAtual.id));
+    const vis = pessoas.filter(p => mostrarInativos || p.ativo || p.id === editId);
+    $('#area').innerHTML =
+      '<div class="card"><h2>'+(atual ? 'Editar pessoa' : 'Nova pessoa')+'</h2>'
+      + '<p class="sub">'+(atual ? 'O e-mail não pode ser trocado. Para tirar alguém de uso, desmarque "Pessoa ativa".' : 'A pessoa recebe um e-mail para criar a própria senha e colocar a foto.')+'</p>'
+      + '<form class="form" id="f-pes" novalidate>'
+      + '<label class="field" for="p-papel">Função<select id="p-papel"'+(atual?' disabled':'')+'><option value="promotor"'+(papelForm==='promotor'?' selected':'')+'>Promotor</option><option value="gerente"'+(papelForm==='gerente'?' selected':'')+'>Gerente de clínica</option></select></label>'
+      + '<label class="field" for="p-nome">Nome<input id="p-nome" type="text" autocomplete="off" value="'+esc(atual?atual.nome:'')+'"></label>'
+      + '<label class="field" for="p-email">E-mail<input id="p-email" type="email" inputmode="email" autocomplete="off" value="'+esc(atual?(atual.email||''):'')+'"'+(atual?' disabled':'')+'></label>'
+      + '<label class="field" for="p-tel">Telefone com DDD<input id="p-tel" type="tel" inputmode="numeric" autocomplete="off" placeholder="(31) 99999-9999" value="'+esc(atual?fmtTel(atual.telefone):'')+'"></label>'
+      + '<label class="field" for="p-clin">Clínica<select id="p-clin"><option value="">Escolha...</option>'+opcClin.map(c => '<option value="'+c.id+'"'+(cAtual&&cAtual.id===c.id?' selected':'')+'>'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="field" for="p-cargo" id="w-cargo"'+(papelForm==='promotor'?'':' hidden')+'>Cargo<select id="p-cargo"><option value="">Escolha...</option>'+CARGOS.map(g => '<option'+(atual&&atual.cargo===g?' selected':'')+'>'+g+'</option>').join('')+'</select></label>'
+      + (atual ? '<label class="chk" for="p-ativo"><input id="p-ativo" type="checkbox"'+(atual.ativo?' checked':'')+'><span>Pessoa ativa</span></label>' : '')
+      + '<div class="err" id="p-err" role="alert"></div>'
+      + '<div class="btns"><button class="btn" type="submit" id="p-btn">'+(atual?'Salvar':'Enviar convite')+'</button>'
+      + (atual ? '<button class="btn ghost" type="button" id="p-cancel">Cancelar edição</button><button class="btn ghost" type="button" id="p-reset">Enviar link de nova senha</button>' : '')
+      + '</div></form></div>'
+      + '<div class="card"><h2>Pessoas</h2><label class="chk" style="margin-bottom:10px"><input type="checkbox" id="mostra-inat"'+(mostrarInativos?' checked':'')+'><span>Mostrar inativos</span></label>'
+      + '<p class="sub">'+vis.length+' cadastrada'+(vis.length===1?'':'s')+'. Pessoas com lançamentos não são apagadas, só inativadas.</p>'
+      + '<ul class="items">'+(vis.map(p => { const c = clinicaDe(p); return '<li class="item"><div><div class="line"><b>'+esc(p.nome)+'</b><span class="badge">'+(p.papel==='gerente'?'Gerente':esc(p.cargo||'Promotor'))+'</span>'+(c?'<span class="sigla">'+esc(c.sigla)+'</span>':'<span class="chip off">Sem clínica</span>')+(p.ativo?'':'<span class="chip off">Inativa</span>')+'</div><div class="meta">'+esc(p.email||'sem e-mail')+(p.telefone?' · '+esc(fmtTel(p.telefone)):'')+'</div></div><div><button type="button" class="btn ghost sm" data-ped="'+p.id+'">Editar</button></div></li>'; }).join('') || '<li class="empty">Ninguém cadastrado ainda.</li>')+'</ul></div>';
+    $('#f-pes').addEventListener('submit', pessoaSalvar);
+    $('#p-papel').addEventListener('change', e => { papelForm = e.target.value; $('#w-cargo').hidden = papelForm !== 'promotor'; });
+    $('#mostra-inat').addEventListener('change', e => { mostrarInativos = e.target.checked; pessoasDesenhar(); });
+    $$('[data-ped]').forEach(b => b.addEventListener('click', () => { editId = Number(b.dataset.ped); pessoasDesenhar(); }));
+    const cn = $('#p-cancel'); if (cn) cn.addEventListener('click', () => { editId = null; pessoasDesenhar(); });
+    const rs = $('#p-reset'); if (rs) rs.addEventListener('click', async () => {
+      rs.disabled = true; const r = await chamar({ acao: 'redefinir', pessoa_id: editId }); rs.disabled = false;
+      toast(r.erro ? r.erro : 'Link de nova senha enviado para '+atual.email+'.');
+    });
+  }
+
+  async function pessoaSalvar(e){
+    e.preventDefault();
+    const atual = pessoas.find(p => p.id === editId) || null;
+    const d = { papel: atual ? atual.papel : $('#p-papel').value, nome: $('#p-nome').value.trim(), email: $('#p-email').value.trim().toLowerCase(),
+      telefone: soDigitos($('#p-tel').value), clinica_id: Number($('#p-clin').value) || null, cargo: $('#p-cargo').value };
+    if (d.papel !== 'promotor') d.cargo = null;
+    const erro = !d.nome ? 'Informe o nome.' : (!atual && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) ? 'Informe um e-mail válido.'
+      : !/^[0-9]{10,11}$/.test(d.telefone) ? 'Telefone com DDD, 10 ou 11 números.' : !d.clinica_id ? 'Escolha a clínica.'
+      : (d.papel === 'promotor' && !d.cargo) ? 'Escolha o cargo.' : '';
+    if (erro){ $('#p-err').textContent = erro; return; }
+    const btn = $('#p-btn'); btn.disabled = true; $('#p-err').textContent = '';
+    if (!atual){
+      const r = await chamar(Object.assign({ acao: 'convidar' }, d));
+      btn.disabled = false;
+      if (r.erro){ $('#p-err').textContent = r.erro; return; }
+      toast('Convite enviado para '+d.email+'.'); pessoasCarregar(); return;
+    }
+    const { error } = await sb.from('usuarios').update({ nome: d.nome, telefone: d.telefone, cargo: d.cargo, ativo: $('#p-ativo').checked }).eq('id', atual.id);
+    let err2 = error;
+    const cAtual = clinicaDe(atual);
+    if (!err2 && (!cAtual || cAtual.id !== d.clinica_id)){
+      const v = vincs.find(x => x.usuario_id === atual.id);
+      if (v){ const r1 = await sb.from('vinculos_clinica').update({ fim: new Date().toISOString().slice(0,10) }).eq('id', v.id); err2 = r1.error; }
+      if (!err2){ const r2 = await sb.from('vinculos_clinica').insert({ usuario_id: atual.id, clinica_id: d.clinica_id }); err2 = r2.error; }
+    }
+    btn.disabled = false;
+    if (err2){ $('#p-err').textContent = msgErro(err2); return; }
+    toast('Pessoa atualizada.'); editId = null; pessoasCarregar();
+  }
 
   /* ---------- entrar, sair, senha ---------- */
   async function aposLogin(){
