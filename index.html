@@ -325,11 +325,11 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
     const vis = pessoas.filter(p => mostrarInativos || p.ativo || p.id === editId);
     $('#area').innerHTML =
       '<div class="card"><h2>'+(atual ? 'Editar pessoa' : 'Nova pessoa')+'</h2>'
-      + '<p class="sub">'+(atual ? 'O e-mail não pode ser trocado. Para tirar alguém de uso, desmarque "Pessoa ativa".' : 'A pessoa recebe um e-mail para criar a própria senha e colocar a foto.')+'</p>'
+      + '<p class="sub">'+(atual ? 'Se trocar o e-mail, a pessoa recebe um link no novo endereço para criar a senha. Para tirar alguém de uso, desmarque "Pessoa ativa".' : 'A pessoa recebe um e-mail para criar a própria senha e colocar a foto.')+'</p>'
       + '<form class="form" id="f-pes" novalidate>'
       + '<label class="field" for="p-papel">Função<select id="p-papel"'+(atual?' disabled':'')+'><option value="promotor"'+(papelForm==='promotor'?' selected':'')+'>Promotor</option><option value="gerente"'+(papelForm==='gerente'?' selected':'')+'>Gerente de clínica</option></select></label>'
       + '<label class="field" for="p-nome">Nome<input id="p-nome" type="text" autocomplete="off" value="'+esc(atual?atual.nome:'')+'"></label>'
-      + '<label class="field" for="p-email">E-mail<input id="p-email" type="email" inputmode="email" autocomplete="off" value="'+esc(atual?(atual.email||''):'')+'"'+(atual?' disabled':'')+'></label>'
+      + '<label class="field" for="p-email">E-mail<input id="p-email" type="email" inputmode="email" autocomplete="off" value="'+esc(atual?(atual.email||''):'')+'"'+'></label>'
       + '<label class="field" for="p-tel">Telefone com DDD<input id="p-tel" type="tel" inputmode="numeric" autocomplete="off" placeholder="(31) 99999-9999" value="'+esc(atual?fmtTel(atual.telefone):'')+'"></label>'
       + '<label class="field" for="p-clin">Clínica<select id="p-clin"><option value="">Escolha...</option>'+opcClin.map(c => '<option value="'+c.id+'"'+(cAtual&&cAtual.id===c.id?' selected':'')+'>'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
       + '<label class="field" for="p-cargo" id="w-cargo"'+(papelForm==='promotor'?'':' hidden')+'>Cargo<select id="p-cargo"><option value="">Escolha...</option>'+CARGOS.map(g => '<option'+(atual&&atual.cargo===g?' selected':'')+'>'+g+'</option>').join('')+'</select></label>'
@@ -363,6 +363,12 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
       : (d.papel === 'promotor' && !d.cargo) ? 'Escolha o cargo.' : '';
     if (erro){ $('#p-err').textContent = erro; return; }
     const btn = $('#p-btn'); btn.disabled = true; $('#p-err').textContent = '';
+    if (atual && d.email !== (atual.email||'').toLowerCase()){
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)){ btn.disabled = false; $('#p-err').textContent = 'Informe um e-mail válido.'; return; }
+      const r0 = await chamar({ acao: 'trocar_email', pessoa_id: atual.id, email: d.email });
+      if (r0.erro){ btn.disabled = false; $('#p-err').textContent = r0.erro; return; }
+      if (r0.data && r0.data.aviso) toast(r0.data.aviso);
+    }
     if (!atual){
       const r = await chamar(Object.assign({ acao: 'convidar' }, d));
       btn.disabled = false;
