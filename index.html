@@ -152,6 +152,7 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
     </header>
     <nav class="nav" id="nav" aria-label="Seções" style="margin-top:14px">
       <button type="button" data-r="corrida">Corrida</button>
+      <button type="button" data-r="lancamentos">Lançamentos</button>
       <button type="button" data-r="clinicas">Clínicas</button>
       <button type="button" data-r="tipos">Tipos de lançamento</button>
       <button type="button" data-r="premios">Prêmios</button>
@@ -273,6 +274,7 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
     if (recurso === 'pessoas') return pessoasCarregar();
     if (recurso === 'campanhas') return campanhasCarregar();
     if (recurso === 'corrida') return corridaCarregar();
+    if (recurso === 'lancamentos') return lancCarregar();
     const R = RECURSOS[recurso];
     $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
     const { data, error } = await sb.from(R.tabela).select('*').order(R.ordem);
@@ -737,6 +739,142 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
   }
 
   setInterval(() => { if (recurso === 'corrida' && !$('#v-app').hidden && !document.hidden && $('#k-pista')) corridaAtualizar(); }, 15000);
+
+
+  /* ---------- lançamentos (visitas e vendas) ---------- */
+  const L = { tipos: [], clin: [], usu: [], camps: [], vincs: [], rows: [], lcs: [], filtroClin: '', dias: 30, acao: null, hist: [] };
+  const num = v => Number(String(v).replace(',', '.'));
+  const rpcMsg = e => (e && e.message) || 'Algo deu errado. Tente de novo.';
+
+  async function lancCarregar(){
+    $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const rs = await Promise.all([sb.from('tipos_lancamento').select('*').order('nome'), sb.from('clinicas').select('*').order('nome'), sb.from('usuarios').select('*').order('nome'),
+      sb.from('campanhas').select('*'), sb.from('vinculos_clinica').select('*')]);
+    const er = rs.map(r => r.error).find(Boolean);
+    if (er){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
+    L.tipos = rs[0].data.filter(t => t.ativo); L.clin = rs[1].data; L.usu = rs[2].data; L.camps = rs[3].data; L.vincs = rs[4].data.filter(v => !v.fim);
+    L.acao = null; lancDesenhar();
+  }
+
+  function lancOpcPromotores(clinicaId){
+    const ativos = L.usu.filter(u => u.papel === 'promotor' && u.ativo);
+    const daClin = ativos.filter(u => L.vincs.some(v => v.usuario_id === u.id && v.clinica_id === clinicaId));
+    const outros = ativos.filter(u => !daClin.includes(u));
+    const o = u => '<option value="'+u.id+'">'+esc(u.nome)+(u.cargo ? ' · '+esc(u.cargo) : '')+'</option>';
+    return '<option value="">Escolha...</option>'+(daClin.length ? '<optgroup label="Desta clínica">'+daClin.map(o).join('')+'</optgroup>' : '')+(outros.length ? '<optgroup label="Outros promotores">'+outros.map(o).join('')+'</optgroup>' : '');
+  }
+
+  function lancDesenhar(){
+    $('#area').style.gridTemplateColumns = '';
+    const clAt = L.clin.filter(c => c.ativa);
+    $('#area').innerHTML =
+      '<div class="card"><h2>Novo lançamento</h2><p class="sub">Registre uma visita ou venda. Ela conta em todas as campanhas em que o promotor e a clínica participam e que aceitam esse tipo.</p>'
+      + '<form class="form" id="f-lanc" novalidate>'
+      + '<label class="field" for="n-clin">Clínica<select id="n-clin"><option value="">Escolha...</option>'+clAt.map(c => '<option value="'+c.id+'">'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="field" for="n-prom">Promotor<select id="n-prom">'+lancOpcPromotores(0)+'</select></label>'
+      + '<label class="field" for="n-tipo">O que foi feito<select id="n-tipo"><option value="">Escolha...</option>'+L.tipos.map(t => '<option value="'+t.id+'" data-v="'+(t.usa_valor?1:0)+'">'+esc(t.nome)+'</option>').join('')+'</select></label>'
+      + '<div class="g2"><label class="field" for="n-qtd">Quantidade<input id="n-qtd" type="number" inputmode="decimal" min="0.01" step="any" value="1"></label>'
+      + '<label class="field" for="n-data">Data<input id="n-data" type="date" value="'+hoje()+'" max="'+hoje()+'"></label></div>'
+      + '<label class="field" for="n-valor" id="w-valor" hidden>Valor da venda (R$)<input id="n-valor" type="number" inputmode="decimal" min="0.01" step="0.01"></label>'
+      + '<div class="err" id="n-err" role="alert"></div><div class="btns"><button class="btn" type="submit" id="n-btn">Lançar</button></div></form></div>'
+      + '<div class="card"><div class="top"><h2>Lançamentos recentes</h2><div class="line">'
+      + '<select id="l-fclin" aria-label="Filtrar por clínica" style="width:auto"><option value="">Todas as clínicas</option>'+L.clin.map(c => '<option value="'+c.id+'"'+(String(c.id)===L.filtroClin?' selected':'')+'>'+esc(c.sigla)+'</option>').join('')+'</select>'
+      + '<select id="l-fdias" aria-label="Período" style="width:auto">'+[7,30,90].map(d => '<option value="'+d+'"'+(d===L.dias?' selected':'')+'>Últimos '+d+' dias</option>').join('')+'</select></div></div>'
+      + '<div id="l-lista" style="margin-top:8px"><p class="sub">Carregando...</p></div></div>';
+    $('#n-clin').addEventListener('change', e => { $('#n-prom').innerHTML = lancOpcPromotores(Number(e.target.value)); });
+    $('#n-tipo').addEventListener('change', e => { const o = e.target.selectedOptions[0]; $('#w-valor').hidden = !(o && o.dataset.v === '1'); });
+    $('#f-lanc').addEventListener('submit', lancarSalvar);
+    $('#l-fclin').addEventListener('change', e => { L.filtroClin = e.target.value; L.acao = null; lancLista(); });
+    $('#l-fdias').addEventListener('change', e => { L.dias = Number(e.target.value); L.acao = null; lancLista(); });
+    $('#l-lista').addEventListener('click', lancClique);
+    lancLista();
+  }
+
+  async function lancarSalvar(e){
+    e.preventDefault();
+    const clinica = Number($('#n-clin').value), prom = Number($('#n-prom').value), tipo = Number($('#n-tipo').value), qtd = num($('#n-qtd').value);
+    const t = L.tipos.find(x => x.id === tipo), valor = $('#n-valor').value === '' ? null : num($('#n-valor').value);
+    const erro = !clinica ? 'Escolha a clínica.' : !prom ? 'Escolha o promotor.' : !tipo ? 'Escolha o que foi feito.' : !(qtd > 0) ? 'A quantidade precisa ser maior que zero.'
+      : (t.usa_valor && !(valor > 0)) ? 'Este tipo exige o valor da venda.' : !$('#n-data').value ? 'Informe a data.' : '';
+    if (erro){ $('#n-err').textContent = erro; return; }
+    const btn = $('#n-btn'); btn.disabled = true; $('#n-err').textContent = '';
+    const { error } = await sb.rpc('lancar', { p_promotor: prom, p_clinica: clinica, p_tipo: tipo, p_quantidade: qtd, p_valor: t.usa_valor ? valor : null, p_data: $('#n-data').value });
+    btn.disabled = false;
+    if (error){ $('#n-err').textContent = rpcMsg(error); return; }
+    toast('Lançamento registrado.'); $('#n-qtd').value = '1'; $('#n-valor').value = ''; lancLista();
+  }
+
+  async function lancLista(){
+    const alvo = $('#l-lista'); if (!alvo) return;
+    const desde = new Date(Date.now() - L.dias * 864e5).toLocaleDateString('sv-SE');
+    let q = sb.from('lancamentos').select('*').gte('data_ref', desde).order('criado_em', { ascending: false }).limit(200);
+    if (L.filtroClin) q = q.eq('clinica_id', Number(L.filtroClin));
+    const { data, error } = await q;
+    if (error){ alvo.innerHTML = '<div class="err">'+esc(msgErro(error))+'</div>'; return; }
+    L.rows = data; L.lcs = [];
+    if (data.length){ const r = await sb.from('lancamento_campanhas').select('*').in('lancamento_id', data.map(x => x.id)); if (!r.error) L.lcs = r.data; }
+    lancRender();
+  }
+
+  function lancRender(){
+    const alvo = $('#l-lista'); if (!alvo) return;
+    alvo.innerHTML = '<ul class="items">'+(L.rows.map(r => {
+      const u = L.usu.find(x => x.id === r.promotor_id) || { nome: '#'+r.promotor_id }, c = L.clin.find(x => x.id === r.clinica_id) || { sigla: '?' }, t = L.tipos.find(x => x.id === r.tipo_id) || {};
+      const nomeT = t.nome || 'Tipo #'+r.tipo_id;
+      const lcs = L.lcs.filter(x => x.lancamento_id === r.id), validos = lcs.filter(x => x.status === 'valido');
+      const st = !lcs.length ? '' : !validos.length ? '<span class="chip off">Cancelado</span>' : validos.length < lcs.length ? '<span class="chip off">Cancelado em parte</span>' : '';
+      const aberto = L.acao && L.acao.id === r.id ? L.acao.tipo : null;
+      return '<li class="item" style="grid-template-columns:minmax(0,1fr)"><div class="line" style="justify-content:space-between"><div style="min-width:0"><div class="line"><b>'+esc(u.nome)+'</b><span class="sigla">'+esc(c.sigla)+'</span><span>'+esc(nomeT)+'</span>'+st+'</div>'
+        + '<div class="meta">'+dBR(r.data_ref)+' · qtd '+Number(r.quantidade)+(r.valor != null ? ' · '+brl(r.valor) : '')+' · '+lcs.map(x => '<span class="chip'+(x.status==='valido'?'':' off')+'">'+esc((L.camps.find(k => k.id === x.campanha_id) || {}).nome || '#'+x.campanha_id)+'</span>').join(' ')+'</div></div>'
+        + '<div class="btns"><button type="button" class="btn ghost sm" data-a="hi" data-id="'+r.id+'">Histórico</button>'
+        + (validos.length ? '<button type="button" class="btn ghost sm" data-a="ed" data-id="'+r.id+'">Corrigir</button><button type="button" class="btn ghost sm" data-a="ca" data-id="'+r.id+'">Cancelar</button>' : '')+'</div></div>'
+        + (aberto ? lancPainel(r, aberto, validos, t) : '')+'</li>'; }).join('') || '<li class="empty">Nenhum lançamento neste período.</li>')+'</ul>';
+  }
+
+  function lancPainel(r, tipo, validos, t){
+    if (tipo === 'ed') return '<div class="form" style="margin-top:10px;padding:12px;background:var(--surface-2);border-radius:14px"><div class="g2"><label class="field">Quantidade<input id="a-qtd" type="number" step="any" min="0.01" value="'+Number(r.quantidade)+'"></label>'
+      + (t.usa_valor ? '<label class="field">Valor (R$)<input id="a-valor" type="number" step="0.01" min="0.01" value="'+(r.valor != null ? Number(r.valor) : '')+'"></label>' : '')+'</div>'
+      + '<label class="field">Motivo da correção<input id="a-motivo" type="text" autocomplete="off" placeholder="Ex.: digitei o valor errado"></label><div class="err" id="a-err" role="alert"></div>'
+      + '<div class="btns"><button type="button" class="btn sm" data-a="ok-ed" data-id="'+r.id+'">Salvar correção</button><button type="button" class="btn ghost sm" data-a="fechar">Fechar</button></div></div>';
+    if (tipo === 'ca') return '<div class="form" style="margin-top:10px;padding:12px;background:var(--surface-2);border-radius:14px"><label class="field">Cancelar em<select id="a-camp"><option value="">Todas as campanhas</option>'
+      + validos.map(x => '<option value="'+x.campanha_id+'">'+esc((L.camps.find(k => k.id === x.campanha_id) || {}).nome || '#'+x.campanha_id)+'</option>').join('')+'</select></label>'
+      + '<label class="field">Motivo do cancelamento<input id="a-motivo" type="text" autocomplete="off" placeholder="Ex.: lançado em duplicidade"></label><div class="err" id="a-err" role="alert"></div>'
+      + '<div class="btns"><button type="button" class="btn sm" data-a="ok-ca" data-id="'+r.id+'">Confirmar cancelamento</button><button type="button" class="btn ghost sm" data-a="fechar">Fechar</button></div></div>';
+    const h = L.hist;
+    return '<div style="margin-top:10px;padding:12px;background:var(--surface-2);border-radius:14px">'+(h.length ? h.map(a => {
+      const u = L.usu.find(x => x.id === a.usuario_id) || { nome: '#'+a.usuario_id };
+      const det = a.acao === 'editar' && a.antes && a.depois ? ' · qtd '+Number(a.antes.quantidade)+' → '+Number(a.depois.quantidade)+(a.antes.valor != null || a.depois.valor != null ? ' · valor '+brl(a.antes.valor)+' → '+brl(a.depois.valor) : '')
+        : a.acao === 'criar' && a.depois ? ' · qtd '+Number(a.depois.quantidade)+(a.depois.valor != null ? ' · '+brl(a.depois.valor) : '') : '';
+      return '<div class="meta" style="margin:4px 0"><b>'+({criar:'Criado',editar:'Corrigido',cancelar:'Cancelado'}[a.acao]||esc(a.acao))+'</b> por '+esc(u.nome)+' em '+new Date(a.quando).toLocaleString('pt-BR')+esc(det)+(a.motivo ? ' · motivo: '+esc(a.motivo) : '')+'</div>'; }).join('') : '<div class="meta">Sem histórico.</div>')
+      + '<div class="btns" style="margin-top:8px"><button type="button" class="btn ghost sm" data-a="fechar">Fechar</button></div></div>';
+  }
+
+  async function lancClique(e){
+    const b = e.target.closest('[data-a]'); if (!b) return;
+    const a = b.dataset.a, id = Number(b.dataset.id);
+    if (a === 'fechar'){ L.acao = null; lancRender(); return; }
+    if (a === 'ed' || a === 'ca'){ L.acao = { id, tipo: a }; lancRender(); return; }
+    if (a === 'hi'){
+      const { data, error } = await sb.from('auditoria').select('*').eq('lancamento_id', id).order('quando', { ascending: false });
+      L.hist = error ? [] : data; L.acao = { id, tipo: 'hi' }; lancRender(); return;
+    }
+    const motivo = ($('#a-motivo') || {}).value || '';
+    if (motivo.trim().length < 3){ $('#a-err').textContent = 'Informe o motivo (mínimo 3 letras).'; return; }
+    b.disabled = true;
+    let r;
+    if (a === 'ok-ed'){
+      const qtd = num($('#a-qtd').value), v = $('#a-valor') ? ($('#a-valor').value === '' ? null : num($('#a-valor').value)) : null;
+      if (!(qtd > 0)){ b.disabled = false; $('#a-err').textContent = 'A quantidade precisa ser maior que zero.'; return; }
+      r = await sb.rpc('editar_lancamento', { p_id: id, p_quantidade: qtd, p_valor: v, p_motivo: motivo.trim() });
+    } else {
+      const c = $('#a-camp').value;
+      r = await sb.rpc('cancelar_lancamento', { p_id: id, p_motivo: motivo.trim(), p_campanha: c ? Number(c) : null });
+    }
+    b.disabled = false;
+    if (r.error){ $('#a-err').textContent = rpcMsg(r.error); return; }
+    toast(a === 'ok-ed' ? 'Lançamento corrigido.' : 'Lançamento cancelado.'); L.acao = null; lancLista();
+  }
 
   /* ---------- entrar, sair, senha ---------- */
   async function aposLogin(){
