@@ -886,10 +886,7 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
       await sb.auth.signOut(); view('login');
       $('#l-err').textContent = 'Seu login existe, mas ainda não foi cadastrado no sistema. Fale com o gestor.'; return;
     }
-    if (data.papel !== 'gestor'){
-      await sb.auth.signOut(); view('login');
-      $('#l-err').textContent = 'Este painel é só do gestor. Gerentes e promotores usam o aplicativo do celular.'; return;
-    }
+    if (data.papel !== 'gestor'){ location.replace('app/'); return; }
     eu = data; $('#quem').textContent = data.nome; view('app'); carregar();
   }
 
