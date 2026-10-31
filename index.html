@@ -566,12 +566,21 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + (atual ? '<label class="chk" for="p-ativo"><input id="p-ativo" type="checkbox"'+(atual.ativo?' checked':'')+'><span>Pessoa ativa</span></label>' : '')
       + '<div class="err" id="p-err" role="alert"></div>'
       + '<div class="btns"><button class="btn" type="submit" id="p-btn">'+(atual?'Salvar':'Enviar convite')+'</button>'
-      + (atual ? '<button class="btn ghost" type="button" id="p-cancel">Cancelar edição</button><button class="btn ghost" type="button" id="p-reset">Enviar link de nova senha</button>' : '')
+      + (atual ? '' : '<button class="btn ghost" type="button" id="p-sem">Salvar sem enviar convite</button>')
+      + (atual ? '<button class="btn ghost" type="button" id="p-cancel">Cancelar edição</button>'+(atual.auth_id ? '<button class="btn ghost" type="button" id="p-reset">Enviar link de nova senha</button>' : '<button class="btn ghost" type="button" id="p-conv">Enviar convite agora</button>') : '')
       + '</div></form></div>'
       + '<div class="card"><h2>Pessoas</h2><label class="chk" style="margin-bottom:10px"><input type="checkbox" id="mostra-inat"'+(mostrarInativos?' checked':'')+'><span>Mostrar inativos</span></label>'
       + '<p class="sub">'+vis.length+' cadastrada'+(vis.length===1?'':'s')+'. Pessoas com lançamentos não são apagadas, só inativadas.</p>'
-      + '<ul class="items">'+(vis.map(p => { const c = clinicaDe(p); return '<li class="item"><div><div class="line"><b>'+esc(p.nome)+'</b><span class="badge">'+(p.papel==='gerente'?'Gerente':p.papel==='assistente'?'Assistente':esc(p.cargo||'Promotor'))+'</span>'+(c?'<span class="sigla">'+esc(c.sigla)+'</span>':(p.papel==='assistente'?'':'<span class="chip off">Sem clínica</span>'))+(p.ativo?'':'<span class="chip off">Inativa</span>')+'</div><div class="meta">'+esc(p.email||'sem e-mail')+(p.telefone?' · '+esc(fmtTel(p.telefone)):'')+'</div></div><div><button type="button" class="btn ghost sm" data-ped="'+p.id+'">Editar</button></div></li>'; }).join('') || '<li class="empty">Ninguém cadastrado ainda.</li>')+'</ul></div>';
+      + '<ul class="items">'+(vis.map(p => { const c = clinicaDe(p); return '<li class="item"><div><div class="line"><b>'+esc(p.nome)+'</b><span class="badge">'+(p.papel==='gerente'?'Gerente':p.papel==='assistente'?'Assistente':esc(p.cargo||'Promotor'))+'</span>'+(c?'<span class="sigla">'+esc(c.sigla)+'</span>':(p.papel==='assistente'?'':'<span class="chip off">Sem clínica</span>'))+(p.auth_id?'':'<span class="chip off">Sem convite</span>')+(p.ativo?'':'<span class="chip off">Inativa</span>')+'</div><div class="meta">'+esc(p.email||'sem e-mail')+(p.telefone?' · '+esc(fmtTel(p.telefone)):'')+'</div></div><div><button type="button" class="btn ghost sm" data-ped="'+p.id+'">Editar</button></div></li>'; }).join('') || '<li class="empty">Ninguém cadastrado ainda.</li>')+'</ul></div>';
     $('#f-pes').addEventListener('submit', pessoaSalvar);
+    const sem = $('#p-sem'); if (sem) sem.addEventListener('click', () => pessoaSalvar(null, true));
+    const cv = $('#p-conv'); if (cv) cv.addEventListener('click', async () => {
+      const em = (atual.email || '').trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){ $('#p-err').textContent = 'Salve primeiro um e-mail válido para esta pessoa.'; return; }
+      cv.disabled = true; const r = await chamar({ acao: 'convidar_existente', pessoa_id: atual.id }); cv.disabled = false;
+      if (r.erro){ $('#p-err').textContent = r.erro; return; }
+      toast('Convite enviado para '+em+'.'); pessoasCarregar();
+    });
     $('#p-papel').addEventListener('change', e => { papelForm = e.target.value; $('#w-cargo').hidden = papelForm !== 'promotor'; $('#w-clin').hidden = papelForm === 'assistente'; });
     $('#mostra-inat').addEventListener('change', e => { mostrarInativos = e.target.checked; pessoasDesenhar(); });
     $$('[data-ped]').forEach(b => b.addEventListener('click', () => { editId = Number(b.dataset.ped); pessoasDesenhar(); }));
@@ -582,30 +591,58 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     });
   }
 
-  async function pessoaSalvar(e){
-    e.preventDefault();
+  const emailOk = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  async function loginUnico(txt){
+    let base = normTxt(String(txt).split('@')[0]).replace(/[^a-z0-9._-]+/g, '.').replace(/^\.+|\.+$/g, '').slice(0, 24);
+    if (base.length < 3) base = (base+'usr').slice(0, 24);
+    const { data } = await sb.from('usuarios').select('login').like('login', base+'%');
+    const usados = new Set((data || []).map(x => x.login)); let l = base, n = 2;
+    while (usados.has(l)) l = base+(n++);
+    return l;
+  }
+
+  async function pessoaSalvar(e, semConvite){
+    if (e) e.preventDefault();
     const atual = pessoas.find(p => p.id === editId) || null;
     const d = { papel: atual ? atual.papel : $('#p-papel').value, nome: $('#p-nome').value.trim(), email: $('#p-email').value.trim().toLowerCase(),
       telefone: soDigitos($('#p-tel').value), clinica_id: Number($('#p-clin').value) || null, cargo: $('#p-cargo').value };
     if (d.papel !== 'promotor') d.cargo = null;
-    const erro = !d.nome ? 'Informe o nome.' : (!atual && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) ? 'Informe um e-mail válido.'
-      : !/^[0-9]{10,11}$/.test(d.telefone) ? 'Telefone com DDD, 10 ou 11 números.' : (!d.clinica_id && d.papel !== 'assistente') ? 'Escolha a clínica.'
+    const exigeContato = !atual && !semConvite;   // convite precisa de e-mail e telefone; salvar sem convite não
+    const erro = !d.nome ? 'Informe o nome.'
+      : ((exigeContato || d.email) && !emailOk(d.email)) ? 'Informe um e-mail válido.'
+      : ((exigeContato || d.telefone || atual) && !/^[0-9]{10,11}$/.test(d.telefone) && !(atual && !atual.telefone && !d.telefone)) ? 'Telefone com DDD, 10 ou 11 números.'
+      : (!d.clinica_id && d.papel !== 'assistente') ? 'Escolha a clínica.'
       : (d.papel === 'promotor' && !d.cargo) ? 'Escolha o cargo.' : '';
     if (erro){ $('#p-err').textContent = erro; return; }
-    const btn = $('#p-btn'); btn.disabled = true; $('#p-err').textContent = '';
-    if (atual && d.email !== (atual.email||'').toLowerCase()){
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)){ btn.disabled = false; $('#p-err').textContent = 'Informe um e-mail válido.'; return; }
+    const btns = $$('#f-pes .btns button'); btns.forEach(b => { b.disabled = true; }); $('#p-err').textContent = '';
+    const libera = () => btns.forEach(b => { b.disabled = false; });
+
+    if (!atual && semConvite){
+      const login = await loginUnico(d.email || d.nome);
+      const ins = await sb.from('usuarios').insert({ papel: d.papel, nome: d.nome, telefone: d.telefone || null, email: d.email || null, cargo: d.cargo || null, login }).select('id').single();
+      if (ins.error){ libera(); $('#p-err').textContent = ins.error.code === '23505' ? 'Já existe uma pessoa com este e-mail.' : msgErro(ins.error); return; }
+      if (d.papel !== 'assistente'){
+        const v = await sb.from('vinculos_clinica').insert({ usuario_id: ins.data.id, clinica_id: d.clinica_id });
+        if (v.error){ await sb.from('usuarios').delete().eq('id', ins.data.id); libera(); $('#p-err').textContent = msgErro(v.error); return; }
+      }
+      libera(); toast(d.nome+' foi salva, sem convite. Quando quiser dar acesso, edite a pessoa e use "Enviar convite agora".'); pessoasCarregar(); return;
+    }
+
+    if (atual && atual.auth_id && d.email !== (atual.email||'').toLowerCase()){
+      if (!emailOk(d.email)){ libera(); $('#p-err').textContent = 'Informe um e-mail válido.'; return; }
       const r0 = await chamar({ acao: 'trocar_email', pessoa_id: atual.id, email: d.email });
-      if (r0.erro){ btn.disabled = false; $('#p-err').textContent = r0.erro; return; }
+      if (r0.erro){ libera(); $('#p-err').textContent = r0.erro; return; }
       if (r0.data && r0.data.aviso) toast(r0.data.aviso);
     }
     if (!atual){
       const r = await chamar(Object.assign({ acao: 'convidar' }, d));
-      btn.disabled = false;
+      libera();
       if (r.erro){ $('#p-err').textContent = r.erro; return; }
       toast('Convite enviado para '+d.email+'.'); pessoasCarregar(); return;
     }
-    const { error } = await sb.from('usuarios').update({ nome: d.nome, telefone: d.telefone, cargo: d.cargo, ativo: $('#p-ativo').checked }).eq('id', atual.id);
+    const upd = { nome: d.nome, telefone: d.telefone || null, cargo: d.cargo, ativo: $('#p-ativo').checked };
+    if (!atual.auth_id) upd.email = d.email || null;   // sem acesso ainda: o e-mail é só um cadastro, troca direto
+    const { error } = await sb.from('usuarios').update(upd).eq('id', atual.id);
     let err2 = error;
     const cAtual = clinicaDe(atual);
     if (!err2 && atual.papel !== 'assistente' && (!cAtual || cAtual.id !== d.clinica_id)){
@@ -613,8 +650,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       if (v){ const r1 = await sb.from('vinculos_clinica').update({ fim: new Date().toISOString().slice(0,10) }).eq('id', v.id); err2 = r1.error; }
       if (!err2){ const r2 = await sb.from('vinculos_clinica').insert({ usuario_id: atual.id, clinica_id: d.clinica_id }); err2 = r2.error; }
     }
-    btn.disabled = false;
-    if (err2){ $('#p-err').textContent = msgErro(err2); return; }
+    libera();
+    if (err2){ $('#p-err').textContent = err2.code === '23505' ? 'Já existe uma pessoa com este e-mail.' : msgErro(err2); return; }
     toast('Pessoa atualizada.'); editId = null; pessoasCarregar();
   }
 

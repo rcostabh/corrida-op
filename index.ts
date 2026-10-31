@@ -61,6 +61,20 @@ Deno.serve(async (req) => {
       return json({ ok: true });
     }
 
+    // 2c. Dar acesso a quem foi cadastrado sem convite: manda o convite para o e-mail já salvo.
+    if (b.acao === "convidar_existente") {
+      if (await protegido(b.pessoa_id)) return json({ erro: "Só o gestor master mexe em gestores e assistentes." }, 403);
+      const { data: p } = await admin.from("usuarios").select("id,auth_id,email,nome").eq("id", b.pessoa_id).maybeSingle();
+      if (!p) return json({ erro: "Pessoa não encontrada." }, 404);
+      if (p.auth_id) return json({ erro: "Esta pessoa já tem acesso." }, 400);
+      if (!p.email) return json({ erro: "Cadastre o e-mail da pessoa antes de convidar." }, 400);
+      const { data: inv, error: ie } = await admin.auth.admin.inviteUserByEmail(p.email, { redirectTo, data: { nome: p.nome } });
+      if (ie || !inv?.user) return json({ erro: ie?.message || "Não foi possível enviar o convite." }, 400);
+      const { error: ue2 } = await admin.from("usuarios").update({ auth_id: inv.user.id }).eq("id", p.id);
+      if (ue2) { await admin.auth.admin.deleteUser(inv.user.id); return json({ erro: ue2.message }, 400); }
+      return json({ ok: true });
+    }
+
     // 3. Convidar.
     if (b.acao !== "convidar") return json({ erro: "Ação desconhecida." }, 400);
     const nome = String(b.nome || "").trim();
