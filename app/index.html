@@ -210,7 +210,7 @@ input:focus,select:focus{outline:none;background:var(--surface);border-color:var
   };
   const guarda = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k, v){ try { localStorage.setItem(k, v); } catch(e){} } };
 
-  const VERSAO = '2026-10-31 · jogo 1';
+  const VERSAO = '2026-10-31 · avisos';
   if ('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => { reg.update(); }).catch(() => {});
     let recarregou = false;
@@ -302,7 +302,7 @@ input:focus,select:focus{outline:none;background:var(--surface);border-color:var
     $('#h-papel').textContent = eu.papel === 'gerente' ? 'Gerente' : (eu.cargo || 'Promotor');
     $('#h-nome').textContent = eu.nome.split(' ')[0];
     $('#h-av').innerHTML = avatar(eu);
-    view('app'); desenharAbas(); mostrar(aba === 'lancar' && eu.papel !== 'gerente' ? 'corrida' : aba);
+    view('app'); desenharAbas(); mostrar(aba === 'lancar' && eu.papel !== 'gerente' ? 'corrida' : aba); pushManter();
     contarAvisos();
     clearInterval(timer); timer = setInterval(() => { if (!document.hidden && $('#v-app').hidden === false){ if (aba === 'corrida') corridaAtualizar(); contarAvisos(); } }, 15000);
   }
@@ -541,6 +541,7 @@ input:focus,select:focus{outline:none;background:var(--surface);border-color:var
       else window.scrollTo(0, 0);
       await sleep(550);
     }
+    if (!$('#k-pista')) return;   // trocou de aba durante a animação
     prev = prev || K.cur || cur;
 
     // novos participantes
@@ -555,6 +556,7 @@ input:focus,select:focus{outline:none;background:var(--surface);border-color:var
     rank.forEach(r => { const id = r[idCol], p0 = prev.pontos[id] != null ? prev.pontos[id] : r.pontos;
       if (p0 !== r.pontos) tarefas.push(andar(K.tokens[id], p0, r.pontos, id === meuId)); });
     await Promise.all(tarefas);
+    if (!$('#k-pista')) return;
     rank.forEach(r => { const t = K.tokens[r[idCol]]; if (t) t.tile = tileDe(r.pontos, N); });
     reempilhar();
 
@@ -694,9 +696,72 @@ input:focus,select:focus{outline:none;background:var(--surface);border-color:var
     toast(a === 'ok-ed' ? 'Lançamento corrigido.' : 'Lançamento cancelado.'); L.acao = null; lancLista();
   }
 
+  /* ---------- avisos no celular (push) ---------- */
+  const VAPID_PUBLIC = 'BLF4hqSMCG5xO08eJWwz7ljcpxLpd1Q3EODat_OGhQeJru5rRisQAxP4-ruJidZRjKZnSehTy445AfQYcxrpIWw';
+  const b64Bytes = t => { t = t.replace(/-/g, '+').replace(/_/g, '/'); while (t.length % 4) t += '='; const b = atob(t); return Uint8Array.from(b, c => c.charCodeAt(0)); };
+  const ehIos = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const instalado = () => { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; } };
+  const pushSuporte = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  async function pushSub(){ try { const reg = await navigator.serviceWorker.ready; return await reg.pushManager.getSubscription(); } catch (e) { return null; } }
+  async function pushEstado(){
+    if (ehIos && !instalado()) return 'instalar';
+    if (!pushSuporte()) return 'nao';
+    if (Notification.permission === 'denied') return 'negado';
+    return (Notification.permission === 'granted' && await pushSub()) ? 'ligado' : 'desligado';
+  }
+  async function pushGravar(sub){
+    return sb.from('dispositivos_push').upsert({ usuario_id: eu.id, token: JSON.stringify(sub.toJSON()), plataforma: 'web', ultimo_uso: new Date().toISOString() }, { onConflict: 'token' });
+  }
+  async function pushLigar(){
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') return 'Sem a permissão do aparelho não dá para avisar. Libere as notificações deste app nas configurações.';
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub){
+      try { sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64Bytes(VAPID_PUBLIC) }); }
+      catch (e){ return 'Não consegui ativar os avisos neste aparelho. Tente de novo em alguns instantes.'; }
+    }
+    const { error } = await pushGravar(sub);
+    return error ? msgErro(error) : '';
+  }
+  async function pushDesligar(){
+    const sub = await pushSub(); if (!sub) return;
+    const token = JSON.stringify(sub.toJSON());
+    await sb.from('dispositivos_push').delete().eq('token', token);
+    try { await sub.unsubscribe(); } catch (e) {}
+  }
+  // Ao abrir o app: se os avisos já estão ligados, mantém o aparelho registrado (e atualiza o "último uso").
+  async function pushManter(){ try { if (await pushEstado() === 'ligado'){ const sub = await pushSub(); if (sub) await pushGravar(sub); } } catch (e) {} }
+  async function pushDesenhar(){
+    const alvo = $('#av-push'); if (!alvo) return;
+    const st = await pushEstado(); if (!$('#av-push')) return;
+    const msg = { instalar: 'No iPhone, os avisos só funcionam com o app instalado: toque em Compartilhar › Adicionar à Tela de Início e abra o Corrida OP pelo ícone.', nao: 'Este aparelho ou navegador não aceita avisos. Tente pelo Chrome (Android) ou instale o app.', negado: 'Os avisos estão bloqueados. Libere as notificações do Corrida OP nas configurações do aparelho ou do navegador e volte aqui.' };
+    if (msg[st]){ alvo.innerHTML = '<h2>Avisos no celular</h2><p class="sub" style="margin:0">'+msg[st]+'</p>'; return; }
+    if (st === 'ligado'){
+      alvo.innerHTML = '<h2>Avisos no celular</h2><p class="sub" style="margin:0 0 10px"><span class="chip ok">Ativados neste aparelho</span> Você recebe um aviso quando muda de posição ou ganha um prêmio, mesmo com o app fechado.</p><div class="err" id="av-err" role="alert"></div>'
+        + '<div class="btns"><button class="btn ghost sm" type="button" id="av-teste">Enviar aviso de teste</button><button class="btn ghost sm" type="button" id="av-off">Desativar</button></div>';
+      $('#av-off').addEventListener('click', async () => { await pushDesligar(); toast('Avisos desativados neste aparelho.'); pushDesenhar(); });
+      $('#av-teste').addEventListener('click', async e => {
+        const b = e.currentTarget; b.disabled = true; $('#av-err').textContent = '';
+        const { data, error } = await sb.functions.invoke('bright-service', { body: { acao: 'teste_push' } });
+        b.disabled = false;
+        if (error || (data && data.erro)){ $('#av-err').textContent = (data && data.erro) || msgErro(error); return; }
+        toast(data && data.enviados ? 'Aviso de teste enviado. Ele chega em instantes.' : 'O servidor não achou este aparelho. Desative e ative de novo.');
+      });
+      return;
+    }
+    alvo.innerHTML = '<h2>Avisos no celular</h2><p class="sub" style="margin:0 0 10px">Receba um aviso quando mudar de posição ou ganhar um prêmio, mesmo com o app fechado.</p><div class="err" id="av-err" role="alert"></div><button class="btn block" type="button" id="av-on">Ativar avisos</button>';
+    $('#av-on').addEventListener('click', async e => {
+      const b = e.currentTarget; b.disabled = true; const er = await pushLigar(); b.disabled = false;
+      if (er){ $('#av-err').textContent = er; return; }
+      toast('Avisos ativados.'); pushDesenhar();
+    });
+  }
+
   /* ---------- avisos ---------- */
   async function avisosCarregar(){
-    $('#main').innerHTML = '<div class="card"><h2>Avisos</h2><p class="sub">Posição na corrida e prêmios.</p><div id="av-lista"><p class="sub">Carregando...</p></div></div>';
+    $('#main').innerHTML = '<div class="card" id="av-push"><p class="sub">Carregando...</p></div><div class="card"><h2>Avisos</h2><p class="sub">Posição na corrida e prêmios.</p><div id="av-lista"><p class="sub">Carregando...</p></div></div>';
+    pushDesenhar();
     const { data, error } = await sb.from('notificacoes').select('*').eq('usuario_id', eu.id).order('criada_em', { ascending: false }).limit(60);
     if (error){ $('#av-lista').innerHTML = '<div class="err">'+esc(msgErro(error))+'</div>'; return; }
     $('#av-lista').innerHTML = data.map(n => '<div class="nt'+(n.lida_em?'':' novo')+'"><b>'+esc(n.titulo)+'</b><p style="margin:2px 0">'+esc(n.texto)+'</p><p class="meta">'+new Date(n.criada_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })+'</p></div>').join('')
