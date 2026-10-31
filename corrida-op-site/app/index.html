@@ -1,0 +1,754 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Corrida de Prêmios OP</title>
+<meta name="theme-color" content="#14141a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Corrida OP">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+:root{
+  --bg:#f5f5f7; --surface:#ffffff; --surface-2:#f2f2f5; --ink:#1d1d1f; --muted:#6e6e73; --line:#e5e5ea;
+  --accent:#d95300; --accent-2:#ff8a1f; --accent-soft:#fff1e5; --on-accent:#ffffff;
+  --red:#d70015; --ok:#248a3d; --warn:#b25000;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.06);
+  --font:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter','Segoe UI',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#000; --surface:#1c1c1e; --surface-2:#2c2c2e; --ink:#f5f5f7; --muted:#a1a1a6; --line:#3a3a3c;
+    --accent:#ff9f0a; --accent-2:#ff6a00; --accent-soft:#3a2308; --on-accent:#1a0e00;
+    --red:#ff6961; --ok:#30d158; --warn:#ffb340; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.4); color-scheme:dark}
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--font);-webkit-font-smoothing:antialiased;letter-spacing:-.01em;
+  padding:max(14px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(92px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 55%,transparent);outline-offset:2px}
+.wrap{max-width:640px;margin:0 auto;display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+h1{font:700 26px/1.1 var(--font);letter-spacing:-.03em;margin:0}
+h2{font:650 18px/1.2 var(--font);letter-spacing:-.02em;margin:0 0 4px}
+.eyebrow{font-weight:600;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.sub{color:var(--muted);font-size:13.5px;margin:0 0 10px}
+.meta{color:var(--muted);font-size:13px;margin:0}
+.card{background:var(--surface);border-radius:22px;padding:18px;min-width:0;box-shadow:var(--shadow);border:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+.top{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between}
+.line{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.form{display:grid;gap:12px}
+.field{display:grid;gap:6px;font-weight:600;font-size:13px;color:var(--muted);min-width:0}
+input,select{font:inherit;font-weight:500;font-size:16px;color:var(--ink);background:var(--surface-2);border:1px solid transparent;border-radius:12px;padding:10px 14px;min-height:48px;width:100%}
+input:focus,select:focus{outline:none;background:var(--surface);border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)}
+.g2{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+.err{color:var(--red);font-weight:500;font-size:13px;min-height:1em}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.btn{font:600 16px var(--font);border:0;border-radius:999px;padding:10px 22px;min-height:48px;cursor:pointer;color:var(--on-accent);
+  background:linear-gradient(180deg,var(--accent-2),var(--accent));box-shadow:0 2px 10px color-mix(in srgb,var(--accent) 35%,transparent)}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:var(--surface-2);color:var(--ink);box-shadow:none;font-size:14px}
+.btn.sm{font-size:13px;min-height:38px;padding:6px 16px}
+.btn.block{width:100%}
+.btn[disabled]{opacity:.6}
+.link{background:none;border:0;color:var(--accent);font:600 14px var(--font);cursor:pointer;padding:8px 0;text-align:center}
+.items{list-style:none;margin:0;padding:0}
+.item{padding:12px 0;border-top:1px solid var(--line);display:grid;gap:8px}
+.item:first-child{border-top:0}
+.empty{padding:18px;background:var(--surface-2);border-radius:14px;color:var(--muted);text-align:center;list-style:none}
+.sigla{font:700 12px var(--font);background:var(--accent-soft);color:var(--accent);padding:3px 9px;border-radius:8px;letter-spacing:.04em}
+.badge{font-weight:600;font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:3px 10px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+.badge.ouro{background:linear-gradient(180deg,#ffd35c,#ffb400);color:#3a2a00}
+.badge.prata{background:linear-gradient(180deg,#e4e6ea,#c3c7ce);color:#1f2933}
+.chip{font-size:12px;font-weight:500;padding:3px 10px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+.chip.off{color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent)}
+.chip.ok{color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent)}
+.dot{width:12px;height:12px;border-radius:50%;flex:none}
+.login{max-width:420px;margin:7vh auto 0;display:grid;gap:20px}
+.login .card{display:grid;gap:14px;padding:24px}
+.boas{text-align:center}
+.palco{position:relative;display:grid;place-items:center;margin:0 auto 8px;width:min(70vw,260px)}
+.palco::before{content:"";position:absolute;inset:6% 2% 2%;border-radius:50%;background:radial-gradient(circle at 50% 45%,color-mix(in srgb,var(--accent-2) 36%,transparent),transparent 68%)}
+.mascote{position:relative;width:100%;height:auto;max-height:min(38vh,330px);object-fit:contain;filter:drop-shadow(0 14px 16px rgba(217,83,0,.28))}
+.login{margin-top:max(2vh,8px)}
+/* avatar */
+.av{width:44px;height:44px;border-radius:50%;object-fit:cover;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font:700 15px var(--font);flex:none;overflow:hidden}
+.av.xl{width:120px;height:120px;font-size:38px;margin:0 auto}
+/* barra de abas */
+.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:2px;padding:6px 10px calc(6px + env(safe-area-inset-bottom,0px));
+  background:color-mix(in srgb,var(--surface) 82%,transparent);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-top:1px solid var(--line);z-index:10}
+.tabs button{flex:1;max-width:140px;border:0;background:transparent;color:var(--muted);font:600 11px var(--font);padding:6px 4px;border-radius:12px;display:grid;justify-items:center;gap:2px;min-height:52px;cursor:pointer;position:relative}
+.tabs button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabs button[aria-current="page"]{color:var(--accent)}
+.tabs .n{position:absolute;top:2px;right:calc(50% - 22px);background:var(--red);color:#fff;font:700 10px var(--font);min-width:17px;height:17px;border-radius:9px;display:grid;place-items:center;padding:0 4px}
+/* corrida */
+.seg{display:inline-flex;background:var(--surface-2);border-radius:999px;padding:3px}
+.seg button{border:0;background:transparent;color:var(--muted);font:600 13px var(--font);padding:7px 14px;border-radius:999px;min-height:34px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+/* mapa de jogo */
+.sndbtn{border:0;background:var(--surface-2);color:var(--ink);width:38px;height:38px;border-radius:50%;display:grid;place-items:center;cursor:pointer}
+.sndbtn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.sndbtn[aria-pressed="false"]{color:var(--muted)}
+.mapa{position:relative;border-radius:22px;overflow:hidden;background:linear-gradient(180deg,#7fd0ff 0%,#b9ecff 22%,#c9f2b8 55%,#8fdc74 100%);box-shadow:var(--shadow);touch-action:pan-y}
+.mapa .nuvem{position:absolute;width:90px;height:30px;border-radius:30px;background:#fff;opacity:.85;filter:blur(.4px)}
+.mapa .nuvem::before,.mapa .nuvem::after{content:"";position:absolute;background:#fff;border-radius:50%}
+.mapa .nuvem::before{width:38px;height:38px;left:14px;top:-18px}.mapa .nuvem::after{width:30px;height:30px;left:46px;top:-12px}
+.mapa svg.estrada{position:absolute;left:0;top:0;pointer-events:none}
+.t{position:absolute;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;display:grid;place-items:center;color:#fff;font:800 17px var(--font);text-shadow:0 1px 2px rgba(0,0,0,.35);
+  background:radial-gradient(circle at 34% 26%,rgba(255,255,255,.85) 0 11%,rgba(255,255,255,0) 12%),radial-gradient(circle at 50% 38%,var(--c),color-mix(in srgb,var(--c) 68%,#000));
+  box-shadow:0 5px 0 rgba(0,0,0,.22),inset 0 -5px 8px rgba(0,0,0,.18),inset 0 3px 4px rgba(255,255,255,.35)}
+.t.ini{background:radial-gradient(circle at 34% 26%,rgba(255,255,255,.85) 0 11%,rgba(255,255,255,0) 12%),radial-gradient(circle at 50% 38%,#4bdc7a,#1f9d4c);font-size:13px}
+.t.fim{width:58px;height:58px;margin:-29px 0 0 -29px;background:repeating-conic-gradient(#fff 0 25%,#1b1b1f 0 50%) 0 0/16px 16px;border:4px solid #fff;box-shadow:0 5px 0 rgba(0,0,0,.25)}
+.t.bau{width:60px;height:60px;margin:-30px 0 0 -30px;box-shadow:0 6px 0 rgba(0,0,0,.25),0 0 0 4px rgba(255,255,255,.75);transition:transform .25s}
+.t.bau.ouro{--c:#ffc400}.t.bau.prata{--c:#b8c2cc}
+.t.bau svg{width:36px;height:36px;margin-top:-2px}
+.t.bau .tampa{transform-box:fill-box;transform-origin:0% 100%;transition:transform .35s}
+.t.bau.aberto .tampa{transform:rotate(-62deg)}
+.t.bau.aberto{animation:balanca .5s}
+@keyframes balanca{20%{transform:rotate(-10deg) scale(1.12)}50%{transform:rotate(8deg) scale(1.16)}80%{transform:rotate(-4deg) scale(1.08)}}
+.rot{position:absolute;transform:translate(-50%,0);font:700 10px var(--font);background:#fff;color:#3a2a00;border-radius:999px;padding:1px 8px;white-space:nowrap;max-width:110px;overflow:hidden;text-overflow:ellipsis;box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.tk{position:absolute;left:0;top:0;z-index:5;will-change:transform;pointer-events:none}
+.tk .disc{position:absolute;left:-17px;top:-52px;width:34px;height:34px;border-radius:50%;object-fit:cover;display:grid;place-items:center;color:#fff;font:800 12px var(--font);border:3px solid var(--rc,#fff);background:var(--rc,#888);box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.tk.eu{z-index:8}
+.tk.eu .mas{position:absolute;left:-27px;top:-84px;width:54px;height:auto;filter:drop-shadow(0 4px 3px rgba(0,0,0,.3));transform-origin:50% 100%}
+.tk.eu .nm{position:absolute;left:50%;top:-100px;transform:translateX(-50%);background:var(--accent);color:var(--on-accent);font:800 10px var(--font);padding:1px 8px;border-radius:999px;white-space:nowrap;box-shadow:0 2px 0 rgba(0,0,0,.25)}
+.tk .sombra{position:absolute;left:-18px;top:-6px;width:36px;height:12px;border-radius:50%;background:rgba(0,0,0,.22);filter:blur(1px)}
+.tk.pulo .mas,.tk.pulo .disc{animation:esmaga .22s}
+@keyframes esmaga{0%{transform:scale(1.18,.82)}60%{transform:scale(.94,1.08)}100%{transform:scale(1,1)}}
+.po{position:absolute;width:9px;height:9px;border-radius:50%;background:#fff;opacity:.9;pointer-events:none;z-index:4}
+.fx{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:40}
+.fx i{position:absolute;display:block;width:9px;height:14px;border-radius:2px}
+.fx b{position:absolute;display:block;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3a8,#ffc400 55%,#c98600);box-shadow:0 0 0 2px #c98600 inset}
+.banner{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translate(-50%,-140%);z-index:50;min-width:200px;max-width:92vw;text-align:center;
+  background:linear-gradient(180deg,var(--accent-2),var(--accent));color:var(--on-accent);font:800 18px var(--font);padding:12px 22px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.3);transition:transform .45s cubic-bezier(.2,1.4,.4,1)}
+.banner.show{transform:translate(-50%,0)}
+.banner.neg{background:linear-gradient(180deg,#6b7280,#4b5563);color:#fff}
+.modal{position:fixed;inset:0;z-index:60;background:rgba(10,10,20,.62);display:grid;place-items:center;padding:20px;animation:fade .25s}
+@keyframes fade{from{opacity:0}}
+.modal .cx{background:var(--surface);border-radius:28px;padding:26px 22px;text-align:center;max-width:340px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.45);animation:salta .5s cubic-bezier(.2,1.5,.4,1)}
+@keyframes salta{from{transform:scale(.6) translateY(30px);opacity:0}}
+.modal .cx svg{width:110px;height:110px;filter:drop-shadow(0 10px 14px rgba(0,0,0,.25))}
+.modal .cx h2{font-size:24px;margin:8px 0 2px}
+.modal .cx p{margin:0 0 14px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.t.bau.aberto,.tk.pulo .mas,.tk.pulo .disc,.modal .cx{animation:none}.banner{transition:none}}
+.rk{display:grid;grid-template-columns:32px 40px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.rk:first-child{border-top:0}
+.rk.eu{background:var(--accent-soft);margin:0 -10px;padding:10px;border-radius:12px;border-top-color:transparent}
+.rk .pos{font:700 17px var(--font);text-align:center}
+.rk .pts{font:700 17px var(--font);text-align:right}
+.rk .av{width:40px;height:40px;font-size:13px}
+.hero{background:linear-gradient(135deg,var(--accent-2),var(--accent));color:var(--on-accent);border-radius:22px;padding:18px;box-shadow:var(--shadow)}
+.hero b{font:700 28px/1.1 var(--font);display:block;letter-spacing:-.03em}
+.hero p{margin:4px 0 0;opacity:.92;font-size:14px}
+.nt{padding:12px 0;border-top:1px solid var(--line)}
+.nt:first-child{border-top:0}
+.nt.novo{background:var(--accent-soft);margin:0 -10px;padding:12px 10px;border-radius:12px;border-top-color:transparent}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);width:min(92vw,460px);
+  background:color-mix(in srgb,var(--ink) 92%,transparent);color:var(--bg);padding:13px 16px;border-radius:16px;font-weight:500;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:30}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="v-load" class="login"><h1>Corrida de Prêmios OP</h1><p class="sub">Carregando...</p></div>
+
+  <div id="v-login" class="login" hidden>
+    <div class="boas"><div class="palco"><img class="mascote" src="mascote.png" alt="Mascote da Orthopride" width="459" height="671"></div><span class="eyebrow">Orthopride</span><h1>Corrida de Prêmios OP</h1></div>
+    <form class="card" id="f-login" novalidate>
+      <label class="field" for="l-email">E-mail<input id="l-email" type="email" autocomplete="username" inputmode="email" autocapitalize="off"></label>
+      <label class="field" for="l-senha">Senha<input id="l-senha" type="password" autocomplete="current-password"></label>
+      <div class="err" id="l-err" role="alert"></div>
+      <button class="btn block" type="submit" id="l-btn">Entrar</button>
+      <button class="link" type="button" id="l-esqueci">Esqueci minha senha</button>
+    </form>
+  </div>
+
+  <div id="v-foto" class="login" hidden>
+    <div><span class="eyebrow">Quase pronto</span><h1>Coloque sua foto</h1><p class="sub">Ela aparece na corrida, junto do seu carro.</p></div>
+    <div class="card">
+      <div class="av xl" id="o-av">?</div>
+      <div class="err" id="o-err" role="alert" style="text-align:center"></div>
+      <label class="btn block" style="text-align:center;display:block;line-height:28px">Tirar foto agora<input type="file" accept="image/*" capture="user" id="o-cam" hidden></label>
+      <label class="btn ghost block" style="text-align:center;display:block;line-height:32px">Escolher da galeria<input type="file" accept="image/*" id="o-gal" hidden></label>
+      <button class="link" type="button" id="o-pular">Pular por enquanto</button>
+    </div>
+  </div>
+
+  <div id="v-app" hidden>
+    <header class="top" style="margin-bottom:14px"><div><span class="eyebrow" id="h-papel"></span><h1 id="h-nome"></h1></div><div id="h-av"></div></header>
+    <main id="main" style="display:grid;gap:14px"></main>
+  </div>
+</div>
+<nav class="tabs" id="tabs" hidden aria-label="Seções"></nav>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+(function(){
+  'use strict';
+  const SUPABASE_URL = 'https://fjroscujmyrjxatakcpo.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_ZuqKt7UHtpkiyQr95Ji67w_OQXS1nMV';
+
+  const $ = (s, r) => (r||document).querySelector(s);
+  const $$ = (s, r) => Array.from((r||document).querySelectorAll(s));
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const brl = n => n == null ? '' : Number(n).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  const num = v => Number(String(v).replace(',', '.'));
+  const hoje = () => new Date().toLocaleDateString('sv-SE');
+  const dBR = d => d ? d.split('-').reverse().join('/') : '';
+  const iniciais = n => { const p = String(n||'?').trim().split(/\s+/); return ((p[0]||'?')[0] + (p.length > 1 ? p[p.length-1][0] : (p[0]||'')[1] || '')).toUpperCase(); };
+  const avatar = (u, cls) => u && u.foto_url ? '<img class="av '+(cls||'')+'" src="'+esc(u.foto_url)+'" alt="">' : '<div class="av '+(cls||'')+'">'+esc(iniciais(u && u.nome))+'</div>';
+  let toastTimer;
+  function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 4500); }
+  const msgErro = e => {
+    const m = (e && e.message) || '';
+    if (/Invalid login credentials/i.test(m)) return 'E-mail ou senha incorretos.';
+    if (/fetch|network/i.test(m)) return 'Sem conexão. Verifique a internet e tente de novo.';
+    return m || 'Algo deu errado. Tente de novo.';
+  };
+  const guarda = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k, v){ try { localStorage.setItem(k, v); } catch(e){} } };
+
+  const VERSAO = '2026-10-31 · jogo 1';
+  if ('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => { reg.update(); }).catch(() => {});
+    let recarregou = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (recarregou || !navigator.serviceWorker.controller) return; recarregou = true; });
+  }
+
+  let definindoSenha = /type=(invite|recovery)/.test(location.hash);
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+  const urlPainel = new URL('../', location.href).href;
+
+  let eu = null, authUid = null, minhasClin = [], aba = 'corrida', timer = null;
+  const view = id => { ['load','login','foto','app'].forEach(v => { $('#v-'+v).hidden = v !== id; }); $('#tabs').hidden = id !== 'app'; };
+
+  /* ---------- entrada ---------- */
+  async function iniciar(){
+    const { data: sess } = await sb.auth.getSession();
+    if (!sess.session){ view('login'); return; }
+    if (definindoSenha){ location.replace(urlPainel + location.hash); return; }
+    authUid = sess.session.user.id;
+    const { data, error } = await sb.from('usuarios').select('*').eq('auth_id', authUid).maybeSingle();
+    if (error || !data){ await sb.auth.signOut(); view('login'); $('#l-err').textContent = 'Seu login existe, mas ainda não foi cadastrado. Fale com o gestor.'; return; }
+    if (!data.ativo){ await sb.auth.signOut(); view('login'); $('#l-err').textContent = 'Seu acesso está desativado. Fale com o gestor.'; return; }
+    if (data.papel === 'gestor'){ location.replace(urlPainel); return; }
+    eu = data;
+    const v = await sb.from('vinculos_clinica').select('*').eq('usuario_id', eu.id);
+    minhasClin = (v.data || []).filter(x => !x.fim).map(x => x.clinica_id);
+    if (!eu.foto_url && !guarda.get('pulou-foto-'+eu.id)){ $('#o-av').innerHTML = esc(iniciais(eu.nome)); view('foto'); return; }
+    abrirApp();
+  }
+
+  $('#f-login').addEventListener('submit', async e => {
+    e.preventDefault();
+    const email = $('#l-email').value.trim(), senha = $('#l-senha').value;
+    if (!email || !senha){ $('#l-err').textContent = 'Informe o e-mail e a senha.'; return; }
+    $('#l-btn').disabled = true; $('#l-err').textContent = '';
+    const { error } = await sb.auth.signInWithPassword({ email, password: senha });
+    $('#l-btn').disabled = false;
+    if (error){ $('#l-err').textContent = msgErro(error); return; }
+    $('#l-senha').value = ''; iniciar();
+  });
+  $('#l-esqueci').addEventListener('click', async () => {
+    const email = $('#l-email').value.trim();
+    if (!email){ $('#l-err').textContent = 'Digite seu e-mail acima e toque em "Esqueci minha senha" de novo.'; return; }
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: urlPainel });
+    $('#l-err').textContent = '';
+    toast(error ? msgErro(error) : 'Se o e-mail estiver cadastrado, enviamos um link para criar uma nova senha.');
+  });
+
+  /* ---------- foto ---------- */
+  function reduzirFoto(file){
+    return new Promise((ok, fail) => {
+      const img = new Image(), u = URL.createObjectURL(file);
+      img.onload = () => {
+        const s = Math.min(img.width, img.height), c = document.createElement('canvas'); c.width = c.height = 320;
+        c.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 320, 320);
+        URL.revokeObjectURL(u); c.toBlob(b => b ? ok(b) : fail(new Error('Não foi possível ler a foto.')), 'image/jpeg', .85);
+      };
+      img.onerror = () => fail(new Error('Não foi possível abrir esta imagem.'));
+      img.src = u;
+    });
+  }
+  async function enviarFoto(file){
+    const blob = await reduzirFoto(file), path = authUid+'/perfil.jpg';
+    const up = await sb.storage.from('fotos').upload(path, blob, { upsert: true, contentType: 'image/jpeg', cacheControl: '3600' });
+    if (up.error) throw up.error;
+    const url = sb.storage.from('fotos').getPublicUrl(path).data.publicUrl + '?v=' + Date.now();
+    const r = await sb.rpc('atualizar_meu_perfil', { p_nome: null, p_telefone: null, p_foto_url: url });
+    if (r.error) throw r.error;
+    eu.foto_url = url; return url;
+  }
+  async function escolheuFoto(inp, erroEl, depois){
+    const f = inp.files && inp.files[0]; inp.value = ''; if (!f) return;
+    erroEl.textContent = '';
+    try { await enviarFoto(f); depois(); } catch(e){ erroEl.textContent = msgErro(e); }
+  }
+  $('#o-cam').addEventListener('change', e => escolheuFoto(e.target, $('#o-err'), () => { toast('Foto salva.'); abrirApp(); }));
+  $('#o-gal').addEventListener('change', e => escolheuFoto(e.target, $('#o-err'), () => { toast('Foto salva.'); abrirApp(); }));
+  $('#o-pular').addEventListener('click', () => { guarda.set('pulou-foto-'+eu.id, '1'); abrirApp(); });
+
+  /* ---------- casca do app ---------- */
+  const ICONES = {
+    corrida: '<svg viewBox="0 0 24 24"><path d="M5 21V4"/><path d="M5 4h13l-2.5 4L18 12H5"/></svg>',
+    lancar: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
+    avisos: '<svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 0112 0c0 6 2 7 2 7H4s2-1 2-7z"/><path d="M10 20a2 2 0 004 0"/></svg>',
+    perfil: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>'
+  };
+  let naoLidas = 0;
+  function abrirApp(){
+    $('#h-papel').textContent = eu.papel === 'gerente' ? 'Gerente' : (eu.cargo || 'Promotor');
+    $('#h-nome').textContent = eu.nome.split(' ')[0];
+    $('#h-av').innerHTML = avatar(eu);
+    view('app'); desenharAbas(); mostrar(aba === 'lancar' && eu.papel !== 'gerente' ? 'corrida' : aba);
+    contarAvisos();
+    clearInterval(timer); timer = setInterval(() => { if (!document.hidden && $('#v-app').hidden === false){ if (aba === 'corrida') corridaAtualizar(); contarAvisos(); } }, 15000);
+  }
+  function desenharAbas(){
+    const abas = [['corrida','Corrida']].concat(eu.papel === 'gerente' ? [['lancar','Lançar']] : [], [['avisos','Avisos'],['perfil','Perfil']]);
+    $('#tabs').innerHTML = abas.map(a => '<button type="button" data-aba="'+a[0]+'" aria-current="'+(a[0]===aba?'page':'false')+'">'+ICONES[a[0]]+'<span>'+a[1]+'</span>'+(a[0]==='avisos'&&naoLidas?'<span class="n">'+naoLidas+'</span>':'')+'</button>').join('');
+  }
+  $('#tabs').addEventListener('click', e => { const b = e.target.closest('[data-aba]'); if (b) mostrar(b.dataset.aba); });
+  function mostrar(a){
+    aba = a; desenharAbas();
+    ({ corrida: corridaCarregar, lancar: lancCarregar, avisos: avisosCarregar, perfil: perfilCarregar })[a]();
+    window.scrollTo(0, 0);
+  }
+  async function contarAvisos(){
+    const r = await sb.from('notificacoes').select('*').eq('usuario_id', eu.id);
+    if (r.error) return;
+    const n = r.data.filter(x => !x.lida_em).length;
+    if (n !== naoLidas){ naoLidas = n; desenharAbas(); }
+  }
+
+  /* ---------- corrida (mapa de jogo) ---------- */
+  const K = { camps: [], sel: null, modo: 'promotor', modoEscolhido: false, tk: 0, key: '', tokens: {}, cur: null, busy: false, som: guarda.get('som') !== '0', geo: null, c: null };
+  const PALETA = ['#e10600','#ff8700','#00a6ff','#34c759','#af52de','#ffd60a','#ff375f','#5ac8fa','#a2845e','#8e8e93'];
+  const CORES_CASA = ['#ff5a5f','#ffa23a','#ffd23f','#3ddc84','#3aa0ff','#b86bff'];
+  const statusCamp = c => { const h = hoje(); return h < c.inicio ? 'Agendada' : h > c.fim ? 'Encerrada' : 'Ativa'; };
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const reduzMov = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch(e){ return false; } };
+  const vibra = p => { try { if (navigator.vibrate) navigator.vibrate(p); } catch(e){} };
+  const tileDe = (p, N) => p <= 0 ? 0 : (p % N === 0 ? N : p % N);
+
+  /* sons sintetizados (sem arquivos) */
+  let ac = null;
+  function audio(){
+    if (!K.som) return null;
+    try { if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); return ac; } catch(e){ return null; }
+  }
+  function tom(f, t0, dur, tipo, vol, ate){
+    const a = audio(); if (!a) return;
+    const o = a.createOscillator(), g = a.createGain(), t = a.currentTime + t0;
+    o.type = tipo || 'sine'; o.frequency.setValueAtTime(f, t); if (ate) o.frequency.exponentialRampToValueAtTime(ate, t + dur);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol || .15, t + .012); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + dur + .05);
+  }
+  const SOM = {
+    passo: i => tom(392 * Math.pow(1.0595, (i % 8) * 2), 0, .13, 'triangle', .17),
+    pouso: () => tom(170, 0, .18, 'sine', .28, 60),
+    sobe: () => [523, 659, 784, 1047].forEach((f, i) => tom(f, i * .08, .2, 'triangle', .2)),
+    desce: () => [392, 311, 262].forEach((f, i) => tom(f, i * .13, .24, 'sawtooth', .09)),
+    premio: () => { [523, 659, 784, 1047, 1319].forEach((f, i) => tom(f, i * .09, .3, 'square', .11)); [1568, 2093, 2637].forEach((f, i) => tom(f, .55 + i * .08, .4, 'triangle', .14)); },
+    moeda: () => { tom(988, 0, .08, 'square', .09); tom(1319, .08, .28, 'square', .09); }
+  };
+  document.addEventListener('pointerdown', () => { if (K.som) audio(); }, { passive: true });
+
+  /* efeitos */
+  function confete(){
+    if (reduzMov()) return;
+    const fx = document.createElement('div'); fx.className = 'fx'; document.body.appendChild(fx);
+    const cores = ['#ff5a5f','#ffa23a','#ffd23f','#3ddc84','#3aa0ff','#b86bff'], W = innerWidth, H = innerHeight;
+    for (let i = 0; i < 46; i++){
+      const p = document.createElement('i'); p.style.background = cores[i % cores.length]; p.style.left = (W * Math.random())+'px'; p.style.top = '-20px'; fx.appendChild(p);
+      p.animate([{ transform: 'translate(0,0) rotate(0deg)', opacity: 1 }, { transform: 'translate('+((Math.random()-.5)*160)+'px,'+(H*(.55+Math.random()*.5))+'px) rotate('+(360+Math.random()*540)+'deg)', opacity: .9 }],
+        { duration: 1700 + Math.random() * 1100, delay: Math.random() * 350, easing: 'cubic-bezier(.3,.6,.5,1)', fill: 'forwards' });
+    }
+    for (let i = 0; i < 10; i++){
+      const m = document.createElement('b'); m.style.left = (W * (.15 + Math.random() * .7))+'px'; m.style.top = (H * .62)+'px'; fx.appendChild(m);
+      m.animate([{ transform: 'translateY(0) scale(.6)', opacity: 1 }, { transform: 'translateY('+(-(H * (.25 + Math.random() * .25)))+'px) scale(1)', opacity: 1, offset: .6 }, { transform: 'translateY('+(-(H * .1))+'px) scale(.8)', opacity: 0 }],
+        { duration: 1300, delay: i * 70, easing: 'ease-out', fill: 'forwards' });
+    }
+    setTimeout(() => fx.remove(), 3600);
+  }
+  let bannerTimer;
+  function banner(txt, neg){
+    let b = $('#banner'); if (!b){ b = document.createElement('div'); b.id = 'banner'; b.className = 'banner'; b.setAttribute('role', 'status'); document.body.appendChild(b); }
+    b.textContent = txt; b.classList.toggle('neg', !!neg); void b.offsetWidth; b.classList.add('show');
+    clearTimeout(bannerTimer); bannerTimer = setTimeout(() => b.classList.remove('show'), 3400);
+  }
+  const bauSvg = tipo => { const c = tipo === 'ouro' ? ['#ffd34d','#e0a200','#8a5a00'] : ['#dfe5ec','#aab5c1','#5d6975'];
+    return '<svg viewBox="0 0 40 40" aria-hidden="true"><rect x="5" y="19" width="30" height="16" rx="3" fill="'+c[1]+'" stroke="'+c[2]+'" stroke-width="2"/><path class="tampa" d="M5 19V15a8 8 0 018-8h14a8 8 0 018 8v4z" fill="'+c[0]+'" stroke="'+c[2]+'" stroke-width="2"/><rect x="17" y="17" width="6" height="8" rx="1.5" fill="'+c[2]+'"/><circle cx="20" cy="21" r="1.4" fill="'+c[0]+'"/></svg>'; };
+  function modalPremio(lista){
+    const m = document.createElement('div'); m.className = 'modal'; m.setAttribute('role', 'dialog'); m.setAttribute('aria-modal', 'true');
+    const p = lista[0];
+    m.innerHTML = '<div class="cx">'+bauSvg(p.tipo).replace('<path class="tampa"', '<path class="tampa" style="transform:rotate(-62deg);transform-box:fill-box;transform-origin:0% 100%"')
+      + '<h2>'+(K.modo === 'clinica' ? 'Sua clínica ganhou!' : 'Você ganhou!')+'</h2><p>'+lista.map(x => esc(x.nome)).join(' + ')+'</p><button class="btn block" type="button">Legal!</button></div>';
+    document.body.appendChild(m);
+    const fechar = () => m.remove();
+    $('button', m).addEventListener('click', fechar); m.addEventListener('click', e => { if (e.target === m) fechar(); }); $('button', m).focus();
+  }
+
+  /* geometria: trilha em S, começando embaixo */
+  function geom(N, W){
+    const cols = 4, pad = 46, dx = (W - 2 * pad) / (cols - 1), dy = 92, rows = Math.ceil((N + 1) / cols), H = pad * 2 + (rows - 1) * dy + 36;
+    const pt = i => { const r = Math.floor(i / cols); let c = i % cols; if (r % 2) c = cols - 1 - c; return { x: pad + c * dx, y: H - pad - r * dy }; };
+    return { cols, rows, H, W, pt };
+  }
+
+  async function corridaCarregar(){
+    $('#main').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const { data, error } = await sb.from('campanhas').select('*');
+    if (error){ $('#main').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(error))+'</div></div>'; return; }
+    K.camps = data.slice().sort((a, b) => a.inicio < b.inicio ? 1 : -1);
+    if (!K.camps.some(c => c.id === K.sel)){ const a = K.camps.find(c => statusCamp(c) === 'Ativa'); K.sel = (a || K.camps[0] || {}).id || null; }
+    if (!K.sel){ $('#main').innerHTML = '<div class="card"><h2>Corrida</h2><div class="empty">Você ainda não está em nenhuma campanha.</div></div>'; return; }
+    if (eu.papel === 'gerente' && !K.modoEscolhido) K.modo = 'clinica';
+    K.key = ''; K.tokens = {}; K.cur = null;
+    $('#main').innerHTML =
+      '<div class="card"><div class="top"><select id="k-camp" aria-label="Campanha" style="width:100%">'+K.camps.map(c => '<option value="'+c.id+'"'+(c.id===K.sel?' selected':'')+'>'+esc(c.nome)+' ('+statusCamp(c)+')</option>').join('')+'</select>'
+      + '<div class="seg" role="group" aria-label="Tipo de corrida"><button type="button" data-modo="promotor" aria-pressed="'+(K.modo==='promotor')+'">Promotores</button><button type="button" data-modo="clinica" aria-pressed="'+(K.modo==='clinica')+'">Clínicas</button></div>'
+      + '<div class="line"><span class="meta" id="k-hora"></span><button class="sndbtn" type="button" id="k-som" aria-label="Som" aria-pressed="'+K.som+'"></button></div></div></div>'
+      + '<div id="k-hero"></div><div class="mapa" id="k-pista"></div>'
+      + '<div class="card"><h2>Classificação</h2><div id="k-rank"></div></div><div class="card"><h2>Prêmios</h2><div id="k-prem"></div></div>';
+    const icoSom = () => { $('#k-som').setAttribute('aria-pressed', String(K.som)); $('#k-som').innerHTML = K.som
+      ? '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 010 6M18.5 6.5a8 8 0 010 11"/></svg>'
+      : '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>'; };
+    icoSom();
+    $('#k-som').addEventListener('click', () => { K.som = !K.som; guarda.set('som', K.som ? '1' : '0'); icoSom(); if (K.som){ audio(); SOM.moeda(); } });
+    $('#k-camp').addEventListener('change', e => { K.sel = Number(e.target.value); K.key = ''; K.cur = null; corridaAtualizar(); });
+    $$('[data-modo]').forEach(b => b.addEventListener('click', () => { K.modo = b.dataset.modo; K.modoEscolhido = true; K.key = ''; K.cur = null; $$('[data-modo]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); corridaAtualizar(); }));
+    await corridaAtualizar();
+  }
+
+  function criarToken(id, e, souEu){
+    const el = document.createElement('div'); el.className = 'tk'+(souEu ? ' eu' : ''); el.dataset.id = id;
+    el.innerHTML = '<span class="sombra"></span>' + (souEu ? '<img class="mas" src="mascote.png" alt="Você"><span class="nm">'+(K.modo==='clinica'?'Sua clínica':'Você')+'</span>'
+      : (e.foto_url ? '<img class="disc" style="--rc:'+esc(e.cor)+'" src="'+esc(e.foto_url)+'" alt="'+esc(e.nome)+'">' : '<span class="disc" style="--rc:'+esc(e.cor)+'" title="'+esc(e.nome)+'">'+esc(e.tag)+'</span>'));
+    return el;
+  }
+  const colocar = (t, ponto, off) => { t.xy = { x: ponto.x + (off || 0), y: ponto.y }; t.el.style.transform = 'translate('+t.xy.x+'px,'+t.xy.y+'px)'; };
+  function reempilhar(){
+    const g = K.geo, N = K.c.casas, grupos = {};
+    Object.values(K.tokens).forEach(t => { (grupos[t.tile] = grupos[t.tile] || []).push(t); });
+    Object.keys(grupos).forEach(ti => grupos[ti].forEach((t, j, arr) => colocar(t, g.pt(Number(ti)), (j - (arr.length - 1) / 2) * 24)));
+  }
+  function poeira(t){
+    if (reduzMov()) return;
+    const mapa = $('#k-pista'); if (!mapa || !t.xy) return;
+    for (let i = 0; i < 4; i++){
+      const d = document.createElement('span'); d.className = 'po'; d.style.left = (t.xy.x - 4)+'px'; d.style.top = (t.xy.y - 4)+'px'; mapa.appendChild(d);
+      const s = i < 2 ? -1 : 1;
+      d.animate([{ transform: 'translate(0,0) scale(1)', opacity: .9 }, { transform: 'translate('+(s*(10+Math.random()*14))+'px,'+(-6-Math.random()*10)+'px) scale(.2)', opacity: 0 }], { duration: 520, easing: 'ease-out' }).onfinish = () => d.remove();
+    }
+  }
+  async function pular(t, ponto, dur){
+    const de = t.xy, para = { x: ponto.x, y: ponto.y };
+    t.el.classList.remove('pulo');
+    if (!reduzMov()){
+      const an = t.el.animate([{ transform: 'translate('+de.x+'px,'+de.y+'px)' }, { transform: 'translate('+((de.x+para.x)/2)+'px,'+(((de.y+para.y)/2)-30)+'px)', offset: .5 }, { transform: 'translate('+para.x+'px,'+para.y+'px)' }], { duration: dur, easing: 'ease-in-out', fill: 'forwards' });
+      try { await an.finished; } catch(e){}
+      t.xy = para; t.el.style.transform = 'translate('+para.x+'px,'+para.y+'px)'; an.cancel();
+    } else { colocar(t, para, 0); }
+    void t.el.offsetWidth; t.el.classList.add('pulo'); poeira(t);
+  }
+  async function andar(t, p0, p1, souEu){
+    const N = K.c.casas, g = K.geo;
+    if (p1 < p0 || reduzMov()){ t.tile = tileDe(p1, N); colocar(t, g.pt(t.tile), 0); return; }
+    const ini = Math.max(p0, p1 - 12);
+    t.tile = tileDe(ini, N); colocar(t, g.pt(t.tile), 0);
+    for (let p = ini + 1, k = 0; p <= p1; p++, k++){
+      t.tile = tileDe(p, N);
+      if (souEu) SOM.passo(k);
+      await pular(t, g.pt(t.tile), 300);
+      if (souEu) vibra(12);
+    }
+    if (souEu) SOM.pouso();
+  }
+
+  async function corridaAtualizar(){
+    const c = K.camps.find(x => x.id === K.sel); if (!c || !$('#k-pista') || K.busy) return;
+    K.busy = true;
+    try { await corridaAtualizarInterno(c); } finally { K.busy = false; }
+  }
+
+  async function corridaAtualizarInterno(c){
+    const tk = ++K.tk, modo = K.modo, view = modo === 'promotor' ? 'ranking_promotores' : 'ranking_clinicas', idCol = modo === 'promotor' ? 'promotor_id' : 'clinica_id';
+    const rs = await Promise.all([
+      sb.from(view).select('*').eq('campanha_id', c.id).order('ordem'),
+      sb.from('casas_premio').select('*').eq('campanha_id', c.id).eq('para', modo),
+      sb.from('premios').select('*'), sb.from('participantes').select('*'), sb.from('clinicas').select('*')]);
+    if (tk !== K.tk || !$('#k-pista')) return;
+    const er = rs.map(r => r.error).find(Boolean);
+    if (er){ $('#k-rank').innerHTML = '<div class="err">'+esc(msgErro(er))+'</div>'; return; }
+    const rank = rs[0].data, casasP = rs[1].data, premios = rs[2].data, pessoas = rs[3].data, cls = rs[4].data;
+    let gan = [];
+    if (casasP.length){ const g = await sb.from('ganhadores').select('*').in('casa_premio_id', casasP.map(x => x.id)); if (tk !== K.tk) return; if (!g.error) gan = g.data; }
+
+    const ehMeu = id => modo === 'promotor' ? id === eu.id : minhasClin.includes(id);
+    const meuId = modo === 'promotor' ? (eu.papel === 'promotor' ? eu.id : null) : (minhasClin.find(id => rank.some(r => r[idCol] === id)) || null);
+    const ents = {};
+    rank.forEach((r, i) => {
+      const id = r[idCol];
+      if (modo === 'promotor'){ const u = pessoas.find(x => x.id === id) || {}; ents[id] = { nome: u.nome || 'Participante', tag: iniciais(u.nome), sub: u.cargo || '', cor: PALETA[i % PALETA.length], foto_url: u.foto_url }; }
+      else { const cl = cls.find(x => x.id === id) || {}; ents[id] = { nome: cl.nome || 'Clínica', tag: cl.sigla || '?', sub: cl.sigla || '', cor: cl.cor || PALETA[i % PALETA.length], foto_url: null }; }
+    });
+    const N = c.casas;
+
+    // resumo pessoal
+    const meu = rank.find(r => ehMeu(r[idCol]));
+    if (meu){
+      const pos = tileDe(meu.pontos, N) % N;
+      const prox = casasP.map(x => x.casa).filter(k => k > pos && k <= N).sort((a, b) => a - b)[0];
+      const pr = prox && premios.find(p => p.id === (casasP.find(x => x.casa === prox) || {}).premio_id);
+      $('#k-hero').innerHTML = '<div class="hero"><p style="margin:0">'+(modo==='promotor'?'Você':'Sua clínica')+' está em</p><b>'+meu.posicao+'º lugar</b><p>'+meu.pontos+' pontos · volta '+meu.volta+', casa '+meu.casa_na_volta
+        +(prox ? ' · faltam '+(prox - pos)+' para a casa '+prox+(pr ? ' ('+esc(pr.nome)+')' : '') : '')+'</p></div>';
+    } else $('#k-hero').innerHTML = '';
+
+    // situação atual e o que eu vi da última vez
+    const premiosMeus = gan.filter(g => ehMeu(g.alvo_id));
+    const cur = { pontos: {}, pos: {}, gan: premiosMeus.map(g => g.id) };
+    rank.forEach(r => { cur.pontos[r[idCol]] = r.pontos; cur.pos[r[idCol]] = r.posicao; });
+    const chave = 'visto-'+eu.id+'-'+c.id+'-'+modo;
+    let prev = K.cur;
+    const primeira = !K.tokens || !Object.keys(K.tokens).length || K.key === '';
+
+    const key = [c.id, modo, N, Math.round($('#k-pista').clientWidth), casasP.map(x => x.casa+':'+x.premio_id).join(',')].join('|');
+    if (key !== K.key){
+      K.key = key; K.tokens = {};
+      if (!prev){ try { prev = JSON.parse(guarda.get(chave) || 'null'); } catch(e){ prev = null; } }
+      if (!prev) prev = { pontos: Object.assign({}, cur.pontos), pos: Object.assign({}, cur.pos), gan: cur.gan.slice() };
+      const W = $('#k-pista').clientWidth || 360, g = geom(N, W); K.geo = g; K.c = c;
+      const pm = {}; casasP.forEach(x => { const pr = premios.find(p => p.id === x.premio_id); if (pr) pm[x.casa] = pr; });
+      let pts = ''; for (let i = 0; i <= N; i++){ const p = g.pt(i); pts += (i ? 'L' : 'M')+p.x.toFixed(1)+' '+p.y.toFixed(1); }
+      let html = '<svg class="estrada" width="'+W+'" height="'+g.H+'" viewBox="0 0 '+W+' '+g.H+'" aria-hidden="true"><path d="'+pts+'" fill="none" stroke="#b88a4a" stroke-width="66" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/><path d="'+pts+'" fill="none" stroke="#f4dba6" stroke-width="58" stroke-linecap="round" stroke-linejoin="round"/><path d="'+pts+'" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="4" stroke-dasharray="3 12" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      for (let i = 0; i < Math.ceil(g.H / 420); i++) html += '<span class="nuvem" style="left:'+((i * 137) % Math.max(W - 90, 10))+'px;top:'+(40 + i * 420)+'px"></span>';
+      for (let i = 0; i <= N; i++){
+        const p = g.pt(i), pr = pm[i];
+        if (i === 0) html += '<div class="t ini" style="left:'+p.x+'px;top:'+p.y+'px">GO</div>';
+        else if (pr) html += '<div class="t bau '+esc(pr.tipo)+'" data-casa="'+i+'" style="left:'+p.x+'px;top:'+p.y+'px">'+bauSvg(pr.tipo)+'</div><span class="rot" style="left:'+p.x+'px;top:'+(p.y + 36)+'px">'+esc(pr.nome)+'</span>';
+        else if (i === N) html += '<div class="t fim" style="left:'+p.x+'px;top:'+p.y+'px"></div><span class="rot" style="left:'+p.x+'px;top:'+(p.y + 40)+'px">Chegada</span>';
+        else html += '<div class="t" style="left:'+p.x+'px;top:'+p.y+'px;--c:'+CORES_CASA[i % CORES_CASA.length]+'">'+i+'</div>';
+      }
+      $('#k-pista').style.height = g.H+'px'; $('#k-pista').innerHTML = html;
+      rank.forEach(r => { const id = r[idCol], t = { el: criarToken(id, ents[id], id === meuId), tile: 0, xy: null }; K.tokens[id] = t; $('#k-pista').appendChild(t.el);
+        t.tile = tileDe(prev.pontos[id] != null ? prev.pontos[id] : r.pontos, N); });
+      reempilhar();
+      const eleEu = meuId != null && K.tokens[meuId];
+      if (eleEu) $('#k-pista').parentElement && eleEu.el.scrollIntoView({ block: 'center', behavior: 'auto' });
+      else window.scrollTo(0, 0);
+      await sleep(550);
+    }
+    prev = prev || K.cur || cur;
+
+    // novos participantes
+    rank.forEach(r => { const id = r[idCol]; if (!K.tokens[id]){ const t = { el: criarToken(id, ents[id], id === meuId), tile: tileDe(r.pontos, N), xy: null }; K.tokens[id] = t; $('#k-pista').appendChild(t.el); colocar(t, K.geo.pt(t.tile), 0); } });
+    Object.keys(K.tokens).forEach(id => { if (!(id in cur.pontos)){ K.tokens[id].el.remove(); delete K.tokens[id]; } });
+
+    // movimentos
+    const eleEu = meuId != null && K.tokens[meuId];
+    const mexeu = rank.some(r => prev.pontos[r[idCol]] != null && prev.pontos[r[idCol]] !== r.pontos);
+    if (mexeu && eleEu && !reduzMov()) eleEu.el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    const tarefas = [];
+    rank.forEach(r => { const id = r[idCol], p0 = prev.pontos[id] != null ? prev.pontos[id] : r.pontos;
+      if (p0 !== r.pontos) tarefas.push(andar(K.tokens[id], p0, r.pontos, id === meuId)); });
+    await Promise.all(tarefas);
+    rank.forEach(r => { const t = K.tokens[r[idCol]]; if (t) t.tile = tileDe(r.pontos, N); });
+    reempilhar();
+
+    // eventos: posição e prêmios
+    if (meuId != null && prev.pos[meuId] != null && cur.pos[meuId] != null && prev.pos[meuId] !== cur.pos[meuId]){
+      const subiu = cur.pos[meuId] < prev.pos[meuId];
+      banner((subiu ? 'Você subiu para o ' : 'Você caiu para o ')+cur.pos[meuId]+'º lugar!', !subiu);
+      if (subiu){ SOM.sobe(); vibra([30, 40, 30]); } else SOM.desce();
+    }
+    const novos = premiosMeus.filter(g => !(prev.gan || []).includes(g.id));
+    if (novos.length){
+      const lista = novos.map(g => { const cp = casasP.find(x => x.id === g.casa_premio_id) || {}; const pr = premios.find(p => p.id === cp.premio_id) || { nome: 'Prêmio', tipo: 'prata' }; return { nome: pr.nome, tipo: pr.tipo, casa: cp.casa }; });
+      lista.forEach(l => { const bau = $('.t.bau[data-casa="'+l.casa+'"]'); if (bau) bau.classList.add('aberto'); });
+      SOM.premio(); vibra([60, 50, 60, 50, 160]); confete();
+      await sleep(900); modalPremio(lista);
+    }
+    K.cur = cur; guarda.set(chave, JSON.stringify(cur));
+
+    // classificação e prêmios
+    $('#k-rank').innerHTML = rank.map(r => { const e = ents[r[idCol]];
+      return '<div class="rk'+(ehMeu(r[idCol])?' eu':'')+'"><span class="pos">'+r.posicao+'º</span>'+(modo==='promotor'?avatar({nome:e.nome,foto_url:e.foto_url}):'<span class="av" style="background:'+esc(e.cor)+';color:#fff">'+esc(e.tag)+'</span>')+'<div style="min-width:0"><b>'+esc(e.nome)+'</b><p class="meta">'+esc(e.sub)+' · volta '+r.volta+', casa '+r.casa_na_volta+'</p></div><span class="pts">'+r.pontos+'</span></div>'; }).join('')
+      || '<div class="empty">Ninguém participa desta corrida ainda.</div>';
+    $('#k-prem').innerHTML = casasP.slice().sort((a, b) => a.casa - b.casa).map(x => {
+      const pr = premios.find(p => p.id === x.premio_id) || { nome: '?', tipo: 'prata' };
+      const meus = gan.filter(g => g.casa_premio_id === x.id && ehMeu(g.alvo_id));
+      return '<div class="item"><div class="line"><span class="badge '+esc(pr.tipo)+'">'+esc(pr.tipo)+'</span><b>Casa '+x.casa+'</b><span>'+esc(pr.nome)+'</span></div>'
+        + (meus.length ? '<div class="line">'+meus.map(g => '<span class="chip ok">'+(modo==='promotor'?'Você ganhou':'Sua clínica ganhou')+(g.volta>1?' (volta '+g.volta+')':'')+'</span>'+(g.entregue_em?'<span class="chip">Entregue</span>':'')).join('')+'</div>' : '')+'</div>'; }).join('')
+      || '<div class="empty">Esta campanha não tem casas premiadas para '+(modo==='promotor'?'promotores':'clínicas')+'.</div>';
+    $('#k-hora').textContent = 'Atualizado às '+new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  }
+  window.__corrida = { atualizar: () => corridaAtualizar(), K };
+
+  /* ---------- lançar (gerente) ---------- */
+  const L = { tipos: [], clin: [], pess: [], camps: [], rows: [], lcs: [], acao: null, hist: [] };
+  async function lancCarregar(){
+    $('#main').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const rs = await Promise.all([sb.from('tipos_lancamento').select('*').order('nome'), sb.from('clinicas').select('*').order('nome'), sb.from('participantes').select('*').order('nome'), sb.from('campanhas').select('*')]);
+    const er = rs.map(r => r.error).find(Boolean);
+    if (er){ $('#main').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
+    L.tipos = rs[0].data.filter(t => t.ativo); L.clin = rs[1].data.filter(c => minhasClin.includes(c.id));
+    L.pess = rs[2].data.filter(p => p.papel === 'promotor'); L.camps = rs[3].data; L.acao = null;
+    if (!L.clin.length){ $('#main').innerHTML = '<div class="card"><h2>Lançar</h2><div class="empty">Você ainda não está vinculado a uma clínica. Fale com o gestor.</div></div>'; return; }
+    $('#main').innerHTML =
+      '<div class="card"><h2>Novo lançamento</h2><p class="sub">Conta em todas as campanhas em que o promotor e a clínica participam.</p><form class="form" id="f-lanc" novalidate>'
+      + (L.clin.length > 1 ? '<label class="field" for="n-clin">Clínica<select id="n-clin">'+L.clin.map(c => '<option value="'+c.id+'">'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>' : '<input type="hidden" id="n-clin" value="'+L.clin[0].id+'">')
+      + '<label class="field" for="n-prom">Promotor<select id="n-prom"><option value="">Escolha...</option>'+L.pess.map(p => '<option value="'+p.id+'">'+esc(p.nome)+(p.cargo?' · '+esc(p.cargo):'')+'</option>').join('')+'</select></label>'
+      + '<label class="field" for="n-tipo">O que foi feito<select id="n-tipo"><option value="">Escolha...</option>'+L.tipos.map(t => '<option value="'+t.id+'" data-v="'+(t.usa_valor?1:0)+'">'+esc(t.nome)+'</option>').join('')+'</select></label>'
+      + '<div class="g2"><label class="field" for="n-qtd">Quantidade<input id="n-qtd" type="number" inputmode="decimal" min="0.01" step="any" value="1"></label>'
+      + '<label class="field" for="n-data">Data<input id="n-data" type="date" value="'+hoje()+'" max="'+hoje()+'"></label></div>'
+      + '<label class="field" for="n-valor" id="w-valor" hidden>Valor da venda (R$)<input id="n-valor" type="number" inputmode="decimal" min="0.01" step="0.01"></label>'
+      + '<div class="err" id="n-err" role="alert"></div><button class="btn block" type="submit" id="n-btn">Lançar</button></form></div>'
+      + '<div class="card"><h2>Lançamentos da clínica</h2><p class="sub">Últimos 30 dias. Correções só até 7 dias depois da data do lançamento.</p><div id="l-lista"><p class="sub">Carregando...</p></div></div>';
+    $('#n-tipo').addEventListener('change', e => { const o = e.target.selectedOptions[0]; $('#w-valor').hidden = !(o && o.dataset.v === '1'); });
+    $('#f-lanc').addEventListener('submit', lancarSalvar);
+    $('#l-lista').addEventListener('click', lancClique);
+    lancLista();
+  }
+
+  async function lancarSalvar(e){
+    e.preventDefault();
+    const clinica = Number($('#n-clin').value), prom = Number($('#n-prom').value), tipo = Number($('#n-tipo').value), qtd = num($('#n-qtd').value);
+    const t = L.tipos.find(x => x.id === tipo), valor = $('#n-valor').value === '' ? null : num($('#n-valor').value);
+    const erro = !prom ? 'Escolha o promotor.' : !tipo ? 'Escolha o que foi feito.' : !(qtd > 0) ? 'A quantidade precisa ser maior que zero.'
+      : (t.usa_valor && !(valor > 0)) ? 'Este tipo exige o valor da venda.' : !$('#n-data').value ? 'Informe a data.' : '';
+    if (erro){ $('#n-err').textContent = erro; return; }
+    const btn = $('#n-btn'); btn.disabled = true; $('#n-err').textContent = '';
+    const { error } = await sb.rpc('lancar', { p_promotor: prom, p_clinica: clinica, p_tipo: tipo, p_quantidade: qtd, p_valor: t.usa_valor ? valor : null, p_data: $('#n-data').value });
+    btn.disabled = false;
+    if (error){ $('#n-err').textContent = msgErro(error); return; }
+    toast('Lançamento registrado.'); $('#n-qtd').value = '1'; $('#n-valor').value = ''; lancLista();
+  }
+
+  async function lancLista(){
+    const alvo = $('#l-lista'); if (!alvo) return;
+    const desde = new Date(Date.now() - 30 * 864e5).toLocaleDateString('sv-SE');
+    const { data, error } = await sb.from('lancamentos').select('*').gte('data_ref', desde).order('criado_em', { ascending: false }).limit(100);
+    if (error){ alvo.innerHTML = '<div class="err">'+esc(msgErro(error))+'</div>'; return; }
+    L.rows = data; L.lcs = [];
+    if (data.length){ const r = await sb.from('lancamento_campanhas').select('*').in('lancamento_id', data.map(x => x.id)); if (!r.error) L.lcs = r.data; }
+    lancRender();
+  }
+
+  function lancRender(){
+    const alvo = $('#l-lista'); if (!alvo) return;
+    alvo.innerHTML = '<ul class="items">'+(L.rows.map(r => {
+      const u = L.pess.find(x => x.id === r.promotor_id) || { nome: 'Promotor' }, t = L.tipos.find(x => x.id === r.tipo_id) || { nome: 'Tipo #'+r.tipo_id };
+      const lcs = L.lcs.filter(x => x.lancamento_id === r.id), validos = lcs.filter(x => x.status === 'valido');
+      const st = !lcs.length ? '' : !validos.length ? '<span class="chip off">Cancelado</span>' : validos.length < lcs.length ? '<span class="chip off">Cancelado em parte</span>' : '';
+      const aberto = L.acao && L.acao.id === r.id ? L.acao.tipo : null;
+      return '<li class="item"><div><div class="line"><b>'+esc(u.nome)+'</b>'+st+'</div><p class="meta">'+esc(t.nome)+' · '+dBR(r.data_ref)+' · qtd '+Number(r.quantidade)+(r.valor != null ? ' · '+brl(r.valor) : '')+'</p>'
+        + '<p class="meta">'+lcs.map(x => esc((L.camps.find(k => k.id === x.campanha_id) || {}).nome || 'Campanha')+(x.status==='valido'?'':' (cancelado)')).join(' · ')+'</p></div>'
+        + '<div class="btns"><button type="button" class="btn ghost sm" data-a="hi" data-id="'+r.id+'">Histórico</button>'
+        + (validos.length ? '<button type="button" class="btn ghost sm" data-a="ed" data-id="'+r.id+'">Corrigir</button><button type="button" class="btn ghost sm" data-a="ca" data-id="'+r.id+'">Cancelar</button>' : '')+'</div>'
+        + (aberto ? lancPainel(r, aberto, validos, t) : '')+'</li>'; }).join('') || '<li class="empty">Nenhum lançamento neste período.</li>')+'</ul>';
+  }
+
+  function lancPainel(r, tipo, validos, t){
+    const caixa = 'style="padding:12px;background:var(--surface-2);border-radius:14px"';
+    if (tipo === 'ed') return '<div class="form" '+caixa+'><div class="g2"><label class="field">Quantidade<input id="a-qtd" type="number" step="any" min="0.01" value="'+Number(r.quantidade)+'"></label>'
+      + (t.usa_valor ? '<label class="field">Valor (R$)<input id="a-valor" type="number" step="0.01" min="0.01" value="'+(r.valor != null ? Number(r.valor) : '')+'"></label>' : '')+'</div>'
+      + '<label class="field">Motivo da correção<input id="a-motivo" type="text" autocomplete="off" placeholder="Ex.: digitei o valor errado"></label><div class="err" id="a-err" role="alert"></div>'
+      + '<div class="btns"><button type="button" class="btn sm" data-a="ok-ed" data-id="'+r.id+'">Salvar correção</button><button type="button" class="btn ghost sm" data-a="fechar">Fechar</button></div></div>';
+    if (tipo === 'ca') return '<div class="form" '+caixa+'><label class="field">Cancelar em<select id="a-camp"><option value="">Todas as campanhas</option>'
+      + validos.map(x => '<option value="'+x.campanha_id+'">'+esc((L.camps.find(k => k.id === x.campanha_id) || {}).nome || 'Campanha')+'</option>').join('')+'</select></label>'
+      + '<label class="field">Motivo do cancelamento<input id="a-motivo" type="text" autocomplete="off" placeholder="Ex.: lançado em duplicidade"></label><div class="err" id="a-err" role="alert"></div>'
+      + '<div class="btns"><button type="button" class="btn sm" data-a="ok-ca" data-id="'+r.id+'">Confirmar cancelamento</button><button type="button" class="btn ghost sm" data-a="fechar">Fechar</button></div></div>';
+    const nome = id => (id === eu.id ? 'você' : ((L.pess.find(x => x.id === id) || {}).nome || 'o gestor'));
+    return '<div '+caixa+'>'+(L.hist.length ? L.hist.map(a => {
+      const det = a.acao === 'editar' && a.antes && a.depois ? ' · qtd '+Number(a.antes.quantidade)+' → '+Number(a.depois.quantidade)+(a.antes.valor != null || a.depois.valor != null ? ' · valor '+brl(a.antes.valor)+' → '+brl(a.depois.valor) : '') : '';
+      return '<p class="meta" style="margin:4px 0"><b>'+({criar:'Criado',editar:'Corrigido',cancelar:'Cancelado'}[a.acao]||esc(a.acao))+'</b> por '+esc(nome(a.usuario_id))+' em '+new Date(a.quando).toLocaleString('pt-BR')+esc(det)+(a.motivo ? ' · motivo: '+esc(a.motivo) : '')+'</p>'; }).join('') : '<p class="meta">Sem histórico.</p>')
+      + '<div class="btns" style="margin-top:8px"><button type="button" class="btn ghost sm" data-a="fechar">Fechar</button></div></div>';
+  }
+
+  async function lancClique(e){
+    const b = e.target.closest('[data-a]'); if (!b) return;
+    const a = b.dataset.a, id = Number(b.dataset.id);
+    if (a === 'fechar'){ L.acao = null; lancRender(); return; }
+    if (a === 'ed' || a === 'ca'){ L.acao = { id, tipo: a }; lancRender(); return; }
+    if (a === 'hi'){
+      const { data, error } = await sb.from('auditoria').select('*').eq('lancamento_id', id).order('quando', { ascending: false });
+      L.hist = error ? [] : data; L.acao = { id, tipo: 'hi' }; lancRender(); return;
+    }
+    const motivo = ($('#a-motivo') || {}).value || '';
+    if (motivo.trim().length < 3){ $('#a-err').textContent = 'Informe o motivo (mínimo 3 letras).'; return; }
+    b.disabled = true;
+    let r;
+    if (a === 'ok-ed'){
+      const qtd = num($('#a-qtd').value), v = $('#a-valor') ? ($('#a-valor').value === '' ? null : num($('#a-valor').value)) : null;
+      if (!(qtd > 0)){ b.disabled = false; $('#a-err').textContent = 'A quantidade precisa ser maior que zero.'; return; }
+      r = await sb.rpc('editar_lancamento', { p_id: id, p_quantidade: qtd, p_valor: v, p_motivo: motivo.trim() });
+    } else {
+      const c = $('#a-camp').value;
+      r = await sb.rpc('cancelar_lancamento', { p_id: id, p_motivo: motivo.trim(), p_campanha: c ? Number(c) : null });
+    }
+    b.disabled = false;
+    if (r.error){ $('#a-err').textContent = msgErro(r.error); return; }
+    toast(a === 'ok-ed' ? 'Lançamento corrigido.' : 'Lançamento cancelado.'); L.acao = null; lancLista();
+  }
+
+  /* ---------- avisos ---------- */
+  async function avisosCarregar(){
+    $('#main').innerHTML = '<div class="card"><h2>Avisos</h2><p class="sub">Posição na corrida e prêmios.</p><div id="av-lista"><p class="sub">Carregando...</p></div></div>';
+    const { data, error } = await sb.from('notificacoes').select('*').eq('usuario_id', eu.id).order('criada_em', { ascending: false }).limit(60);
+    if (error){ $('#av-lista').innerHTML = '<div class="err">'+esc(msgErro(error))+'</div>'; return; }
+    $('#av-lista').innerHTML = data.map(n => '<div class="nt'+(n.lida_em?'':' novo')+'"><b>'+esc(n.titulo)+'</b><p style="margin:2px 0">'+esc(n.texto)+'</p><p class="meta">'+new Date(n.criada_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })+'</p></div>').join('')
+      || '<div class="empty">Nenhum aviso ainda.</div>';
+    if (data.some(n => !n.lida_em)){
+      await sb.from('notificacoes').update({ lida_em: new Date().toISOString() }).eq('usuario_id', eu.id).is('lida_em', null);
+      naoLidas = 0; desenharAbas();
+    }
+  }
+
+  /* ---------- perfil ---------- */
+  const fmtTel = v => { const d = String(v||'').replace(/\D/g,''); return d.length === 11 ? '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7) : d.length === 10 ? '('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6) : d; };
+  async function perfilCarregar(){
+    const cl = await sb.from('clinicas').select('*');
+    const minhas = (cl.data || []).filter(c => minhasClin.includes(c.id));
+    $('#main').innerHTML =
+      '<div class="card" style="text-align:center"><div id="p-av">'+avatar(eu, 'xl')+'</div><h2 style="margin-top:10px">'+esc(eu.nome)+'</h2>'
+      + '<p class="meta">'+esc(eu.email || '')+'</p><p class="meta">'+(eu.papel==='gerente'?'Gerente':esc(eu.cargo||'Promotor'))+(minhas.length?' · '+minhas.map(c => esc(c.sigla)).join(', '):'')+'</p>'
+      + '<div class="err" id="p-ferr" role="alert"></div><div class="btns" style="justify-content:center"><label class="btn sm" style="line-height:24px">Tirar foto<input type="file" accept="image/*" capture="user" id="p-cam" hidden></label>'
+      + '<label class="btn ghost sm" style="line-height:26px">Escolher da galeria<input type="file" accept="image/*" id="p-gal" hidden></label></div></div>'
+      + '<div class="card"><h2>Meus dados</h2><form class="form" id="f-perfil" novalidate><label class="field" for="p-nome">Nome<input id="p-nome" type="text" autocomplete="name" value="'+esc(eu.nome)+'"></label>'
+      + '<label class="field" for="p-tel">Telefone com DDD<input id="p-tel" type="tel" inputmode="numeric" autocomplete="tel" value="'+esc(fmtTel(eu.telefone))+'"></label>'
+      + '<p class="meta">Clínica e cargo só o gestor altera.</p><div class="err" id="p-err" role="alert"></div><button class="btn block" type="submit">Salvar dados</button></form></div>'
+      + '<div class="card"><h2>Trocar senha</h2><form class="form" id="f-senha" novalidate><label class="field" for="s-nova">Nova senha<input id="s-nova" type="password" autocomplete="new-password" placeholder="Mínimo de 8 caracteres"></label>'
+      + '<label class="field" for="s-rep">Repita a senha<input id="s-rep" type="password" autocomplete="new-password"></label><div class="err" id="s-err" role="alert"></div><button class="btn block" type="submit">Trocar senha</button></form></div>'
+      + '<button class="btn ghost block" type="button" id="p-sair">Sair</button><p class="meta" style="text-align:center">Versão '+VERSAO+'</p>';
+    const depois = () => { toast('Foto atualizada.'); $('#p-av').innerHTML = avatar(eu, 'xl'); $('#h-av').innerHTML = avatar(eu); };
+    $('#p-cam').addEventListener('change', e => escolheuFoto(e.target, $('#p-ferr'), depois));
+    $('#p-gal').addEventListener('change', e => escolheuFoto(e.target, $('#p-ferr'), depois));
+    $('#f-perfil').addEventListener('submit', async e => {
+      e.preventDefault();
+      const nome = $('#p-nome').value.trim(), tel = $('#p-tel').value.replace(/\D/g, '');
+      if (!nome){ $('#p-err').textContent = 'Informe o nome.'; return; }
+      if (tel && !/^[0-9]{10,11}$/.test(tel)){ $('#p-err').textContent = 'Telefone com DDD, 10 ou 11 números.'; return; }
+      const { error } = await sb.rpc('atualizar_meu_perfil', { p_nome: nome, p_telefone: tel || null, p_foto_url: null });
+      if (error){ $('#p-err').textContent = msgErro(error); return; }
+      eu.nome = nome; if (tel) eu.telefone = tel; $('#p-err').textContent = ''; $('#h-nome').textContent = nome.split(' ')[0]; toast('Dados salvos.');
+    });
+    $('#f-senha').addEventListener('submit', async e => {
+      e.preventDefault();
+      const a = $('#s-nova').value, b = $('#s-rep').value;
+      if (a.length < 8){ $('#s-err').textContent = 'A senha precisa ter pelo menos 8 caracteres.'; return; }
+      if (a !== b){ $('#s-err').textContent = 'As duas senhas não são iguais.'; return; }
+      const { error } = await sb.auth.updateUser({ password: a });
+      if (error){ $('#s-err').textContent = msgErro(error); return; }
+      $('#s-err').textContent = ''; $('#s-nova').value = ''; $('#s-rep').value = ''; toast('Senha trocada.');
+    });
+    $('#p-sair').addEventListener('click', async () => { clearInterval(timer); await sb.auth.signOut(); eu = null; view('login'); });
+  }
+
+  iniciar();
+})();
+</script>
+</body>
+</html>

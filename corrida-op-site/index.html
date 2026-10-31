@@ -1,0 +1,1341 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Corrida de Prêmios OP</title>
+<link rel="icon" type="image/png" href="app/icon-192.png">
+<link rel="apple-touch-icon" href="app/apple-touch-icon.png">
+<style>
+:root{
+  --bg:#f5f5f7; --surface:#ffffff; --surface-2:#f5f5f7; --ink:#1d1d1f; --muted:#6e6e73; --line:#e5e5ea;
+  --accent:#d95300; --accent-2:#ff8a1f; --accent-soft:#fff1e5; --on-accent:#ffffff;
+  --red:#d70015; --ok:#248a3d; --warn:#b25000;
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.06);
+  --font-display:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter','Segoe UI',system-ui,sans-serif;
+  --font-body:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter','Segoe UI',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#000000; --surface:#1c1c1e; --surface-2:#2c2c2e; --ink:#f5f5f7; --muted:#a1a1a6; --line:#3a3a3c;
+    --accent:#ff9f0a; --accent-2:#ff6a00; --accent-soft:#3a2308; --on-accent:#1a0e00;
+    --red:#ff6961; --ok:#30d158; --warn:#ffb340; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.4); color-scheme:dark}
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--font-body);-webkit-font-smoothing:antialiased;letter-spacing:-.01em;
+  padding:20px max(16px,env(safe-area-inset-right,0px)) 56px max(16px,env(safe-area-inset-left,0px))}
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 55%,transparent);outline-offset:2px}
+.wrap{max-width:1040px;margin:0 auto;display:grid;gap:20px;grid-template-columns:minmax(0,1fr)}
+.band{display:none}
+h1{font:700 clamp(26px,5vw,34px)/1.1 var(--font-display);letter-spacing:-.03em;margin:2px 0 0}
+h2{font:650 19px/1.2 var(--font-display);letter-spacing:-.02em;margin:0 0 4px}
+.eyebrow{font-weight:600;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.sub,.hint{color:var(--muted);font-size:13.5px;margin:0 0 14px}
+.card{background:var(--surface);border-radius:22px;padding:22px;min-width:0;box-shadow:var(--shadow);border:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+.top{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between}
+.who{color:var(--muted);font-size:13.5px;font-weight:500}
+.nav{display:flex;gap:2px;background:color-mix(in srgb,var(--surface) 78%,transparent);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
+  border:1px solid var(--line);padding:4px;border-radius:999px;overflow-x:auto;scrollbar-width:none;width:fit-content;max-width:100%}
+.nav button{flex:none;border:0;background:transparent;color:var(--muted);font:600 14px var(--font-body);padding:8px 18px;border-radius:999px;min-height:40px;cursor:pointer;white-space:nowrap;transition:background .2s,color .2s}
+.nav button:hover:not([disabled]):not([aria-current="page"]){color:var(--ink)}
+.nav button[aria-current="page"]{background:linear-gradient(180deg,var(--accent-2),var(--accent));color:var(--on-accent);box-shadow:0 2px 8px color-mix(in srgb,var(--accent) 40%,transparent)}
+.nav button[disabled]{opacity:.45;cursor:not-allowed}
+.two{display:grid;gap:20px;grid-template-columns:minmax(0,1fr);align-items:start}
+@media (min-width:900px){.two{grid-template-columns:minmax(0,380px) minmax(0,1fr)}}
+.form{display:grid;gap:14px}
+.field{display:grid;gap:6px;font-weight:600;font-size:13px;color:var(--muted);min-width:0}
+input,select{font:inherit;font-weight:500;font-size:15px;color:var(--ink);background:var(--surface-2);border:1px solid transparent;border-radius:12px;padding:10px 14px;min-height:46px;width:100%;transition:border-color .2s,box-shadow .2s,background .2s}
+input:hover,select:hover{border-color:var(--line)}
+input:focus,select:focus{outline:none;background:var(--surface);border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)}
+input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:var(--accent);flex:none}
+.chk{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface-2);border-radius:12px;min-height:46px;cursor:pointer;font-weight:500;color:var(--ink)}
+.err{color:var(--red);font-weight:500;font-size:13px;min-height:1em}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.btn{font:600 15px var(--font-body);border:0;border-radius:999px;padding:10px 22px;min-height:46px;cursor:pointer;color:var(--on-accent);
+  background:linear-gradient(180deg,var(--accent-2),var(--accent));box-shadow:0 2px 10px color-mix(in srgb,var(--accent) 35%,transparent);transition:transform .15s,filter .2s,box-shadow .2s}
+.btn:hover{filter:brightness(1.06)}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:var(--surface-2);color:var(--ink);box-shadow:none;font-weight:600;font-size:14px}
+.btn.ghost:hover{background:var(--line);filter:none}
+.btn.sm{font-size:13px;min-height:36px;padding:6px 16px}
+.btn[disabled]{opacity:.6;cursor:wait}
+.items{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center;padding:14px 4px;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+@media (max-width:560px){.item{grid-template-columns:minmax(0,1fr)}}
+.line{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.meta{color:var(--muted);font-size:13px;margin-top:2px}
+.empty{padding:22px;background:var(--surface-2);border-radius:14px;color:var(--muted);text-align:center;list-style:none}
+.sigla{font:700 12px var(--font-display);background:var(--accent-soft);color:var(--accent);padding:4px 9px;border-radius:8px;letter-spacing:.04em}
+.badge{font-weight:600;font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:3px 10px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+.badge.ouro{background:linear-gradient(180deg,#ffd35c,#ffb400);color:#3a2a00}
+.badge.prata{background:linear-gradient(180deg,#e4e6ea,#c3c7ce);color:#1f2933}
+.chip{font-size:12px;font-weight:500;padding:3px 10px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
+.chip.off{color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent)}
+.dot{width:12px;height:12px;border-radius:50%;flex:none;box-shadow:0 0 0 3px color-mix(in srgb,currentColor 0%,transparent),inset 0 0 0 1px rgba(0,0,0,.12)}
+.login{max-width:420px;margin:9vh auto 0;display:grid;gap:22px}
+.login .card{display:grid;gap:16px;padding:28px}
+.link{background:none;border:0;color:var(--accent);font:600 13.5px var(--font-body);cursor:pointer;padding:6px 0;text-align:center}
+.link:hover{text-decoration:underline}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);width:min(92vw,460px);
+  background:color-mix(in srgb,var(--ink) 92%,transparent);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:var(--bg);padding:14px 18px;border-radius:16px;font-weight:500;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:20;box-shadow:var(--shadow)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){.toast,.btn,.nav button,input,select{transition:none}.btn:active{transform:none}}
+.sec{border-top:1px solid var(--line);margin-top:22px;padding-top:20px;display:grid;gap:12px}
+.g2{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.picks{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+.rrow{display:grid;gap:8px 10px;grid-template-columns:minmax(170px,1.3fr) minmax(150px,1fr) 100px 100px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.rrow.off .r-modo,.rrow.off .r-passo,.rrow.off .r-pts{opacity:.45}
+@media (max-width:700px){.rrow{grid-template-columns:1fr 1fr}.rrow .chk,.rrow .r-modo{grid-column:1/-1}}
+.prow{display:grid;gap:8px;grid-template-columns:100px minmax(0,1fr) 150px auto;align-items:center}
+@media (max-width:700px){.prow{grid-template-columns:1fr 1fr}.prow .p-premio{grid-column:1/-1}}
+.grp{display:grid;gap:8px}
+.grp h3{margin:0;font:650 14px var(--font-display);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chip.ok{color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent)}
+.full{grid-column:1/-1}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:999px;padding:3px}
+.seg button{border:0;background:transparent;color:var(--muted);font:600 13px var(--font-body);padding:7px 16px;border-radius:999px;min-height:34px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.pista{position:relative;border-radius:18px;overflow:hidden;background:#2a2d33;padding:6px}
+.pgrid{display:grid;gap:3px}
+.casa{aspect-ratio:1.25;border-radius:8px;background:#3a3e46;color:#aeb4bf;font:600 11px var(--font-body);display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;padding:4px 6px;min-width:0;overflow:hidden}
+.casa small{font-size:9px;line-height:1.1;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:inherit}
+.casa.ouro{background:linear-gradient(135deg,#ffd35c,#e8a400);color:#3a2a00}
+.casa.prata{background:linear-gradient(135deg,#e4e6ea,#aeb4bd);color:#1f2933}
+.casa.largada{background:repeating-conic-gradient(#fff 0 25%,#111 0 50%) 0 0/16px 16px;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000}
+.carros{position:absolute;inset:6px;pointer-events:none}
+.carro{position:absolute;display:grid;place-items:center;transition:left .9s cubic-bezier(.5,0,.2,1),top .9s cubic-bezier(.5,0,.2,1)}
+.carro .in{transform:translateX(var(--dx,0px));display:grid;justify-items:center;gap:1px}
+.carro .tag{font:700 10px var(--font-body);color:#fff;background:rgba(0,0,0,.7);padding:1px 5px;border-radius:6px;white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.carro{transition:none}}
+.rk{display:grid;grid-template-columns:34px 14px minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+.rk:first-child{border-top:0}
+.rk .pos{font:700 18px var(--font-display);text-align:center}
+.rk .pts{font:700 18px var(--font-display);text-align:right}
+.rk .meta{margin:0}
+#area:fullscreen{background:var(--bg);padding:24px;overflow:auto;align-content:start}
+.g3{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+table.tab{width:100%;border-collapse:collapse;font-size:14px}
+table.tab th{text-align:left;font-weight:600;font-size:12px;color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.tab td{padding:10px;border-bottom:1px solid var(--line)}
+table.tab .n{text-align:right;white-space:nowrap}
+table.tab tr.tot td{font-weight:700;border-top:2px solid var(--line);background:var(--surface-2)}
+.barra{display:inline-block;width:70px;height:8px;border-radius:4px;background:var(--surface-2);vertical-align:middle;overflow:hidden;margin-right:6px}
+.barra i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-2),var(--accent));border-radius:4px}
+.pd-card{background:var(--surface);border-radius:20px;box-shadow:var(--shadow);min-width:0;border:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+.pd-bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between}
+.pd-bar .grp{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pd-mes{display:inline-flex;align-items:center;gap:2px;background:var(--surface-2);border-radius:12px;padding:2px}
+.pd-mes button{border:0;background:transparent;color:var(--ink);font:700 16px var(--font-body);width:34px;height:34px;border-radius:10px;cursor:pointer}
+.pd-mes button:disabled{opacity:.35;cursor:default}
+.pd-mes b{min-width:130px;text-align:center;font-size:14px;display:inline-block}.pd-mes b::first-letter,.pd-bar .sub::first-letter{text-transform:uppercase}.pd-bar select{width:auto;min-width:200px}
+.pd-placar{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.pd-pc{background:var(--surface);border-radius:18px;padding:14px 16px;box-shadow:var(--shadow);display:grid;gap:6px;min-width:0}
+.pd-pc .k{font-size:12px;font-weight:600;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.pd-pc .v{font-size:30px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
+.pd-pc .v small{font-size:14px;font-weight:600;color:var(--muted);margin-left:4px}
+.pd-pc .b{position:relative;height:8px;border-radius:4px;background:var(--surface-2)}
+.pd-pc .b i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent-2),var(--accent))}
+.pd-pc .b u{position:absolute;top:-4px;width:2px;height:16px;background:var(--ink);border-radius:1px}
+.pd-pc .f{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pl{display:inline-block;font-weight:700;font-size:12px;padding:2px 9px;border-radius:999px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pl.ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.pl.no{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red)}
+.pl.nd{background:var(--surface-2);color:var(--muted)}
+.pd-scroll{overflow:auto;max-width:100%;border-radius:20px;max-height:76vh}
+table.pd{border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums;table-layout:fixed}
+table.pd th,table.pd td{padding:0;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+table.pd thead th{position:sticky;top:0;z-index:3;background:var(--surface);font-size:12px;font-weight:700;height:46px}
+table.pd thead th small{display:block;font-weight:600;color:var(--muted);font-size:10.5px}
+table.pd .dom{background:var(--surface-2)}
+table.pd td.c{height:40px;font-size:13px;font-weight:600}
+table.pd td.c.z{color:var(--muted);opacity:.55;font-weight:500}
+table.pd td.c.hj,table.pd thead th.hj{box-shadow:inset 0 -2px 0 var(--accent)}
+table.pd td.c.dv{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red);cursor:help}
+table.pd .nm{position:sticky;left:0;z-index:2;background:var(--surface);text-align:left;padding:0 12px;font-weight:600;border-right:1px solid var(--line);overflow:hidden;text-overflow:ellipsis}
+table.pd thead th.nm{z-index:5}
+table.pd .rt{position:sticky;background:var(--surface);z-index:2;font-weight:700}
+table.pd thead th.rt{z-index:5}
+table.pd .r1{right:186px;border-left:1px solid var(--line)} table.pd .r2{right:132px} table.pd .r3{right:62px} table.pd .r4{right:0;color:var(--muted);font-weight:600}
+table.pd tr.gr td{background:var(--surface-2)!important;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;height:32px}
+table.pd tr.in td.nm{color:var(--muted)}
+table.pd tr.tot td{font-weight:700}
+.pd-tag{display:inline-block;font-size:10.5px;font-weight:700;border-radius:6px;padding:1px 6px;margin-right:6px;background:var(--surface-2);color:var(--muted)}
+.pd-tag.a{background:var(--accent-soft);color:var(--accent)}
+.pd-leg{display:flex;flex-wrap:wrap;gap:6px 18px;color:var(--muted);font-size:12.5px;padding:12px 16px;align-items:center}
+.pd-div{padding:12px 16px}
+.pd-div summary{cursor:pointer;font-weight:600}
+.pd-div ul{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:13px}
+.pd-lan{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:900px){.pd-lan{grid-template-columns:minmax(0,1fr)}}
+.pd-box{padding:16px 18px;display:grid;gap:2px}
+.pd-box h2{margin:0 0 4px;font-size:16px}
+.pd-row{display:grid;grid-template-columns:minmax(0,1fr) 90px 90px minmax(110px,auto);gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.pd-row.dv2{grid-template-columns:minmax(0,1fr) 90px 90px}
+.pd-row.h{border-top:0;color:var(--muted);font-size:12px;font-weight:700;padding-bottom:2px}
+.pd-row.h span{text-align:center}.pd-row.h span:first-child{text-align:left}
+.pd-row.g{display:block;border-top:0;padding:12px 0 0;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.pd-row input{width:100%;text-align:center;font-size:16px;font-weight:600}
+.pd-conf{position:sticky;bottom:calc(10px + env(safe-area-inset-bottom,0px));background:var(--surface);border-radius:18px;box-shadow:var(--shadow),0 0 0 1px var(--line);padding:12px 16px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between;margin-top:14px}
+.pd-conf .lin{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-variant-numeric:tabular-nums;min-width:0}
+.pd-conf input[type=text]{min-width:220px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  
+  <!-- carregando -->
+  <div id="v-load" class="login"><h1>Corrida de Prêmios OP</h1><p class="sub">Carregando...</p></div>
+
+  <!-- entrar -->
+  <div id="v-login" class="login" hidden>
+    <div style="text-align:center"><img src="mascote.png" alt="Mascote da Orthopride" width="459" height="671" style="height:230px;width:auto;filter:drop-shadow(0 14px 16px rgba(217,83,0,.3))"><div><span class="eyebrow">Painel do gestor</span><h1>Corrida de Prêmios OP</h1></div></div>
+    <form class="card" id="f-login" novalidate>
+      <label class="field" for="l-email">E-mail<input id="l-email" type="email" autocomplete="username" inputmode="email"></label>
+      <label class="field" for="l-senha">Senha<input id="l-senha" type="password" autocomplete="current-password"></label>
+      <div class="err" id="l-err" role="alert"></div>
+      <button class="btn" type="submit" id="l-btn">Entrar</button>
+      <button class="link" type="button" id="l-esqueci">Esqueci minha senha</button>
+    </form>
+  </div>
+
+  <!-- definir senha (convite ou recuperação) -->
+  <div id="v-senha" class="login" hidden>
+    <div><span class="eyebrow">Quase lá</span><h1>Crie sua senha</h1></div>
+    <form class="card" id="f-senha" novalidate>
+      <label class="field" for="s-nova">Nova senha<input id="s-nova" type="password" autocomplete="new-password" placeholder="Mínimo de 8 caracteres"></label>
+      <label class="field" for="s-rep">Repita a senha<input id="s-rep" type="password" autocomplete="new-password"></label>
+      <div class="err" id="s-err" role="alert"></div>
+      <button class="btn" type="submit">Salvar senha</button>
+    </form>
+  </div>
+
+  <!-- painel -->
+  <div id="v-app" hidden>
+    <header class="top">
+      <div><span class="eyebrow" id="eyebrow">Painel do gestor</span><h1>Corrida de Prêmios OP</h1></div>
+      <div class="line"><span class="who" id="quem"></span><button class="btn ghost sm" type="button" id="sair">Sair</button></div>
+    </header>
+    <nav class="nav" id="nav" aria-label="Seções" style="margin-top:14px">
+      <button type="button" data-r="corrida">Corrida</button>
+      <button type="button" data-r="diario">Lançamento diário</button>
+      <button type="button" data-r="planilha">Planilha do mês</button>
+      <button type="button" data-r="lancamentos">Lançamentos</button>
+      <button type="button" data-r="clinicas">Clínicas</button>
+      <button type="button" data-r="tipos">Tipos de lançamento</button>
+      <button type="button" data-r="premios">Prêmios</button>
+      <button type="button" data-r="pessoas">Pessoas</button>
+      <button type="button" data-r="campanhas">Campanhas</button>
+      <button type="button" data-r="relatorios">Relatórios</button>
+    </nav>
+    <section class="two" id="area" style="margin-top:18px"></section>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+(function(){
+  'use strict';
+  /* Chaves públicas do projeto. A chave "publishable" foi feita para ficar no navegador:
+     quem protege os dados são as regras de acesso do banco. Nunca coloque a chave secreta aqui. */
+  const SUPABASE_URL = 'https://fjroscujmyrjxatakcpo.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_ZuqKt7UHtpkiyQr95Ji67w_OQXS1nMV';
+
+  const $ = (s, r) => (r||document).querySelector(s);
+  const $$ = (s, r) => Array.from((r||document).querySelectorAll(s));
+  const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const brl = n => Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+  let toastTimer;
+  function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 4500); }
+
+  /* Se o convite ou a recuperação de senha chegou pelo link do e-mail, o endereço traz "type=invite" ou "type=recovery". */
+  const veioDeLink = /type=(invite|recovery)/.test(location.hash);
+  let definindoSenha = veioDeLink;
+
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+  let eu = null;           // linha da tabela usuarios
+  let recurso = 'corrida';
+  let editId = null;
+  let lista = [];
+  let mostrarInativos = false, confirmaExcluir = false;
+
+  const view = id => { ['load','login','senha','app'].forEach(v => { $('#v-'+v).hidden = v !== id; }); };
+  const msgErro = e => {
+    if (!e) return '';
+    if (e.code === '23505') return 'Já existe um cadastro com esse valor. Use outro nome ou sigla.';
+    if (e.code === '42501' || /row-level security|permission denied/i.test(e.message || '')) return 'Sem permissão para esta ação.';
+    if (/Invalid login credentials/i.test(e.message || '')) return 'E-mail ou senha incorretos.';
+    if (/Email not confirmed/i.test(e.message || '')) return 'Este e-mail ainda não foi confirmado.';
+    if (/fetch|network/i.test(e.message || '')) return 'Sem conexão com o servidor. Verifique a internet e tente de novo.';
+    return e.message || 'Algo deu errado. Tente de novo.';
+  };
+
+  /* ---------- cadastros ---------- */
+  const CORES = [['#5b9bff','Azul'],['#ffa23a','Laranja'],['#ff7aa8','Rosa'],['#3ecf9a','Verde'],['#b58cff','Roxo'],['#ff7a6b','Coral']];
+  const RECURSOS = {
+    clinicas: {
+      titulo: 'Clínica', plural: 'Clínicas', tabela: 'clinicas', ordem: 'nome', ativo: 'ativa',
+      intro: 'Cada clínica é uma equipe na corrida. A sigla aparece no carro da clínica.',
+      campos: [
+        {k:'sigla', rot:'Sigla (2 a 4 letras)', tipo:'text', max:4, upper:true, obrig:true},
+        {k:'nome', rot:'Nome da clínica', tipo:'text', obrig:true},
+        {k:'cor', rot:'Cor do carro', tipo:'select', opcoes:CORES, padrao:'#5b9bff'},
+        {k:'ativa', rot:'Clínica ativa', tipo:'check', padrao:true}
+      ],
+      validar: d => /^[A-Z0-9]{2,4}$/.test(d.sigla) ? '' : 'A sigla precisa ter de 2 a 4 letras ou números.',
+      resumo: r => '<div class="line"><span class="dot" style="background:'+esc(r.cor||'#999')+'"></span><span class="sigla">'+esc(r.sigla)+'</span><b>'+esc(r.nome)+'</b>'+(r.ativa?'':'<span class="chip off">Inativa</span>')+'</div>'
+    },
+    tipos: {
+      titulo: 'Tipo de lançamento', plural: 'Tipos de lançamento', tabela: 'tipos_lancamento', ordem: 'nome', ativo: 'ativo',
+      intro: 'O que pode ser lançado: visita, venda de início, raspagem, clareamento... Cada campanha escolhe quais tipos aceita e como pontuam.',
+      campos: [
+        {k:'nome', rot:'Nome', tipo:'text', obrig:true},
+        {k:'categoria', rot:'É uma visita ou uma venda?', tipo:'select', opcoes:[['visita','Visita'],['venda','Venda']], padrao:'venda'},
+        {k:'usa_valor', rot:'Pede o valor em reais no lançamento', tipo:'check', padrao:false},
+        {k:'base_fechamento', rot:'Entra no % de fechamento como', tipo:'select', opcoes:[['nenhum','Não entra'],['visita','Visita (divisor)'],['venda','Venda (dividendo)']], padrao:'nenhum'},
+        {k:'ativo', rot:'Tipo ativo', tipo:'check', padrao:true}
+      ],
+      resumo: r => '<div class="line"><b>'+esc(r.nome)+'</b><span class="badge">'+(r.categoria==='visita'?'Visita':'Venda')+'</span>'+(r.usa_valor?'<span class="chip">pede valor</span>':'')+(r.base_fechamento!=='nenhum'?'<span class="chip">fechamento: '+(r.base_fechamento==='visita'?'visita':'venda')+'</span>':'')+(r.ativo?'':'<span class="chip off">Inativo</span>')+'</div>'
+    },
+    premios: {
+      titulo: 'Prêmio', plural: 'Prêmios', tabela: 'premios', ordem: 'nome', ativo: 'ativo',
+      intro: 'Ouro: só o primeiro que passar pela casa leva. Prata: todos que passarem levam.',
+      campos: [
+        {k:'nome', rot:'Nome do prêmio', tipo:'text', obrig:true},
+        {k:'tipo', rot:'Tipo', tipo:'select', opcoes:[['ouro','Ouro (só o primeiro)'],['prata','Prata (todos que passarem)']], padrao:'prata'},
+        {k:'custo', rot:'Custo de cada prêmio (R$)', tipo:'number', padrao:0},
+        {k:'ativo', rot:'Prêmio ativo', tipo:'check', padrao:true}
+      ],
+      validar: d => d.custo >= 0 ? '' : 'O custo não pode ser negativo.',
+      resumo: r => '<div class="line"><span class="badge '+esc(r.tipo)+'">'+esc(r.tipo)+'</span><b>'+esc(r.nome)+'</b><span class="chip">'+brl(r.custo)+'</span>'+(r.ativo?'':'<span class="chip off">Inativo</span>')+'</div>'
+    }
+  };
+
+  function campoHtml(c, v){
+    const id = 'f-'+c.k;
+    if (c.tipo === 'check') return '<label class="chk" for="'+id+'"><input id="'+id+'" type="checkbox"'+(v?' checked':'')+'><span>'+esc(c.rot)+'</span></label>';
+    if (c.tipo === 'select') return '<label class="field" for="'+id+'">'+esc(c.rot)+'<select id="'+id+'">'+c.opcoes.map(o => '<option value="'+esc(o[0])+'"'+(o[0]===v?' selected':'')+'>'+esc(o[1])+'</option>').join('')+'</select></label>';
+    if (c.tipo === 'number') return '<label class="field" for="'+id+'">'+esc(c.rot)+'<input id="'+id+'" type="number" inputmode="decimal" min="0" step="0.01" value="'+esc(v)+'"></label>';
+    return '<label class="field" for="'+id+'">'+esc(c.rot)+'<input id="'+id+'" type="text"'+(c.max?' maxlength="'+c.max+'"':'')+' autocomplete="off" value="'+esc(v)+'"></label>';
+  }
+
+  function desenhar(){
+    const R = RECURSOS[recurso], atual = lista.find(r => r.id === editId) || null;
+    const vis = lista.filter(r => mostrarInativos || r[R.ativo] !== false || r.id === editId);
+    $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
+    $('#area').innerHTML =
+      '<div class="card"><h2>'+(atual ? 'Editar' : (recurso==='clinicas' ? 'Nova' : 'Novo'))+' '+esc(R.titulo.toLowerCase())+'</h2><p class="sub">'+esc(R.intro)+'</p>'
+      + '<form class="form" id="f-cad" novalidate>'+R.campos.map(c => campoHtml(c, atual ? atual[c.k] : c.padrao)).join('')
+      + '<div class="err" id="c-err" role="alert"></div><div class="btns"><button class="btn" type="submit" id="c-btn">Salvar</button>'
+      + (atual ? '<button class="btn ghost" type="button" id="c-cancel">Cancelar edição</button><button class="btn ghost" type="button" id="c-del">'+(confirmaExcluir?'Confirmar exclusão':'Excluir')+'</button>' : '')+'</div></form></div>'
+      + '<div class="card"><h2>'+esc(R.plural)+'</h2><label class="chk" style="margin-bottom:10px"><input type="checkbox" id="mostra-inat"'+(mostrarInativos?' checked':'')+'><span>Mostrar inativos</span></label><p class="sub">'+vis.length+' cadastrad'+(recurso==='premios'||recurso==='tipos'?'o':'a')+(vis.length===1?'':'s')+'. Excluir só funciona para o que nunca foi usado. O que já tem movimentação deve ser inativado.</p>'
+      + '<ul class="items">'+(vis.map(r => '<li class="item"><div>'+R.resumo(r)+'</div><div><button type="button" class="btn ghost sm" data-ed="'+r.id+'">Editar</button></div></li>').join('') || '<li class="empty">Nada cadastrado ainda.</li>')+'</ul></div>';
+    $('#f-cad').addEventListener('submit', salvar);
+    $('#mostra-inat').addEventListener('change', e => { mostrarInativos = e.target.checked; desenhar(); });
+    const del = $('#c-del'); if (del) del.addEventListener('click', excluir);
+    const cancel = $('#c-cancel'); if (cancel) cancel.addEventListener('click', () => { editId = null; confirmaExcluir = false; desenhar(); });
+    $$('[data-ed]').forEach(b => b.addEventListener('click', () => { editId = Number(b.dataset.ed); confirmaExcluir = false; desenhar(); const p = $('#f-cad input, #f-cad select'); if (p) p.focus(); }));
+  }
+
+  async function carregar(){
+    $('#area').style.gridTemplateColumns = '';
+    if (recurso === 'pessoas') return pessoasCarregar();
+    if (recurso === 'campanhas') return campanhasCarregar();
+    if (recurso === 'corrida') return corridaCarregar();
+    if (recurso === 'relatorios') return relCarregar();
+    if (recurso === 'planilha') return planCarregar();
+    if (recurso === 'diario') return diaCarregar();
+    if (recurso === 'lancamentos') return lancCarregar();
+    const R = RECURSOS[recurso];
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const { data, error } = await sb.from(R.tabela).select('*').order(R.ordem);
+    if (error){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(error))+'</div></div>'; return; }
+    lista = data; desenhar();
+  }
+
+  async function salvar(e){
+    e.preventDefault();
+    const R = RECURSOS[recurso], d = {};
+    R.campos.forEach(c => {
+      const el = $('#f-'+c.k);
+      if (c.tipo === 'check') d[c.k] = el.checked;
+      else if (c.tipo === 'number') d[c.k] = el.value === '' ? 0 : Number(el.value);
+      else { let v = el.value.trim(); if (c.upper) v = v.toUpperCase(); d[c.k] = v; }
+    });
+    const falta = R.campos.find(c => c.obrig && !d[c.k]);
+    const erro = falta ? 'Preencha: '+falta.rot.toLowerCase()+'.' : (R.validar ? R.validar(d) : '');
+    if (erro){ $('#c-err').textContent = erro; return; }
+    const btn = $('#c-btn'); btn.disabled = true;
+    const q = editId ? sb.from(R.tabela).update(d).eq('id', editId) : sb.from(R.tabela).insert(d);
+    const { error } = await q;
+    btn.disabled = false;
+    if (error){ $('#c-err').textContent = msgErro(error); return; }
+    toast(editId ? R.titulo+' atualizado.' : R.titulo+' cadastrado.');
+    editId = null; carregar();
+  }
+
+  async function excluir(){
+    if (!confirmaExcluir){ confirmaExcluir = true; desenhar(); $('#c-err').textContent = 'Toque em "Confirmar exclusão" para apagar de vez.'; return; }
+    const R = RECURSOS[recurso];
+    const { error } = await sb.from(R.tabela).delete().eq('id', editId);
+    confirmaExcluir = false;
+    if (error){
+      desenhar();
+      $('#c-err').textContent = error.code === '23503' ? 'Este cadastro já tem movimentação e não pode ser excluído. Desmarque "ativo" e salve.' : msgErro(error);
+      return;
+    }
+    toast(R.titulo+' excluído.'); editId = null; carregar();
+  }
+
+  $('#nav').addEventListener('click', e => {
+    const b = e.target.closest('button[data-r]'); if (!b) return;
+    recurso = b.dataset.r; editId = null; confirmaExcluir = false; ed = null; carregar();
+  });
+
+
+  /* ---------- pessoas (gerentes e promotores) ---------- */
+  let pessoas = [], vincs = [], clin = [], papelForm = 'promotor';
+  const CARGOS = ['Promotor','Tele BH','Tele interno','Divulgador','Luminoso'];
+  const soDigitos = v => String(v||'').replace(/\D/g,'');
+  const fmtTel = v => { const d = soDigitos(v); return d.length === 11 ? '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7) : d.length === 10 ? '('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6) : d; };
+  const clinicaDe = p => { const v = vincs.find(x => x.usuario_id === p.id); return v ? clin.find(c => c.id === v.clinica_id) : null; };
+
+  async function chamar(body){
+    body.redirectTo = location.origin + location.pathname;
+    const { data, error } = await sb.functions.invoke('bright-service', { body });
+    if (error){
+      let m = error.message || '';
+      try { const j = await error.context.json(); m = j.erro || m; } catch(e){}
+      if (/not found|404|Failed to send/i.test(m)) m = 'A função de convite ainda não está ativa no Supabase. Veja as instruções de instalação.';
+      return { erro: m };
+    }
+    if (data && data.erro) return { erro: data.erro };
+    return { data };
+  }
+
+  async function pessoasCarregar(){
+    $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const [a, b, c] = await Promise.all([
+      sb.from('usuarios').select('*').order('nome'),
+      sb.from('vinculos_clinica').select('*'),
+      sb.from('clinicas').select('*').order('nome')]);
+    const er = a.error || b.error || c.error;
+    if (er){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
+    pessoas = a.data.filter(p => p.papel !== 'gestor');
+    vincs = b.data.filter(v => !v.fim); clin = c.data;
+    pessoasDesenhar();
+  }
+
+  function pessoasDesenhar(){
+    const atual = pessoas.find(p => p.id === editId) || null;
+    if (atual) papelForm = atual.papel;
+    const cAtual = atual ? clinicaDe(atual) : null;
+    const opcClin = clin.filter(c => c.ativa || (cAtual && c.id === cAtual.id));
+    const vis = pessoas.filter(p => mostrarInativos || p.ativo || p.id === editId);
+    $('#area').innerHTML =
+      '<div class="card"><h2>'+(atual ? 'Editar pessoa' : 'Nova pessoa')+'</h2>'
+      + '<p class="sub">'+(atual ? 'Se trocar o e-mail, a pessoa recebe um link no novo endereço para criar a senha. Para tirar alguém de uso, desmarque "Pessoa ativa".' : 'A pessoa recebe um e-mail para criar a própria senha e colocar a foto.')+'</p>'
+      + '<form class="form" id="f-pes" novalidate>'
+      + '<label class="field" for="p-papel">Função<select id="p-papel"'+(atual?' disabled':'')+'><option value="promotor"'+(papelForm==='promotor'?' selected':'')+'>Promotor</option><option value="gerente"'+(papelForm==='gerente'?' selected':'')+'>Gerente de clínica</option></select></label>'
+      + '<label class="field" for="p-nome">Nome<input id="p-nome" type="text" autocomplete="off" value="'+esc(atual?atual.nome:'')+'"></label>'
+      + '<label class="field" for="p-email">E-mail<input id="p-email" type="email" inputmode="email" autocomplete="off" value="'+esc(atual?(atual.email||''):'')+'"'+'></label>'
+      + '<label class="field" for="p-tel">Telefone com DDD<input id="p-tel" type="tel" inputmode="numeric" autocomplete="off" placeholder="(31) 99999-9999" value="'+esc(atual?fmtTel(atual.telefone):'')+'"></label>'
+      + '<label class="field" for="p-clin">Clínica<select id="p-clin"><option value="">Escolha...</option>'+opcClin.map(c => '<option value="'+c.id+'"'+(cAtual&&cAtual.id===c.id?' selected':'')+'>'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="field" for="p-cargo" id="w-cargo"'+(papelForm==='promotor'?'':' hidden')+'>Cargo<select id="p-cargo"><option value="">Escolha...</option>'+CARGOS.map(g => '<option'+(atual&&atual.cargo===g?' selected':'')+'>'+g+'</option>').join('')+'</select></label>'
+      + (atual ? '<label class="chk" for="p-ativo"><input id="p-ativo" type="checkbox"'+(atual.ativo?' checked':'')+'><span>Pessoa ativa</span></label>' : '')
+      + '<div class="err" id="p-err" role="alert"></div>'
+      + '<div class="btns"><button class="btn" type="submit" id="p-btn">'+(atual?'Salvar':'Enviar convite')+'</button>'
+      + (atual ? '<button class="btn ghost" type="button" id="p-cancel">Cancelar edição</button><button class="btn ghost" type="button" id="p-reset">Enviar link de nova senha</button>' : '')
+      + '</div></form></div>'
+      + '<div class="card"><h2>Pessoas</h2><label class="chk" style="margin-bottom:10px"><input type="checkbox" id="mostra-inat"'+(mostrarInativos?' checked':'')+'><span>Mostrar inativos</span></label>'
+      + '<p class="sub">'+vis.length+' cadastrada'+(vis.length===1?'':'s')+'. Pessoas com lançamentos não são apagadas, só inativadas.</p>'
+      + '<ul class="items">'+(vis.map(p => { const c = clinicaDe(p); return '<li class="item"><div><div class="line"><b>'+esc(p.nome)+'</b><span class="badge">'+(p.papel==='gerente'?'Gerente':esc(p.cargo||'Promotor'))+'</span>'+(c?'<span class="sigla">'+esc(c.sigla)+'</span>':'<span class="chip off">Sem clínica</span>')+(p.ativo?'':'<span class="chip off">Inativa</span>')+'</div><div class="meta">'+esc(p.email||'sem e-mail')+(p.telefone?' · '+esc(fmtTel(p.telefone)):'')+'</div></div><div><button type="button" class="btn ghost sm" data-ped="'+p.id+'">Editar</button></div></li>'; }).join('') || '<li class="empty">Ninguém cadastrado ainda.</li>')+'</ul></div>';
+    $('#f-pes').addEventListener('submit', pessoaSalvar);
+    $('#p-papel').addEventListener('change', e => { papelForm = e.target.value; $('#w-cargo').hidden = papelForm !== 'promotor'; });
+    $('#mostra-inat').addEventListener('change', e => { mostrarInativos = e.target.checked; pessoasDesenhar(); });
+    $$('[data-ped]').forEach(b => b.addEventListener('click', () => { editId = Number(b.dataset.ped); pessoasDesenhar(); }));
+    const cn = $('#p-cancel'); if (cn) cn.addEventListener('click', () => { editId = null; pessoasDesenhar(); });
+    const rs = $('#p-reset'); if (rs) rs.addEventListener('click', async () => {
+      rs.disabled = true; const r = await chamar({ acao: 'redefinir', pessoa_id: editId }); rs.disabled = false;
+      toast(r.erro ? r.erro : 'Link de nova senha enviado para '+atual.email+'.');
+    });
+  }
+
+  async function pessoaSalvar(e){
+    e.preventDefault();
+    const atual = pessoas.find(p => p.id === editId) || null;
+    const d = { papel: atual ? atual.papel : $('#p-papel').value, nome: $('#p-nome').value.trim(), email: $('#p-email').value.trim().toLowerCase(),
+      telefone: soDigitos($('#p-tel').value), clinica_id: Number($('#p-clin').value) || null, cargo: $('#p-cargo').value };
+    if (d.papel !== 'promotor') d.cargo = null;
+    const erro = !d.nome ? 'Informe o nome.' : (!atual && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) ? 'Informe um e-mail válido.'
+      : !/^[0-9]{10,11}$/.test(d.telefone) ? 'Telefone com DDD, 10 ou 11 números.' : !d.clinica_id ? 'Escolha a clínica.'
+      : (d.papel === 'promotor' && !d.cargo) ? 'Escolha o cargo.' : '';
+    if (erro){ $('#p-err').textContent = erro; return; }
+    const btn = $('#p-btn'); btn.disabled = true; $('#p-err').textContent = '';
+    if (atual && d.email !== (atual.email||'').toLowerCase()){
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)){ btn.disabled = false; $('#p-err').textContent = 'Informe um e-mail válido.'; return; }
+      const r0 = await chamar({ acao: 'trocar_email', pessoa_id: atual.id, email: d.email });
+      if (r0.erro){ btn.disabled = false; $('#p-err').textContent = r0.erro; return; }
+      if (r0.data && r0.data.aviso) toast(r0.data.aviso);
+    }
+    if (!atual){
+      const r = await chamar(Object.assign({ acao: 'convidar' }, d));
+      btn.disabled = false;
+      if (r.erro){ $('#p-err').textContent = r.erro; return; }
+      toast('Convite enviado para '+d.email+'.'); pessoasCarregar(); return;
+    }
+    const { error } = await sb.from('usuarios').update({ nome: d.nome, telefone: d.telefone, cargo: d.cargo, ativo: $('#p-ativo').checked }).eq('id', atual.id);
+    let err2 = error;
+    const cAtual = clinicaDe(atual);
+    if (!err2 && (!cAtual || cAtual.id !== d.clinica_id)){
+      const v = vincs.find(x => x.usuario_id === atual.id);
+      if (v){ const r1 = await sb.from('vinculos_clinica').update({ fim: new Date().toISOString().slice(0,10) }).eq('id', v.id); err2 = r1.error; }
+      if (!err2){ const r2 = await sb.from('vinculos_clinica').insert({ usuario_id: atual.id, clinica_id: d.clinica_id }); err2 = r2.error; }
+    }
+    btn.disabled = false;
+    if (err2){ $('#p-err').textContent = msgErro(err2); return; }
+    toast('Pessoa atualizada.'); editId = null; pessoasCarregar();
+  }
+
+
+  /* ---------- campanhas ---------- */
+  let C = { camps: [], cc: [], cp: [], rg: [], cs: [], tipos: [], premios: [], promos: [] };
+  let ed = null;
+  const hoje = () => new Date().toLocaleDateString('sv-SE');
+  const dBR = d => d ? d.split('-').reverse().join('/') : '';
+  const statusCamp = c => { const h = hoje(); return h < c.inicio ? ['Agendada',''] : h > c.fim ? ['Encerrada','off'] : ['Ativa','ok']; };
+  const MODOS = { ocorrencia: 'Cada lançamento', quantidade: 'A cada N unidades', valor: 'A cada N reais' };
+
+  async function campanhasCarregar(){
+    $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
+    $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const rs = await Promise.all([
+      sb.from('campanhas').select('*').order('inicio', { ascending: false }),
+      sb.from('tipos_lancamento').select('*').order('nome'),
+      sb.from('premios').select('*').order('nome'),
+      sb.from('usuarios').select('*').order('nome'),
+      sb.from('vinculos_clinica').select('*'),
+      sb.from('clinicas').select('*').order('nome'),
+      sb.from('campanha_clinicas').select('*'),
+      sb.from('campanha_participantes').select('*'),
+      sb.from('regras_pontuacao').select('*'),
+      sb.from('casas_premio').select('*')]);
+    const er = rs.map(r => r.error).find(Boolean);
+    if (er){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
+    C.camps = rs[0].data.slice().sort((a, b) => a.inicio < b.inicio ? 1 : -1);
+    C.tipos = rs[1].data; C.premios = rs[2].data;
+    C.promos = rs[3].data.filter(u => u.papel === 'promotor' && u.ativo);
+    vincs = rs[4].data.filter(v => !v.fim); clin = rs[5].data;
+    C.cc = rs[6].data; C.cp = rs[7].data; C.rg = rs[8].data; C.cs = rs[9].data;
+    if (ed) editorDesenhar(); else campanhasLista();
+  }
+
+  function campanhasLista(){
+    $('#area').innerHTML = '<div class="card"><div class="top"><div><h2>Campanhas</h2><p class="sub" style="margin:0">Uma pessoa ou clínica pode estar em várias campanhas ao mesmo tempo.</p></div><button class="btn" type="button" id="nova-camp">Nova campanha</button></div>'
+      + '<ul class="items" style="margin-top:12px">'+(C.camps.map(c => {
+          const st = statusCamp(c), nc = C.cc.filter(x => x.campanha_id === c.id).length, np = C.cp.filter(x => x.campanha_id === c.id).length;
+          return '<li class="item"><div><div class="line"><b>'+esc(c.nome)+'</b><span class="chip '+st[1]+'">'+st[0]+'</span></div><div class="meta">'+dBR(c.inicio)+' a '+dBR(c.fim)+' · '+c.casas+' casas · '+nc+' clínica'+(nc===1?'':'s')+' · '+np+' promotor'+(np===1?'':'es')+(c.voltas_max===1?' · sem segunda volta':'')+'</div></div><div><button type="button" class="btn ghost sm" data-ec="'+c.id+'">Editar</button></div></li>'; }).join('') || '<li class="empty">Nenhuma campanha ainda. Cadastre antes as clínicas, os tipos de lançamento, os prêmios e as pessoas.</li>')+'</ul></div>';
+    $('#nova-camp').addEventListener('click', () => { ed = modeloCamp(null); editorDesenhar(); });
+    $$('[data-ec]').forEach(b => b.addEventListener('click', () => { ed = modeloCamp(C.camps.find(c => c.id === Number(b.dataset.ec))); editorDesenhar(); }));
+  }
+
+  function modeloCamp(c){
+    const id = c ? c.id : null;
+    return { id, nome: c ? c.nome : '', inicio: c ? c.inicio : hoje(), fim: c ? c.fim : '', casas: c ? c.casas : 30,
+      voltas: c ? c.voltas_max !== 1 : true, limite: c && c.voltas_max > 1 ? c.voltas_max : '', confirma: false,
+      clinicas: new Set(C.cc.filter(x => x.campanha_id === id).map(x => x.clinica_id)),
+      promotores: new Set(C.cp.filter(x => x.campanha_id === id).map(x => x.usuario_id)),
+      regras: Object.fromEntries(C.rg.filter(r => r.campanha_id === id).map(r => [r.tipo_id, { modo: r.modo, passo: Number(r.passo), pontos: r.pontos }])),
+      premios: C.cs.filter(x => x.campanha_id === id).map(x => ({ casa: x.casa, premio_id: x.premio_id, para: x.para })) };
+  }
+
+  function lerEditor(){
+    if (!$('#e-nome')) return;
+    ed.nome = $('#e-nome').value.trim(); ed.inicio = $('#e-inicio').value; ed.fim = $('#e-fim').value;
+    ed.casas = $('#e-casas').value; ed.voltas = $('#e-voltas').checked; ed.limite = $('#e-limite').value;
+    ed.clinicas = new Set($$('.e-cl:checked').map(x => Number(x.dataset.id)));
+    ed.promotores = new Set($$('.e-pr:checked').map(x => Number(x.dataset.id)));
+    ed.regras = {};
+    $$('.rrow[data-tipo]').forEach(r => {
+      if (!$('.r-on', r).checked) return;
+      ed.regras[r.dataset.tipo] = { modo: $('.r-modo', r).value, passo: $('.r-passo', r).value, pontos: $('.r-pts', r).value };
+    });
+    ed.premios = $$('.prow').map(r => ({ casa: $('.p-casa', r).value, premio_id: Number($('.p-premio', r).value) || null, para: $('.p-para', r).value }));
+  }
+
+  function editorDesenhar(){
+    const cinfo = ed.id ? C.camps.find(c => c.id === ed.id) : null;
+    const grupos = [];
+    clin.filter(c => c.ativa || ed.clinicas.has(c.id)).forEach(c => grupos.push({ c, ps: C.promos.filter(p => (clinicaDe(p) || {}).id === c.id) }));
+    const sem = C.promos.filter(p => !clinicaDe(p)); if (sem.length) grupos.push({ c: null, ps: sem });
+    const tiposVis = C.tipos.filter(t => t.ativo || ed.regras[t.id]);
+    $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
+    $('#area').innerHTML = '<div class="card"><div class="top"><div><h2>'+(ed.id ? 'Editar campanha' : 'Nova campanha')+'</h2><p class="sub" style="margin:0">Preencha as cinco partes e salve no fim da página.</p></div><button class="btn ghost sm" type="button" id="e-voltar">Voltar para a lista</button></div>'
+      + '<form id="f-camp" novalidate>'
+      + '<div class="sec" style="border:0;margin-top:14px;padding-top:0"><h2>1. Dados da corrida</h2><div class="g2">'
+      + '<label class="field full" for="e-nome">Nome da campanha<input id="e-nome" type="text" autocomplete="off" value="'+esc(ed.nome)+'"></label>'
+      + '<label class="field" for="e-inicio">Início<input id="e-inicio" type="date" value="'+esc(ed.inicio)+'"></label>'
+      + '<label class="field" for="e-fim">Fim<input id="e-fim" type="date" value="'+esc(ed.fim)+'"></label>'
+      + '<label class="field" for="e-casas">Casas da pista (5 a 120)<input id="e-casas" type="number" inputmode="numeric" min="5" max="120" value="'+esc(ed.casas)+'"></label></div>'
+      + '<label class="chk" for="e-voltas"><input id="e-voltas" type="checkbox"'+(ed.voltas?' checked':'')+'><span>Permitir segunda volta (quem completa a pista recomeça e pode ganhar os prêmios de novo)</span></label>'
+      + '<label class="field" for="e-limite">Máximo de voltas (deixe vazio para sem limite)<input id="e-limite" type="number" inputmode="numeric" min="2" value="'+esc(ed.limite)+'"></label></div>'
+      + '<div class="sec"><h2>2. Clínicas que participam</h2><div class="picks">'+(clin.filter(c => c.ativa || ed.clinicas.has(c.id)).map(c => '<label class="chk"><input class="e-cl" type="checkbox" data-id="'+c.id+'"'+(ed.clinicas.has(c.id)?' checked':'')+'><span><span class="sigla">'+esc(c.sigla)+'</span> '+esc(c.nome)+'</span></label>').join('') || '<div class="empty">Nenhuma clínica ativa cadastrada.</div>')+'</div></div>'
+      + '<div class="sec"><h2>3. Promotores que participam</h2><p class="sub" style="margin:0">Agrupados pela clínica em que atuam hoje.</p>'
+      + (grupos.map((g, i) => '<div class="grp"><h3>'+(g.c ? '<span class="sigla">'+esc(g.c.sigla)+'</span>'+esc(g.c.nome) : 'Sem clínica')+'<button type="button" class="btn ghost sm" data-grp="'+i+'">Marcar todos</button></h3><div class="picks">'+(g.ps.map(p => '<label class="chk"><input class="e-pr" data-g="'+i+'" type="checkbox" data-id="'+p.id+'"'+(ed.promotores.has(p.id)?' checked':'')+'><span>'+esc(p.nome)+' <span class="meta">'+esc(p.cargo||'')+'</span></span></label>').join('') || '<div class="meta">Nenhum promotor ativo nesta clínica.</div>')+'</div></div>').join('') || '<div class="empty">Nenhum promotor ativo cadastrado.</div>')+'</div>'
+      + '<div class="sec"><div class="top"><div><h2>4. Pontuação</h2><p class="sub" style="margin:0">Marque o que esta campanha aceita. 1 ponto = 1 casa. O que não estiver marcado não pode ser lançado nela.</p></div><button class="btn ghost sm" type="button" id="e-padrao">Usar pontuação padrão</button></div>'
+      + tiposVis.map(t => { const r = ed.regras[t.id]; const m = r ? r.modo : 'ocorrencia';
+          return '<div class="rrow'+(r?'':' off')+'" data-tipo="'+t.id+'"><label class="chk"><input class="r-on" type="checkbox"'+(r?' checked':'')+'><span>'+esc(t.nome)+'</span></label>'
+          + '<select class="r-modo" aria-label="Como pontua">'+Object.keys(MODOS).filter(k => k !== 'valor' || t.usa_valor).map(k => '<option value="'+k+'"'+(k===m?' selected':'')+'>'+MODOS[k]+'</option>').join('')+'</select>'
+          + '<input class="r-passo" type="number" min="0.01" step="0.01" inputmode="decimal" aria-label="N" placeholder="N"'+(m==='ocorrencia'?' disabled':'')+' value="'+(r && m !== 'ocorrencia' ? esc(r.passo) : '')+'">'
+          + '<input class="r-pts" type="number" min="0" step="1" inputmode="numeric" aria-label="Pontos" placeholder="pontos" value="'+(r ? esc(r.pontos) : '')+'"></div>'; }).join('')
+      + '</div>'
+      + '<div class="sec"><div class="top"><div><h2>5. Prêmios nas casas</h2><p class="sub" style="margin:0">Ouro: só o primeiro que passar leva. Prata: todos que passarem levam.</p></div><button class="btn ghost sm" type="button" id="e-addp">Adicionar casa premiada</button></div>'
+      + (ed.premios.map((p, i) => '<div class="prow"><input class="p-casa" type="number" min="1" inputmode="numeric" aria-label="Número da casa" placeholder="Casa" value="'+esc(p.casa)+'"><select class="p-premio" aria-label="Prêmio"><option value="">Prêmio...</option>'+C.premios.filter(x => x.ativo || x.id === p.premio_id).map(x => '<option value="'+x.id+'"'+(x.id===p.premio_id?' selected':'')+'>'+esc(x.nome)+' ('+x.tipo+')</option>').join('')+'</select><select class="p-para" aria-label="Quem ganha"><option value="promotor"'+(p.para==='promotor'?' selected':'')+'>Promotor</option><option value="clinica"'+(p.para==='clinica'?' selected':'')+'>Clínica</option></select><button type="button" class="btn ghost sm" data-delp="'+i+'">Remover</button></div>').join('') || '<div class="empty">Nenhuma casa premiada ainda.</div>')+'</div>'
+      + '<div class="err" id="e-err" role="alert" style="margin-top:14px"></div>'
+      + '<div class="btns" style="margin-top:6px"><button class="btn" type="submit" id="e-btn">Salvar campanha</button>'
+      + (ed.id ? '<button class="btn ghost" type="button" id="e-del">'+(ed.confirma?'Confirmar exclusão':'Excluir campanha')+'</button>' : '')+'</div></form></div>';
+    $('#e-voltar').addEventListener('click', () => { ed = null; campanhasLista(); });
+    $('#f-camp').addEventListener('submit', campanhaSalvar);
+    $('#e-addp').addEventListener('click', () => { lerEditor(); ed.premios.push({ casa: '', premio_id: null, para: 'promotor' }); editorDesenhar(); });
+    $$('[data-delp]').forEach(b => b.addEventListener('click', () => { lerEditor(); ed.premios.splice(Number(b.dataset.delp), 1); editorDesenhar(); }));
+    $$('[data-grp]').forEach(b => b.addEventListener('click', () => { $$('.e-pr[data-g="'+b.dataset.grp+'"]').forEach(x => { x.checked = true; }); }));
+    $('#e-padrao').addEventListener('click', () => {
+      lerEditor();
+      const pad = [['visita','quantidade',5,1],['venda de início','ocorrencia',1,1],['venda da nuv','ocorrencia',1,1],['venda nuv + início','ocorrencia',1,3]];
+      pad.forEach(p => { const t = C.tipos.find(x => x.ativo && x.nome.toLowerCase().includes(p[0])); if (t) ed.regras[t.id] = { modo: p[1], passo: p[2], pontos: p[3] }; });
+      editorDesenhar();
+    });
+    $$('.rrow[data-tipo]').forEach(r => {
+      const sync = () => {
+        const on = $('.r-on', r).checked, m = $('.r-modo', r).value;
+        r.classList.toggle('off', !on);
+        $('.r-passo', r).disabled = m === 'ocorrencia';
+        $('.r-passo', r).placeholder = m === 'valor' ? 'R$' : 'N';
+        if (m === 'ocorrencia') $('.r-passo', r).value = '';
+      };
+      $('.r-on', r).addEventListener('change', sync); $('.r-modo', r).addEventListener('change', sync);
+    });
+    const del = $('#e-del'); if (del) del.addEventListener('click', campanhaExcluir);
+  }
+
+  async function syncConj(tabela, col, campId, atuais, novos){
+    const add = [...novos].filter(x => !atuais.has(x)), rem = [...atuais].filter(x => !novos.has(x));
+    if (add.length){ const { error } = await sb.from(tabela).insert(add.map(x => ({ campanha_id: campId, [col]: x }))); if (error) return error; }
+    if (rem.length){ const { error } = await sb.from(tabela).delete().eq('campanha_id', campId).in(col, rem); if (error) return error; }
+    return null;
+  }
+
+  async function campanhaSalvar(e){
+    e.preventDefault(); lerEditor();
+    const falha = m => { $('#e-err').textContent = m; return null; };
+    const casas = Number(ed.casas);
+    if (!ed.nome) return falha('Informe o nome da campanha.');
+    if (!ed.inicio || !ed.fim) return falha('Informe as datas de início e fim.');
+    if (ed.fim < ed.inicio) return falha('A data final não pode ser antes da inicial.');
+    if (!Number.isInteger(casas) || casas < 5 || casas > 120) return falha('O número de casas deve ficar entre 5 e 120.');
+    if (ed.voltas && ed.limite !== '' && (!Number.isInteger(Number(ed.limite)) || Number(ed.limite) < 2)) return falha('O máximo de voltas deve ser 2 ou mais, ou fique vazio.');
+    if (!ed.clinicas.size) return falha('Escolha pelo menos uma clínica.');
+    const regras = [];
+    for (const [tid, r] of Object.entries(ed.regras)){
+      const t = C.tipos.find(x => x.id === Number(tid)), pts = Number(r.pontos), passo = r.modo === 'ocorrencia' ? 1 : Number(r.passo);
+      if (r.pontos === '' || !Number.isInteger(pts) || pts < 0) return falha('Informe os pontos de "'+t.nome+'" (número inteiro).');
+      if (!(passo > 0)) return falha('Informe o N de "'+t.nome+'" (maior que zero).');
+      regras.push({ tipo_id: Number(tid), modo: r.modo, passo, pontos: pts });
+    }
+    if (!regras.length) return falha('Marque pelo menos um tipo de lançamento na pontuação.');
+    const vistos = new Set(), casasP = [];
+    for (const p of ed.premios){
+      const n = Number(p.casa);
+      if (!Number.isInteger(n) || n < 1 || n > casas) return falha('Cada casa premiada precisa ser um número de 1 a '+casas+'.');
+      if (!p.premio_id) return falha('Escolha o prêmio da casa '+n+'.');
+      const k = n+'|'+p.para; if (vistos.has(k)) return falha('A casa '+n+' já tem prêmio para '+(p.para==='clinica'?'clínica':'promotor')+'.');
+      vistos.add(k); casasP.push({ casa: n, premio_id: p.premio_id, para: p.para });
+    }
+    const btn = $('#e-btn'); btn.disabled = true; $('#e-err').textContent = '';
+    const fim = (m) => { btn.disabled = false; $('#e-err').textContent = m; return null; };
+    const dados = { nome: ed.nome, inicio: ed.inicio, fim: ed.fim, casas, voltas_max: ed.voltas ? (ed.limite === '' ? null : Number(ed.limite)) : 1, premios_repetem: true };
+    let id = ed.id;
+    if (id){ const { error } = await sb.from('campanhas').update(dados).eq('id', id); if (error) return fim(msgErro(error)); }
+    else { const { data, error } = await sb.from('campanhas').insert(dados).select('id').single(); if (error) return fim(msgErro(error)); id = data.id; ed.id = id; }
+    let er = await syncConj('campanha_clinicas', 'clinica_id', id, new Set(C.cc.filter(x => x.campanha_id === id).map(x => x.clinica_id)), ed.clinicas);
+    if (!er) er = await syncConj('campanha_participantes', 'usuario_id', id, new Set(C.cp.filter(x => x.campanha_id === id).map(x => x.usuario_id)), ed.promotores);
+    if (!er){
+      const at = C.rg.filter(r => r.campanha_id === id), novos = [], rem = [];
+      for (const r of regras){
+        const ex = at.find(x => x.tipo_id === r.tipo_id);
+        if (!ex) novos.push(Object.assign({ campanha_id: id }, r));
+        else if (ex.modo !== r.modo || Number(ex.passo) !== r.passo || ex.pontos !== r.pontos){ const u = await sb.from('regras_pontuacao').update({ modo: r.modo, passo: r.passo, pontos: r.pontos }).eq('id', ex.id); if (u.error){ er = u.error; break; } }
+      }
+      at.forEach(x => { if (!regras.some(r => r.tipo_id === x.tipo_id)) rem.push(x.id); });
+      if (!er && novos.length){ const i = await sb.from('regras_pontuacao').insert(novos); er = i.error; }
+      if (!er && rem.length){ const d = await sb.from('regras_pontuacao').delete().in('id', rem); er = d.error; }
+    }
+    if (!er){
+      const at = C.cs.filter(x => x.campanha_id === id), novos = [], rem = [];
+      for (const c of casasP){
+        const ex = at.find(x => x.casa === c.casa && x.para === c.para);
+        if (!ex) novos.push(Object.assign({ campanha_id: id }, c));
+        else if (ex.premio_id !== c.premio_id){ const u = await sb.from('casas_premio').update({ premio_id: c.premio_id }).eq('id', ex.id); if (u.error){ er = u.error; break; } }
+      }
+      at.forEach(x => { if (!casasP.some(c => c.casa === x.casa && c.para === x.para)) rem.push(x); });
+      if (!er && novos.length){ const i = await sb.from('casas_premio').insert(novos); er = i.error; }
+      for (const x of rem){ if (er) break; const d = await sb.from('casas_premio').delete().eq('id', x.id); if (d.error) er = d.error.code === '23503' ? { message: 'A casa '+x.casa+' já tem ganhador e não pode ser removida.' } : d.error; }
+    }
+    if (er){ await campanhasCarregarSilencioso(); return fim('Salvo só em parte: '+msgErro(er)); }
+    await sb.rpc('recalcular', { p_camp: id });
+    toast('Campanha salva.'); ed = null; campanhasCarregar();
+  }
+
+  async function campanhasCarregarSilencioso(){
+    const rs = await Promise.all([sb.from('campanhas').select('*'), sb.from('campanha_clinicas').select('*'), sb.from('campanha_participantes').select('*'), sb.from('regras_pontuacao').select('*'), sb.from('casas_premio').select('*')]);
+    if (rs.some(r => r.error)) return;
+    C.camps = rs[0].data; C.cc = rs[1].data; C.cp = rs[2].data; C.rg = rs[3].data; C.cs = rs[4].data;
+  }
+
+  async function campanhaExcluir(){
+    if (!ed.confirma){ lerEditor(); ed.confirma = true; editorDesenhar(); $('#e-err').textContent = 'Toque em "Confirmar exclusão" para apagar de vez.'; return; }
+    const { error } = await sb.from('campanhas').delete().eq('id', ed.id);
+    ed.confirma = false;
+    if (error){ editorDesenhar(); $('#e-err').textContent = error.code === '23503' ? 'Esta campanha já tem lançamentos ou ganhadores e não pode ser excluída.' : msgErro(error); return; }
+    toast('Campanha excluída.'); ed = null; campanhasCarregar();
+  }
+
+
+  /* ---------- corrida (acompanhamento ao vivo) ---------- */
+  const K = { camps: [], sel: null, modo: 'promotor', tk: 0, key: '', cars: {}, cols: 10, timer: null };
+  const PALETA = ['#e10600','#ff8700','#00a6ff','#34c759','#af52de','#ffd60a','#ff375f','#5ac8fa','#a2845e','#8e8e93'];
+  const iniciais = n => { const p = String(n||'?').trim().split(/\s+/); return ((p[0]||'?')[0] + (p.length > 1 ? p[p.length-1][0] : (p[0]||'')[1] || '')).toUpperCase(); };
+
+  async function corridaCarregar(){
+    $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
+    $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const { data, error } = await sb.from('campanhas').select('*');
+    if (error){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(error))+'</div></div>'; return; }
+    K.camps = data.slice().sort((a, b) => a.inicio < b.inicio ? 1 : -1);
+    if (!K.camps.some(c => c.id === K.sel)){ const a = K.camps.find(c => statusCamp(c)[0] === 'Ativa'); K.sel = (a || K.camps[0] || {}).id || null; }
+    if (!K.sel){ $('#area').innerHTML = '<div class="card"><h2>Corrida</h2><div class="empty">Nenhuma campanha ainda. Crie uma em "Campanhas".</div></div>'; return; }
+    K.key = '';
+    $('#area').innerHTML =
+      '<div class="card"><div class="top"><div class="line"><select id="k-camp" aria-label="Campanha" style="width:auto;min-width:220px">'+K.camps.map(c => '<option value="'+c.id+'"'+(c.id===K.sel?' selected':'')+'>'+esc(c.nome)+' ('+statusCamp(c)[0]+')</option>').join('')+'</select>'
+      + '<div class="seg" role="group" aria-label="Tipo de corrida"><button type="button" data-modo="promotor" aria-pressed="'+(K.modo==='promotor')+'">Promotores</button><button type="button" data-modo="clinica" aria-pressed="'+(K.modo==='clinica')+'">Clínicas</button></div></div>'
+      + '<div class="line"><span class="meta" id="k-hora" style="margin:0"></span><button class="btn ghost sm" type="button" id="k-tela">Tela cheia</button></div></div></div>'
+      + '<div class="card"><div class="pista" id="k-pista"></div></div>'
+      + '<div class="two"><div class="card"><h2>Classificação</h2><div id="k-rank"></div></div><div class="card"><h2>Prêmios</h2><div id="k-prem"></div></div></div>';
+    $('#k-camp').addEventListener('change', e => { K.sel = Number(e.target.value); K.key = ''; corridaAtualizar(); });
+    $$('[data-modo]').forEach(b => b.addEventListener('click', () => { K.modo = b.dataset.modo; K.key = ''; $$('[data-modo]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); corridaAtualizar(); }));
+    $('#k-tela').addEventListener('click', () => { const a = $('#area'); if (document.fullscreenElement) document.exitFullscreen(); else if (a.requestFullscreen) a.requestFullscreen(); });
+    $('#k-prem').addEventListener('click', async e => {
+      const b = e.target.closest('[data-ent]'); if (!b) return;
+      b.disabled = true;
+      const { error: er } = await sb.from('ganhadores').update({ entregue_em: new Date().toISOString(), entregue_por: eu.id }).eq('id', Number(b.dataset.ent));
+      if (er){ b.disabled = false; toast(msgErro(er)); return; }
+      toast('Prêmio marcado como entregue.'); corridaAtualizar();
+    });
+    await corridaAtualizar();
+  }
+
+  async function corridaAtualizar(){
+    const c = K.camps.find(x => x.id === K.sel); if (!c || !$('#k-pista')) return;
+    const tk = ++K.tk, modo = K.modo, view = modo === 'promotor' ? 'ranking_promotores' : 'ranking_clinicas', idCol = modo === 'promotor' ? 'promotor_id' : 'clinica_id';
+    const rs = await Promise.all([
+      sb.from(view).select('*').eq('campanha_id', c.id).order('ordem'),
+      sb.from('casas_premio').select('*').eq('campanha_id', c.id).eq('para', modo),
+      sb.from('premios').select('*'), sb.from('usuarios').select('*'), sb.from('clinicas').select('*'), sb.from('vinculos_clinica').select('*')]);
+    const er = rs.map(r => r.error).find(Boolean);
+    if (tk !== K.tk || !$('#k-pista')) return;
+    if (er){ $('#k-rank').innerHTML = '<div class="err">'+esc(msgErro(er))+'</div>'; return; }
+    const rank = rs[0].data, casasP = rs[1].data, premios = rs[2].data, usu = rs[3].data, cls = rs[4].data;
+    const vcs = rs[5].data.filter(v => !v.fim);
+    let gan = [];
+    if (casasP.length){ const g = await sb.from('ganhadores').select('*').in('casa_premio_id', casasP.map(x => x.id)); if (tk !== K.tk) return; if (!g.error) gan = g.data; }
+
+    const ents = {};
+    rank.forEach((r, i) => {
+      const id = r[idCol];
+      if (modo === 'promotor'){ const u = usu.find(x => x.id === id) || {}; const v = vcs.find(x => x.usuario_id === id); const cl = v && cls.find(x => x.id === v.clinica_id);
+        ents[id] = { nome: u.nome || '#'+id, tag: iniciais(u.nome), sub: (cl ? cl.sigla : '') + (u.cargo ? ' · '+u.cargo : ''), cor: PALETA[i % PALETA.length] }; }
+      else { const cl = cls.find(x => x.id === id) || {}; ents[id] = { nome: cl.nome || '#'+id, tag: cl.sigla || '?', sub: cl.sigla || '', cor: cl.cor || PALETA[i % PALETA.length] }; }
+    });
+
+    const N = c.casas, cols = Math.max(4, Math.min(10, Math.floor(($('#k-pista').clientWidth || 800) / 78))), rows = Math.ceil(N / cols);
+    const key = [c.id, modo, N, cols, casasP.map(x => x.casa+':'+x.premio_id).join(',')].join('|');
+    const pos = i => { const r = Math.floor(i / cols); let col = i % cols; if (r % 2) col = cols - 1 - col; return { r, col }; };
+    if (key !== K.key){
+      K.key = key; K.cars = {};
+      const pm = {}; casasP.forEach(x => { const pr = premios.find(p => p.id === x.premio_id); if (pr) pm[x.casa % N] = pr; });
+      let cells = '';
+      for (let r = 0; r < rows; r++) for (let k = 0; k < cols; k++){
+        const col = r % 2 ? cols - 1 - k : k, i = r * cols + col;
+        if (i >= N){ cells += '<div></div>'; continue; }
+        const pr = pm[i];
+        cells += '<div class="casa'+(i===0?' largada':'')+(pr?' '+pr.tipo:'')+'"'+(pr?' title="'+esc(pr.nome)+'"':'')+'><span>'+(i===0?'Largada':i)+'</span>'+(pr?'<small>'+esc(pr.nome)+'</small>':'')+'</div>';
+      }
+      $('#k-pista').innerHTML = '<div class="pgrid" style="grid-template-columns:repeat('+cols+',minmax(0,1fr))">'+cells+'</div><div class="carros" id="k-carros"></div>';
+    }
+    // carros
+    const grupos = {}; rank.forEach(r => { const i = (r.casa_na_volta || 0) % N; (grupos[i] = grupos[i] || []).push(r[idCol]); });
+    const camada = $('#k-carros'), vivos = new Set();
+    Object.keys(grupos).forEach(ci => grupos[ci].forEach((id, j, arr) => {
+      const e = ents[id], p = pos(Number(ci)); vivos.add(id);
+      let el = K.cars[id];
+      if (!el){ el = document.createElement('div'); el.className = 'carro'; camada.appendChild(el); K.cars[id] = el;
+        el.innerHTML = '<div class="in"><span class="tag"></span><svg viewBox="0 0 40 20" width="42" height="21" aria-hidden="true"><rect x="4" y="6" width="26" height="8" rx="4" fill="'+esc(e.cor)+'"/><rect x="28" y="8" width="10" height="4" rx="2" fill="'+esc(e.cor)+'"/><rect x="1" y="3" width="4" height="14" rx="1.5" fill="#111"/><rect x="26" y="2" width="5" height="16" rx="2" fill="#111"/><circle cx="17" cy="10" r="3" fill="#fff" opacity=".85"/></svg></div>'; }
+      $('.tag', el).textContent = e.tag; el.title = e.nome;
+      el.style.width = (100 / cols)+'%'; el.style.height = (100 / rows)+'%';
+      el.style.left = (p.col * 100 / cols)+'%'; el.style.top = (p.r * 100 / rows)+'%';
+      el.style.setProperty('--dx', ((j - (arr.length - 1) / 2) * 26)+'px');
+    }));
+    Object.keys(K.cars).forEach(id => { if (!vivos.has(Number(id))){ K.cars[id].remove(); delete K.cars[id]; } });
+
+    // classificação
+    $('#k-rank').innerHTML = rank.map(r => { const e = ents[r[idCol]]; const fim = c.voltas_max && r.pontos >= c.voltas_max * N;
+      return '<div class="rk"><span class="pos">'+r.posicao+'º</span><span class="dot" style="background:'+esc(e.cor)+'"></span><div><b>'+esc(e.nome)+'</b><p class="meta">'+esc(e.sub)+' · volta '+r.volta+', casa '+r.casa_na_volta+(fim?' · terminou':'')+'</p></div><span class="pts">'+r.pontos+' <span class="meta">pts</span></span></div>'; }).join('')
+      || '<div class="empty">Ninguém participa desta campanha ainda.</div>';
+
+    // prêmios
+    $('#k-prem').innerHTML = casasP.slice().sort((a, b) => a.casa - b.casa).map(x => {
+      const pr = premios.find(p => p.id === x.premio_id) || { nome: '?', tipo: 'prata' };
+      const gs = gan.filter(g => g.casa_premio_id === x.id).sort((a, b) => a.volta - b.volta);
+      return '<div class="item" style="grid-template-columns:minmax(0,1fr)"><div class="line"><span class="badge '+esc(pr.tipo)+'">'+esc(pr.tipo)+'</span><b>Casa '+x.casa+'</b><span>'+esc(pr.nome)+'</span></div>'
+        + (gs.length ? gs.map(g => { const e = ents[g.alvo_id] || { nome: '#'+g.alvo_id };
+            return '<div class="line"><span>'+esc(e.nome)+(g.volta > 1 ? ' <span class="meta">(volta '+g.volta+')</span>' : '')+'</span>'
+              + (g.pendente_revisao ? '<span class="chip off">Revisar</span>' : '')
+              + (g.entregue_em ? '<span class="chip ok">Entregue</span>' : '<button type="button" class="btn ghost sm" data-ent="'+g.id+'">Marcar entregue</button>')+'</div>'; }).join('')
+          : '<div class="meta">Ninguém passou ainda.</div>')+'</div>'; }).join('')
+      || '<div class="empty">Esta campanha não tem casas premiadas para '+(modo==='promotor'?'promotores':'clínicas')+'.</div>';
+    $('#k-hora').textContent = 'Atualizado às '+new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+
+  setInterval(() => { if (recurso === 'corrida' && !$('#v-app').hidden && !document.hidden && $('#k-pista')) corridaAtualizar(); }, 15000);
+
+
+  /* ---------- lançamentos (visitas e vendas) ---------- */
+  const L = { tipos: [], clin: [], usu: [], camps: [], vincs: [], rows: [], lcs: [], filtroClin: '', dias: 30, acao: null, hist: [] };
+  const num = v => Number(String(v).replace(',', '.'));
+  const rpcMsg = e => (e && e.message) || 'Algo deu errado. Tente de novo.';
+
+  async function lancCarregar(){
+    $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const rs = await Promise.all([sb.from('tipos_lancamento').select('*').order('nome'), sb.from('clinicas').select('*').order('nome'), sb.from('usuarios').select('*').order('nome'),
+      sb.from('campanhas').select('*'), sb.from('vinculos_clinica').select('*')]);
+    const er = rs.map(r => r.error).find(Boolean);
+    if (er){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
+    L.tipos = rs[0].data.filter(t => t.ativo); L.clin = rs[1].data; L.usu = rs[2].data; L.camps = rs[3].data; L.vincs = rs[4].data.filter(v => !v.fim);
+    L.acao = null; lancDesenhar();
+  }
+
+  function lancOpcPromotores(clinicaId){
+    const ativos = L.usu.filter(u => u.papel === 'promotor' && u.ativo);
+    const daClin = ativos.filter(u => L.vincs.some(v => v.usuario_id === u.id && v.clinica_id === clinicaId));
+    const outros = ativos.filter(u => !daClin.includes(u));
+    const o = u => '<option value="'+u.id+'">'+esc(u.nome)+(u.cargo ? ' · '+esc(u.cargo) : '')+'</option>';
+    return '<option value="">Escolha...</option>'+(daClin.length ? '<optgroup label="Desta clínica">'+daClin.map(o).join('')+'</optgroup>' : '')+(outros.length ? '<optgroup label="Outros promotores">'+outros.map(o).join('')+'</optgroup>' : '');
+  }
+
+  function lancDesenhar(){
+    $('#area').style.gridTemplateColumns = '';
+    const clAt = L.clin.filter(c => c.ativa);
+    $('#area').innerHTML =
+      '<div class="card"><h2>Novo lançamento</h2><p class="sub">Registre uma visita ou venda. Ela conta em todas as campanhas em que o promotor e a clínica participam e que aceitam esse tipo.</p>'
+      + '<form class="form" id="f-lanc" novalidate>'
+      + '<label class="field" for="n-clin">Clínica<select id="n-clin"><option value="">Escolha...</option>'+clAt.map(c => '<option value="'+c.id+'">'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="field" for="n-prom">Promotor<select id="n-prom">'+lancOpcPromotores(0)+'</select></label>'
+      + '<label class="field" for="n-tipo">O que foi feito<select id="n-tipo"><option value="">Escolha...</option>'+L.tipos.map(t => '<option value="'+t.id+'" data-v="'+(t.usa_valor?1:0)+'">'+esc(t.nome)+'</option>').join('')+'</select></label>'
+      + '<div class="g2"><label class="field" for="n-qtd">Quantidade<input id="n-qtd" type="number" inputmode="decimal" min="0.01" step="any" value="1"></label>'
+      + '<label class="field" for="n-data">Data<input id="n-data" type="date" value="'+hoje()+'" max="'+hoje()+'"></label></div>'
+      + '<label class="field" for="n-valor" id="w-valor" hidden>Valor da venda (R$)<input id="n-valor" type="number" inputmode="decimal" min="0.01" step="0.01"></label>'
+      + '<div class="err" id="n-err" role="alert"></div><div class="btns"><button class="btn" type="submit" id="n-btn">Lançar</button></div></form></div>'
+      + '<div class="card"><div class="top"><h2>Lançamentos recentes</h2><div class="line">'
+      + '<select id="l-fclin" aria-label="Filtrar por clínica" style="width:auto"><option value="">Todas as clínicas</option>'+L.clin.map(c => '<option value="'+c.id+'"'+(String(c.id)===L.filtroClin?' selected':'')+'>'+esc(c.sigla)+'</option>').join('')+'</select>'
+      + '<select id="l-fdias" aria-label="Período" style="width:auto">'+[7,30,90].map(d => '<option value="'+d+'"'+(d===L.dias?' selected':'')+'>Últimos '+d+' dias</option>').join('')+'</select></div></div>'
+      + '<div id="l-lista" style="margin-top:8px"><p class="sub">Carregando...</p></div></div>';
+    $('#n-clin').addEventListener('change', e => { $('#n-prom').innerHTML = lancOpcPromotores(Number(e.target.value)); });
+    $('#n-tipo').addEventListener('change', e => { const o = e.target.selectedOptions[0]; $('#w-valor').hidden = !(o && o.dataset.v === '1'); });
+    $('#f-lanc').addEventListener('submit', lancarSalvar);
+    $('#l-fclin').addEventListener('change', e => { L.filtroClin = e.target.value; L.acao = null; lancLista(); });
+    $('#l-fdias').addEventListener('change', e => { L.dias = Number(e.target.value); L.acao = null; lancLista(); });
+    $('#l-lista').addEventListener('click', lancClique);
+    lancLista();
+  }
+
+  async function lancarSalvar(e){
+    e.preventDefault();
+    const clinica = Number($('#n-clin').value), prom = Number($('#n-prom').value), tipo = Number($('#n-tipo').value), qtd = num($('#n-qtd').value);
+    const t = L.tipos.find(x => x.id === tipo), valor = $('#n-valor').value === '' ? null : num($('#n-valor').value);
+    const erro = !clinica ? 'Escolha a clínica.' : !prom ? 'Escolha o promotor.' : !tipo ? 'Escolha o que foi feito.' : !(qtd > 0) ? 'A quantidade precisa ser maior que zero.'
+      : (t.usa_valor && !(valor > 0)) ? 'Este tipo exige o valor da venda.' : !$('#n-data').value ? 'Informe a data.' : '';
+    if (erro){ $('#n-err').textContent = erro; return; }
+    const btn = $('#n-btn'); btn.disabled = true; $('#n-err').textContent = '';
+    const { error } = await sb.rpc('lancar', { p_promotor: prom, p_clinica: clinica, p_tipo: tipo, p_quantidade: qtd, p_valor: t.usa_valor ? valor : null, p_data: $('#n-data').value });
+    btn.disabled = false;
+    if (error){ $('#n-err').textContent = rpcMsg(error); return; }
+    toast('Lançamento registrado.'); $('#n-qtd').value = '1'; $('#n-valor').value = ''; lancLista();
+  }
+
+  async function lancLista(){
+    const alvo = $('#l-lista'); if (!alvo) return;
+    const desde = new Date(Date.now() - L.dias * 864e5).toLocaleDateString('sv-SE');
+    let q = sb.from('lancamentos').select('*').gte('data_ref', desde).order('criado_em', { ascending: false }).limit(200);
+    if (L.filtroClin) q = q.eq('clinica_id', Number(L.filtroClin));
+    const { data, error } = await q;
+    if (error){ alvo.innerHTML = '<div class="err">'+esc(msgErro(error))+'</div>'; return; }
+    L.rows = data; L.lcs = [];
+    if (data.length){ const r = await sb.from('lancamento_campanhas').select('*').in('lancamento_id', data.map(x => x.id)); if (!r.error) L.lcs = r.data; }
+    lancRender();
+  }
+
+  function lancRender(){
+    const alvo = $('#l-lista'); if (!alvo) return;
+    alvo.innerHTML = '<ul class="items">'+(L.rows.map(r => {
+      const u = L.usu.find(x => x.id === r.promotor_id) || { nome: '#'+r.promotor_id }, c = L.clin.find(x => x.id === r.clinica_id) || { sigla: '?' }, t = L.tipos.find(x => x.id === r.tipo_id) || {};
+      const nomeT = t.nome || 'Tipo #'+r.tipo_id;
+      const lcs = L.lcs.filter(x => x.lancamento_id === r.id), validos = lcs.filter(x => x.status === 'valido');
+      const st = !lcs.length ? '' : !validos.length ? '<span class="chip off">Cancelado</span>' : validos.length < lcs.length ? '<span class="chip off">Cancelado em parte</span>' : '';
+      const aberto = L.acao && L.acao.id === r.id ? L.acao.tipo : null;
+      return '<li class="item" style="grid-template-columns:minmax(0,1fr)"><div class="line" style="justify-content:space-between"><div style="min-width:0"><div class="line"><b>'+esc(u.nome)+'</b><span class="sigla">'+esc(c.sigla)+'</span><span>'+esc(nomeT)+'</span>'+st+'</div>'
+        + '<div class="meta">'+dBR(r.data_ref)+' · qtd '+Number(r.quantidade)+(r.valor != null ? ' · '+brl(r.valor) : '')+' · '+lcs.map(x => '<span class="chip'+(x.status==='valido'?'':' off')+'">'+esc((L.camps.find(k => k.id === x.campanha_id) || {}).nome || '#'+x.campanha_id)+'</span>').join(' ')+'</div></div>'
+        + '<div class="btns"><button type="button" class="btn ghost sm" data-a="hi" data-id="'+r.id+'">Histórico</button>'
+        + (validos.length ? '<button type="button" class="btn ghost sm" data-a="ed" data-id="'+r.id+'">Corrigir</button><button type="button" class="btn ghost sm" data-a="ca" data-id="'+r.id+'">Cancelar</button>' : '')+'</div></div>'
+        + (aberto ? lancPainel(r, aberto, validos, t) : '')+'</li>'; }).join('') || '<li class="empty">Nenhum lançamento neste período.</li>')+'</ul>';
+  }
+
+  function lancPainel(r, tipo, validos, t){
+    if (tipo === 'ed') return '<div class="form" style="margin-top:10px;padding:12px;background:var(--surface-2);border-radius:14px"><div class="g2"><label class="field">Quantidade<input id="a-qtd" type="number" step="any" min="0.01" value="'+Number(r.quantidade)+'"></label>'
+      + (t.usa_valor ? '<label class="field">Valor (R$)<input id="a-valor" type="number" step="0.01" min="0.01" value="'+(r.valor != null ? Number(r.valor) : '')+'"></label>' : '')+'</div>'
+      + '<label class="field">Motivo da correção<input id="a-motivo" type="text" autocomplete="off" placeholder="Ex.: digitei o valor errado"></label><div class="err" id="a-err" role="alert"></div>'
+      + '<div class="btns"><button type="button" class="btn sm" data-a="ok-ed" data-id="'+r.id+'">Salvar correção</button><button type="button" class="btn ghost sm" data-a="fechar">Fechar</button></div></div>';
+    if (tipo === 'ca') return '<div class="form" style="margin-top:10px;padding:12px;background:var(--surface-2);border-radius:14px"><label class="field">Cancelar em<select id="a-camp"><option value="">Todas as campanhas</option>'
+      + validos.map(x => '<option value="'+x.campanha_id+'">'+esc((L.camps.find(k => k.id === x.campanha_id) || {}).nome || '#'+x.campanha_id)+'</option>').join('')+'</select></label>'
+      + '<label class="field">Motivo do cancelamento<input id="a-motivo" type="text" autocomplete="off" placeholder="Ex.: lançado em duplicidade"></label><div class="err" id="a-err" role="alert"></div>'
+      + '<div class="btns"><button type="button" class="btn sm" data-a="ok-ca" data-id="'+r.id+'">Confirmar cancelamento</button><button type="button" class="btn ghost sm" data-a="fechar">Fechar</button></div></div>';
+    const h = L.hist;
+    return '<div style="margin-top:10px;padding:12px;background:var(--surface-2);border-radius:14px">'+(h.length ? h.map(a => {
+      const u = L.usu.find(x => x.id === a.usuario_id) || { nome: '#'+a.usuario_id };
+      const det = a.acao === 'editar' && a.antes && a.depois ? ' · qtd '+Number(a.antes.quantidade)+' → '+Number(a.depois.quantidade)+(a.antes.valor != null || a.depois.valor != null ? ' · valor '+brl(a.antes.valor)+' → '+brl(a.depois.valor) : '')
+        : a.acao === 'criar' && a.depois ? ' · qtd '+Number(a.depois.quantidade)+(a.depois.valor != null ? ' · '+brl(a.depois.valor) : '') : '';
+      return '<div class="meta" style="margin:4px 0"><b>'+({criar:'Criado',editar:'Corrigido',cancelar:'Cancelado'}[a.acao]||esc(a.acao))+'</b> por '+esc(u.nome)+' em '+new Date(a.quando).toLocaleString('pt-BR')+esc(det)+(a.motivo ? ' · motivo: '+esc(a.motivo) : '')+'</div>'; }).join('') : '<div class="meta">Sem histórico.</div>')
+      + '<div class="btns" style="margin-top:8px"><button type="button" class="btn ghost sm" data-a="fechar">Fechar</button></div></div>';
+  }
+
+  async function lancClique(e){
+    const b = e.target.closest('[data-a]'); if (!b) return;
+    const a = b.dataset.a, id = Number(b.dataset.id);
+    if (a === 'fechar'){ L.acao = null; lancRender(); return; }
+    if (a === 'ed' || a === 'ca'){ L.acao = { id, tipo: a }; lancRender(); return; }
+    if (a === 'hi'){
+      const { data, error } = await sb.from('auditoria').select('*').eq('lancamento_id', id).order('quando', { ascending: false });
+      L.hist = error ? [] : data; L.acao = { id, tipo: 'hi' }; lancRender(); return;
+    }
+    const motivo = ($('#a-motivo') || {}).value || '';
+    if (motivo.trim().length < 3){ $('#a-err').textContent = 'Informe o motivo (mínimo 3 letras).'; return; }
+    b.disabled = true;
+    let r;
+    if (a === 'ok-ed'){
+      const qtd = num($('#a-qtd').value), v = $('#a-valor') ? ($('#a-valor').value === '' ? null : num($('#a-valor').value)) : null;
+      if (!(qtd > 0)){ b.disabled = false; $('#a-err').textContent = 'A quantidade precisa ser maior que zero.'; return; }
+      r = await sb.rpc('editar_lancamento', { p_id: id, p_quantidade: qtd, p_valor: v, p_motivo: motivo.trim() });
+    } else {
+      const c = $('#a-camp').value;
+      r = await sb.rpc('cancelar_lancamento', { p_id: id, p_motivo: motivo.trim(), p_campanha: c ? Number(c) : null });
+    }
+    b.disabled = false;
+    if (r.error){ $('#a-err').textContent = rpcMsg(r.error); return; }
+    toast(a === 'ok-ed' ? 'Lançamento corrigido.' : 'Lançamento cancelado.'); L.acao = null; lancLista();
+  }
+
+
+  /* ---------- relatórios: fechamento e auditoria ---------- */
+  const RP = { tipos: [], clin: [], usu: [], camps: [], aba: 'fech', f: { de: '', ate: '', camp: '', clin: '', por: 'promotor' }, a: { de: '', ate: '', quem: '', acao: '', so: true }, linhas: [], tk: 0 };
+  const pct1 = n => n == null ? '—' : n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })+'%';
+  const nfmt = n => Number(n).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+
+  async function relCarregar(){
+    $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
+    $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const rs = await Promise.all([sb.from('tipos_lancamento').select('*'), sb.from('clinicas').select('*').order('nome'), sb.from('usuarios').select('*').order('nome'), sb.from('campanhas').select('*')]);
+    const er = rs.map(r => r.error).find(Boolean);
+    if (er){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
+    RP.tipos = rs[0].data; RP.clin = rs[1].data; RP.usu = rs[2].data; RP.camps = rs[3].data;
+    const h = hoje(), ini = h.slice(0, 8)+'01';
+    if (!RP.f.de){ RP.f.de = ini; RP.f.ate = h; RP.a.de = ini; RP.a.ate = h; }
+    relDesenhar();
+  }
+
+  function relDesenhar(){
+    $('#area').innerHTML = '<div class="card"><div class="top"><h2>Relatórios</h2><div class="seg" role="group" aria-label="Relatório"><button type="button" data-ra="fech" aria-pressed="'+(RP.aba==='fech')+'">% pela corrida</button><button type="button" data-ra="aud" aria-pressed="'+(RP.aba==='aud')+'">Auditoria</button></div></div><div id="r-corpo" style="margin-top:12px"></div></div>';
+    $$('[data-ra]').forEach(b => b.addEventListener('click', () => { RP.aba = b.dataset.ra; relDesenhar(); }));
+    if (RP.aba === 'fech') relFiltrosFech(); else relFiltrosAud();
+  }
+
+  const optsPessoas = (sel, papeis) => '<option value="">Todas as pessoas</option>'+RP.usu.filter(u => papeis.includes(u.papel)).map(u => '<option value="'+u.id+'"'+(String(u.id)===String(sel)?' selected':'')+'>'+esc(u.nome)+'</option>').join('');
+
+  function relFiltrosFech(){
+    const f = RP.f;
+    $('#r-corpo').innerHTML = '<p class="sub">% de fechamento = vendas de início ÷ visitas. Só entram lançamentos que continuam válidos.</p>'
+      + '<div class="g3"><label class="field">De<input id="f-de" type="date" value="'+esc(f.de)+'"></label><label class="field">Até<input id="f-ate" type="date" value="'+esc(f.ate)+'"></label>'
+      + '<label class="field">Campanha<select id="f-camp"><option value="">Todas</option>'+RP.camps.map(c => '<option value="'+c.id+'"'+(String(c.id)===f.camp?' selected':'')+'>'+esc(c.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="field">Clínica<select id="f-clin"><option value="">Todas</option>'+RP.clin.map(c => '<option value="'+c.id+'"'+(String(c.id)===f.clin?' selected':'')+'>'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="field">Agrupar por<select id="f-por"><option value="promotor"'+(f.por==='promotor'?' selected':'')+'>Promotor</option><option value="clinica"'+(f.por==='clinica'?' selected':'')+'>Clínica</option><option value="mes"'+(f.por==='mes'?' selected':'')+'>Mês</option></select></label></div>'
+      + '<div class="btns" style="margin:10px 0"><button class="btn ghost sm" type="button" data-p="mes">Este mês</button><button class="btn ghost sm" type="button" data-p="ant">Mês passado</button><button class="btn ghost sm" type="button" data-p="90">Últimos 90 dias</button><button class="btn ghost sm" type="button" id="f-csv">Baixar planilha</button></div><div id="f-res"><p class="sub">Carregando...</p></div>';
+    const ler = () => { f.de = $('#f-de').value; f.ate = $('#f-ate').value; f.camp = $('#f-camp').value; f.clin = $('#f-clin').value; f.por = $('#f-por').value; relFechamento(); };
+    ['f-de','f-ate','f-camp','f-clin','f-por'].forEach(id => $('#'+id).addEventListener('change', ler));
+    $$('[data-p]').forEach(b => b.addEventListener('click', () => {
+      const h = new Date(), d = n => new Date(h.getFullYear(), h.getMonth() + n, 1), iso = x => x.toLocaleDateString('sv-SE');
+      if (b.dataset.p === 'mes'){ f.de = iso(d(0)); f.ate = hoje(); }
+      else if (b.dataset.p === 'ant'){ f.de = iso(d(-1)); f.ate = iso(new Date(h.getFullYear(), h.getMonth(), 0)); }
+      else { f.de = iso(new Date(Date.now() - 90 * 864e5)); f.ate = hoje(); }
+      $('#f-de').value = f.de; $('#f-ate').value = f.ate; relFechamento();
+    }));
+    $('#f-csv').addEventListener('click', baixarCsv);
+    relFechamento();
+  }
+
+  async function buscarLanc(de, ate){
+    let tudo = [];
+    for (let i = 0; ; i += 1000){
+      const { data, error } = await sb.from('lancamentos').select('*, lancamento_campanhas(campanha_id,status)').gte('data_ref', de).lte('data_ref', ate).order('data_ref').range(i, i + 999);
+      if (error) return { error };
+      tudo = tudo.concat(data);
+      if (data.length < 1000 || tudo.length >= 20000) break;
+    }
+    return { data: tudo };
+  }
+
+  async function relFechamento(){
+    const f = RP.f, tk = ++RP.tk, alvo = $('#f-res'); if (!alvo) return;
+    if (!f.de || !f.ate || f.de > f.ate){ alvo.innerHTML = '<div class="err">Informe um período válido.</div>'; return; }
+    alvo.innerHTML = '<p class="sub">Calculando...</p>';
+    const r = await buscarLanc(f.de, f.ate);
+    if (tk !== RP.tk || !$('#f-res')) return;
+    if (r.error){ alvo.innerHTML = '<div class="err">'+esc(msgErro(r.error))+'</div>'; return; }
+    const camp = f.camp ? Number(f.camp) : null, g = {};
+    r.data.forEach(l => {
+      if (f.clin && l.clinica_id !== Number(f.clin)) return;
+      if (!(l.lancamento_campanhas || []).some(x => x.status === 'valido' && (!camp || x.campanha_id === camp))) return;
+      const t = RP.tipos.find(x => x.id === l.tipo_id); if (!t || t.base_fechamento === 'nenhum') return;
+      const k = f.por === 'promotor' ? l.promotor_id : f.por === 'clinica' ? l.clinica_id : String(l.data_ref).slice(0, 7);
+      const o = g[k] = g[k] || { k, visitas: 0, vendas: 0 };
+      if (t.base_fechamento === 'visita') o.visitas += Number(l.quantidade); else o.vendas += Number(l.quantidade);
+    });
+    const nome = k => f.por === 'promotor' ? ((RP.usu.find(u => u.id === k) || {}).nome || '#'+k)
+      : f.por === 'clinica' ? (c => c ? c.sigla+' · '+c.nome : '#'+k)(RP.clin.find(c => c.id === k)) : k.slice(5)+'/'+k.slice(0, 4);
+    const linhas = Object.values(g).map(o => ({ nome: nome(o.k), visitas: o.visitas, vendas: o.vendas, pct: o.visitas > 0 ? 100 * o.vendas / o.visitas : null, k: o.k }));
+    linhas.sort((a, b) => f.por === 'mes' ? (a.k < b.k ? -1 : 1) : ((b.pct == null ? -1 : b.pct) - (a.pct == null ? -1 : a.pct)) || b.visitas - a.visitas);
+    const tv = linhas.reduce((s, x) => s + x.visitas, 0), tn = linhas.reduce((s, x) => s + x.vendas, 0);
+    RP.linhas = linhas.concat([{ nome: 'Total', visitas: tv, vendas: tn, pct: tv > 0 ? 100 * tn / tv : null, total: true }]);
+    alvo.innerHTML = linhas.length
+      ? '<div style="overflow-x:auto"><table class="tab"><thead><tr><th>'+({promotor:'Promotor',clinica:'Clínica',mes:'Mês'}[f.por])+'</th><th class="n">Visitas</th><th class="n">Vendas de início</th><th class="n">% de fechamento</th></tr></thead><tbody>'
+        + RP.linhas.map(x => '<tr'+(x.total?' class="tot"':'')+'><td>'+esc(x.nome)+'</td><td class="n">'+nfmt(x.visitas)+'</td><td class="n">'+nfmt(x.vendas)+'</td><td class="n"><span class="barra"><i style="width:'+Math.min(100, x.pct || 0)+'%"></i></span> <b>'+pct1(x.pct)+'</b></td></tr>').join('')+'</tbody></table></div>'
+      : '<div class="empty">Nenhuma visita ou venda de início neste período.</div>';
+  }
+
+  function baixarCsv(){
+    if (!RP.linhas.length){ toast('Nada para baixar neste período.'); return; }
+    const n = v => String(v).replace('.', ',');
+    const csv = '﻿'+['Nome;Visitas;Vendas de início;% de fechamento'].concat(RP.linhas.map(x => [x.nome, n(x.visitas), n(x.vendas), x.pct == null ? '' : n(x.pct.toFixed(1))].map(c => '"'+String(c).replace(/"/g, '""')+'"').join(';'))).join('\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'fechamento-'+RP.f.de+'-a-'+RP.f.ate+'.csv';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+
+  function relFiltrosAud(){
+    const a = RP.a;
+    $('#r-corpo').innerHTML = '<p class="sub">Tudo que foi criado, corrigido ou cancelado, com quem fez, quando e o motivo. Nada aqui pode ser apagado.</p>'
+      + '<div class="g3"><label class="field">De<input id="a-de" type="date" value="'+esc(a.de)+'"></label><label class="field">Até<input id="a-ate" type="date" value="'+esc(a.ate)+'"></label>'
+      + '<label class="field">Quem fez<select id="a-quem">'+optsPessoas(a.quem, ['gestor','gerente'])+'</select></label>'
+      + '<label class="field">Ação<select id="a-acao"><option value="">Todas</option><option value="criar"'+(a.acao==='criar'?' selected':'')+'>Criou</option><option value="editar"'+(a.acao==='editar'?' selected':'')+'>Corrigiu</option><option value="cancelar"'+(a.acao==='cancelar'?' selected':'')+'>Cancelou</option></select></label></div>'
+      + '<label class="chk" style="margin:10px 0"><input id="a-so" type="checkbox"'+(a.so?' checked':'')+'><span>Mostrar só correções e cancelamentos</span></label><div id="a-res"><p class="sub">Carregando...</p></div>';
+    const ler = () => { a.de = $('#a-de').value; a.ate = $('#a-ate').value; a.quem = $('#a-quem').value; a.acao = $('#a-acao').value; a.so = $('#a-so').checked; relAuditoria(); };
+    ['a-de','a-ate','a-quem','a-acao','a-so'].forEach(id => $('#'+id).addEventListener('change', ler));
+    relAuditoria();
+  }
+
+  async function relAuditoria(){
+    const a = RP.a, tk = ++RP.tk, alvo = $('#a-res'); if (!alvo) return;
+    if (!a.de || !a.ate || a.de > a.ate){ alvo.innerHTML = '<div class="err">Informe um período válido.</div>'; return; }
+    alvo.innerHTML = '<p class="sub">Carregando...</p>';
+    let q = sb.from('auditoria').select('*, lancamentos(promotor_id,clinica_id,tipo_id,quantidade,valor,data_ref)')
+      .gte('quando', new Date(a.de+'T00:00:00').toISOString()).lte('quando', new Date(a.ate+'T23:59:59').toISOString()).order('quando', { ascending: false }).limit(300);
+    if (a.quem) q = q.eq('usuario_id', Number(a.quem));
+    if (a.acao) q = q.eq('acao', a.acao); else if (a.so) q = q.in('acao', ['editar', 'cancelar']);
+    const { data, error } = await q;
+    if (tk !== RP.tk || !$('#a-res')) return;
+    if (error){ alvo.innerHTML = '<div class="err">'+esc(msgErro(error))+'</div>'; return; }
+    alvo.innerHTML = data.length ? '<p class="meta" style="margin-bottom:6px">'+data.length+(data.length === 300 ? ' (mostrando os 300 mais recentes)' : '')+' registro'+(data.length === 1 ? '' : 's')+'</p><ul class="items">'+data.map(x => {
+      const l = x.lancamentos || {}, quem = (RP.usu.find(u => u.id === x.usuario_id) || { nome: '#'+x.usuario_id }).nome,
+        pr = (RP.usu.find(u => u.id === l.promotor_id) || { nome: '—' }).nome, cl = (RP.clin.find(c => c.id === l.clinica_id) || { sigla: '?' }).sigla, tp = (RP.tipos.find(t => t.id === l.tipo_id) || { nome: 'Lançamento' }).nome;
+      const det = x.acao === 'editar' && x.antes && x.depois ? ' · quantidade '+nfmt(x.antes.quantidade)+' → '+nfmt(x.depois.quantidade)+(x.antes.valor != null || x.depois.valor != null ? ' · valor '+brl(x.antes.valor)+' → '+brl(x.depois.valor) : '') : '';
+      return '<li class="item" style="grid-template-columns:minmax(0,1fr)"><div class="line"><span class="badge '+(x.acao==='criar'?'':'ouro')+'">'+({criar:'Criou',editar:'Corrigiu',cancelar:'Cancelou'}[x.acao]||esc(x.acao))+'</span><b>'+esc(quem)+'</b><span class="meta" style="margin:0">'+new Date(x.quando).toLocaleString('pt-BR')+'</span></div>'
+        + '<div class="meta">'+esc(tp)+' de '+esc(pr)+' · '+esc(cl)+(l.data_ref ? ' · '+dBR(l.data_ref) : '')+esc(det)+'</div>'+(x.motivo ? '<div>Motivo: '+esc(x.motivo)+'</div>' : '')+'</li>'; }).join('')+'</ul>'
+      : '<div class="empty">Nenhum registro neste período.</div>';
+  }
+
+
+  /* ---------- planilha diária: lançamento do dia e planilha do mês ---------- */
+  const PD = { clinicas: [], clin: null, ano: 0, mes: 0, inativos: true, data: '', tk: 0, pessoas: [], r: {}, corr: {}, existe: false, motivo: '' };
+  const PD_META = { 'Promotor': 30, 'Luminoso': 30, 'Tele BH': 45, 'Tele interno': 45 };
+  const PD_ORDEM = ['Promotor', 'Tele BH', 'Tele interno', 'Luminoso'];
+  const PD_ROT = { 'Promotor': 'Promotores', 'Tele BH': 'Tele BH', 'Tele interno': 'Tele interno', 'Luminoso': 'Luminoso', 'Divulgador': 'Divulgadores' };
+  const pd2 = n => String(n).padStart(2, '0');
+  const pdIso = (a, m, d) => a+'-'+pd2(m + 1)+'-'+pd2(d);
+  const pdN = (a, m) => new Date(a, m + 1, 0).getDate();
+  const pf1 = x => x == null ? '—' : x.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })+'%';
+  const pf0 = x => x == null ? '—' : Math.round(x)+'%';
+  const pdPct = (v, s) => v > 0 ? 100 * s / v : null;
+  const pdMarcar = () => $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
+  const pdErro = e => { $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(e))+'</div></div>'; };
+
+  async function pdBase(){
+    if (PD.clinicas.length && PD.ano) return null;
+    const q = await sb.from('clinicas').select('*').order('nome');
+    if (q.error) return q.error;
+    let lista = q.data.filter(c => c.ativa !== false);
+    if (eu.papel === 'gerente'){
+      const v = await sb.from('vinculos_clinica').select('*').eq('usuario_id', eu.id);
+      if (v.error) return v.error;
+      const ids = v.data.filter(x => !x.fim || x.fim >= hoje()).map(x => x.clinica_id);
+      lista = lista.filter(c => ids.includes(c.id));
+    }
+    PD.clinicas = lista; PD.clin = lista[0] ? lista[0].id : null;
+    const h = hoje(); PD.ano = Number(h.slice(0, 4)); PD.mes = Number(h.slice(5, 7)) - 1; PD.data = h;
+    return null;
+  }
+
+  const pdSelClin = () => '<select id="pd-clin" aria-label="Clínica">'+PD.clinicas.map(c => '<option value="'+c.id+'"'+(c.id === PD.clin ? ' selected' : '')+'>'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select>';
+  const pdVazio = () => { $('#area').innerHTML = '<div class="card"><div class="empty">'+(eu.papel === 'gerente' ? 'Você ainda não está vinculada a uma clínica. Fale com o gestor.' : 'Cadastre uma clínica primeiro.')+'</div></div>'; };
+
+  /* meta do divulgador num dia: média das metas por tipo de visita (rua 30%, tele 45%) */
+  function pdMetaDia(pes, M, d){
+    let rua = 0, tele = 0;
+    pes.forEach(p => { if (p.cargo === 'Divulgador') return; const v = ((M[p.id] || {})[d] || [0, 0])[0]; if (p.cargo === 'Tele BH' || p.cargo === 'Tele interno') tele += v; else rua += v; });
+    return rua + tele > 0 ? (rua * 30 + tele * 45) / (rua + tele) : null;
+  }
+  function pdMetaDiv(pes, M, ids, n){
+    let num = 0, den = 0;
+    ids.forEach(id => { for (let d = 1; d <= n; d++){ const c = (M[id] || {})[d]; if (!c || c[0] <= 0) continue; const m = pdMetaDia(pes, M, d); if (m != null){ num += c[0] * m; den += c[0]; } } });
+    return den > 0 ? num / den : null;
+  }
+  const pdSoma = (ids, M, n) => { let v = 0, s = 0; ids.forEach(id => { for (let d = 1; d <= n; d++){ const c = (M[id] || {})[d]; if (c){ v += c[0]; s += c[1]; } } }); return { v, s }; };
+  function pdPill(p, m){
+    if (p == null) return '<span class="pl nd">sem visitas</span>';
+    if (m == null) return '<span class="pl nd">'+pf1(p)+'</span>';
+    return '<span class="pl '+(p >= m ? 'ok' : 'no')+'">'+(p >= m ? '+' : '−')+Math.abs(p - m).toLocaleString('pt-BR', { maximumFractionDigits: 1 })+' pp</span>';
+  }
+
+  /* ----- planilha do mês ----- */
+  async function planCarregar(){
+    pdMarcar(); $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const e0 = await pdBase(); if (e0){ pdErro(e0); return; }
+    if (!PD.clin){ pdVazio(); return; }
+    const n = pdN(PD.ano, PD.mes), de = pdIso(PD.ano, PD.mes, 1), ate = pdIso(PD.ano, PD.mes, n), tk = ++PD.tk;
+    const rs = await Promise.all([sb.rpc('equipe_clinica', { p_clinica: PD.clin, p_de: de, p_ate: ate }),
+      sb.from('planilha_diaria').select('*').eq('clinica_id', PD.clin).gte('data_ref', de).lte('data_ref', ate).limit(5000),
+      sb.rpc('conferencia_corrida', { p_clinica: PD.clin, p_de: de, p_ate: ate })]);
+    if (tk !== PD.tk) return;
+    const er = rs.map(r => r.error).find(Boolean); if (er){ pdErro(er); return; }
+    const M = {}, lanc = {}, C = {};
+    rs[1].data.forEach(r => { const d = Number(String(r.data_ref).slice(8)); (M[r.usuario_id] = M[r.usuario_id] || {})[d] = [r.visitas, r.vendas]; lanc[d] = true; });
+    (rs[2].data || []).forEach(c => { C[c.usuario_id+'|'+Number(String(c.data_ref).slice(8))] = c; });
+    const pes = rs[0].data.filter(p => p.ativo || M[p.id]);
+    PD.mapa = { M, lanc, C, pes, n };
+    planDesenhar();
+  }
+
+  function planDesenhar(){
+    const { M, lanc, C, pes, n } = PD.mapa, hj = hoje(), ehHj = d => pdIso(PD.ano, PD.mes, d) === hj, SEM = ['D','S','T','Q','Q','S','S'];
+    const div = pes.filter(p => p.cargo === 'Divulgador'), ou = pes.filter(p => p.cargo !== 'Divulgador');
+    const ids = a => a.map(p => p.id), idsC = c => ids(pes.filter(p => p.cargo === c));
+    const tdiv = pdSoma(ids(div), M, n), rua = pdSoma(idsC('Promotor').concat(idsC('Luminoso')), M, n), tele = pdSoma(idsC('Tele BH').concat(idsC('Tele interno')), M, n), todos = pdSoma(ids(ou), M, n);
+    const mdiv = pdMetaDiv(pes, M, ids(div), n), rp = pdPct(rua.v, rua.s), tp = pdPct(tele.v, tele.s);
+    const cards = [['Eficiência da clínica', pdPct(todos.v, todos.s), mdiv, todos], ['Promotores e Luminoso', rp, 30, rua], ['Teles (BH e interno)', tp, 45, tele], ['Divulgadores', pdPct(tdiv.v, tdiv.s), mdiv, tdiv]];
+    const placar = '<div class="pd-placar">'+cards.map(c => '<div class="pd-pc"><div class="k"><span>'+c[0]+'</span>'+pdPill(c[1], c[2])+'</div><div class="v">'+pf1(c[1]).replace('%','')+'<small>%</small></div>'
+      + '<div class="b" title="Escala de 0 a 60%"><i style="width:'+Math.min(100, (c[1] || 0) / 60 * 100)+'%"></i>'+(c[2] != null ? '<u style="left:calc('+Math.min(100, c[2] / 60 * 100)+'% - 1px)"></u>' : '')+'</div>'
+      + '<div class="f">Meta '+(c[2] != null ? pf1(c[2]) : '—')+' · '+c[3].s+' vendas · '+c[3].v+' visitas</div></div>').join('')+'</div>';
+
+    const dvs = [];
+    Object.keys(C).forEach(k => { const c = C[k], d = Number(k.split('|')[1]); if (d >= 1 && d <= n && pdIso(PD.ano, PD.mes, d) <= hj && (c.visitas_planilha !== c.visitas_corrida || c.vendas_planilha !== c.vendas_corrida)) dvs.push({ p: pes.find(x => x.id === c.usuario_id), d, c }); });
+    dvs.sort((a, b) => a.d - b.d);
+    const aviso = '<div class="pd-card pd-div">'+(dvs.length
+      ? '<details><summary><span class="pl no">'+dvs.length+' divergência'+(dvs.length === 1 ? '' : 's')+' com a corrida</span> A planilha e a corrida precisam mostrar os mesmos números de cada pessoa no dia.</summary><ul>'
+        + dvs.map(x => '<li><b>'+esc(x.p ? x.p.nome : '#'+x.c.usuario_id)+'</b> em '+pd2(x.d)+'/'+pd2(PD.mes + 1)+': planilha '+x.c.visitas_planilha+' vis. / '+x.c.vendas_planilha+' ven., corrida '+x.c.visitas_corrida+' vis. / '+x.c.vendas_corrida+' ven.</li>').join('')+'</ul></details>'
+      : '<span class="pl ok">Sem divergências</span> Planilha e corrida mostram os mesmos números neste mês.')+'</div>';
+
+    let h = '<table class="pd" style="width:'+(168 + n * 50 + 240)+'px"><colgroup><col style="width:168px">'+new Array(n + 1).join('<col style="width:50px">')+'<col style="width:54px"><col style="width:54px"><col style="width:70px"><col style="width:62px"></colgroup><thead><tr><th class="nm">Pessoa</th>';
+    for (let d = 1; d <= n; d++){ const w = new Date(PD.ano, PD.mes, d).getDay(); h += '<th class="'+(w === 0 ? 'dom' : '')+(ehHj(d) ? ' hj' : '')+'">'+d+'<small>'+SEM[w]+'</small></th>'; }
+    h += '<th class="rt r1">Vis.</th><th class="rt r2">Ven.</th><th class="rt r3">%</th><th class="rt r4">Meta</th></tr></thead><tbody>';
+    const grupo = (tit, arr, meta) => { const t = pdSoma(ids(arr), M, n), pc = pdPct(t.v, t.s);
+      return '<tr class="gr"><td class="nm">'+tit+'</td><td colspan="'+n+'"></td><td class="rt r1">'+t.v+'</td><td class="rt r2">'+t.s+'</td><td class="rt r3">'+(pc == null ? '–' : '<span class="pl '+(meta != null && pc >= meta ? 'ok' : 'no')+'">'+pf0(pc)+'</span>')+'</td><td class="rt r4">'+(meta != null ? pf0(meta) : '')+'</td></tr>'; };
+    const linha = (p, meta, conf) => {
+      const t = pdSoma([p.id], M, n), pc = pdPct(t.v, t.s); let tds = '';
+      for (let d = 1; d <= n; d++){
+        const c = (M[p.id] || {})[d], w = new Date(PD.ano, PD.mes, d).getDay() === 0, cf = conf && C[p.id+'|'+d];
+        const dv = cf && pdIso(PD.ano, PD.mes, d) <= hj && (cf.visitas_planilha !== cf.visitas_corrida || cf.vendas_planilha !== cf.vendas_corrida);
+        tds += '<td class="c'+(c ? '' : ' z')+(w ? ' dom' : '')+(ehHj(d) ? ' hj' : '')+(dv ? ' dv' : '')+'"'+(dv ? ' title="Corrida: '+cf.visitas_corrida+' visitas / '+cf.vendas_corrida+' vendas"' : '')+'>'+(c ? c[0]+' / '+c[1] : '·')+'</td>';
+      }
+      return '<tr class="'+(p.ativo ? '' : 'in')+'"><td class="nm" title="'+esc(p.nome)+'"><span class="pd-tag'+(p.ativo ? ' a' : '')+'">'+(p.ativo ? 'A' : 'I')+'</span>'+esc(p.nome)+'</td>'+tds+'<td class="rt r1">'+(t.v || '–')+'</td><td class="rt r2">'+(t.v ? t.s : '–')+'</td><td class="rt r3">'+(pc == null ? '–' : '<span class="pl '+(meta != null && pc >= meta ? 'ok' : 'no')+'">'+pf0(pc)+'</span>')+'</td><td class="rt r4">'+(meta != null ? pf0(meta) : '–')+'</td></tr>';
+    };
+    const vis = a => PD.inativos ? a : a.filter(p => p.ativo);
+    h += grupo('Divulgadores', div, mdiv);
+    vis(div).forEach(p => { h += linha(p, pdMetaDiv(pes, M, [p.id], n), false); });
+    PD_ORDEM.forEach(cg => { const a = pes.filter(p => p.cargo === cg); if (!a.length) return; h += grupo(PD_ROT[cg], a, PD_META[cg]); vis(a).forEach(p => { h += linha(p, PD_META[cg], true); }); });
+    const tot = (rot, arr) => { const t = pdSoma(ids(arr), M, n); let tds = '';
+      for (let d = 1; d <= n; d++){ let v = 0, s = 0; arr.forEach(p => { const c = (M[p.id] || {})[d]; if (c){ v += c[0]; s += c[1]; } }); tds += '<td class="c'+(lanc[d] ? '' : ' z')+(new Date(PD.ano, PD.mes, d).getDay() === 0 ? ' dom' : '')+'">'+(lanc[d] ? v+' / '+s : '·')+'</td>'; }
+      return '<tr class="tot"><td class="nm">'+rot+'</td>'+tds+'<td class="rt r1">'+t.v+'</td><td class="rt r2">'+t.s+'</td><td class="rt r3">'+pf0(pdPct(t.v, t.s))+'</td><td class="rt r4"></td></tr>'; };
+    h += tot('Total divulgadores', div)+tot('Total promotores e teles', ou);
+    h += '<tr class="tot"><td class="nm">Meta do divulgador no dia</td>';
+    for (let d = 1; d <= n; d++){ const m = pdMetaDia(pes, M, d); h += '<td class="c'+(m == null ? ' z' : '')+(new Date(PD.ano, PD.mes, d).getDay() === 0 ? ' dom' : '')+'">'+(m == null ? '·' : pf0(m))+'</td>'; }
+    h += '<td class="rt r1"></td><td class="rt r2"></td><td class="rt r3"></td><td class="rt r4">'+pf0(mdiv)+'</td></tr></tbody></table>';
+
+    $('#area').innerHTML = '<div class="pd-card" style="padding:16px 18px"><div class="pd-bar"><div><h2 style="margin:0">Planilha do mês</h2><p class="sub" style="margin:2px 0 0">Visitas / vendas de início de cada pessoa, dia a dia.</p></div>'
+      + '<div class="grp">'+pdSelClin()+'<div class="pd-mes"><button type="button" id="pd-ant" aria-label="Mês anterior">‹</button><b>'+new Date(PD.ano, PD.mes, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })+'</b><button type="button" id="pd-prox" aria-label="Próximo mês">›</button></div></div></div>'
+      + placar+aviso+'<div class="pd-card"><div class="pd-scroll">'+h+'</div><div class="pd-leg"><label class="chk" for="pd-ver-in" style="min-height:0;padding:6px 12px"><input type="checkbox" id="pd-ver-in"'+(PD.inativos ? ' checked' : '')+'><span>Mostrar inativos (I)</span></label><span>"·" = dia sem lançamento</span><span>Vermelho = diferente da corrida</span><span>Inativos continuam somando no %</span></div></div>';
+    const hojeD = hoje(); $('#pd-prox').disabled = PD.ano === Number(hojeD.slice(0, 4)) && PD.mes >= Number(hojeD.slice(5, 7)) - 1;
+    $('#pd-clin').addEventListener('change', e => { PD.clin = Number(e.target.value); planCarregar(); });
+    $('#pd-ant').addEventListener('click', () => { PD.mes--; if (PD.mes < 0){ PD.mes = 11; PD.ano--; } planCarregar(); });
+    $('#pd-prox').addEventListener('click', () => { PD.mes++; if (PD.mes > 11){ PD.mes = 0; PD.ano++; } planCarregar(); });
+    $('#pd-ver-in').addEventListener('change', e => { PD.inativos = e.target.checked; planDesenhar(); });
+  }
+
+  /* ----- lançamento diário ----- */
+  async function diaCarregar(){
+    pdMarcar(); $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const e0 = await pdBase(); if (e0){ pdErro(e0); return; }
+    if (!PD.clin){ pdVazio(); return; }
+    const dt = PD.data, tk = ++PD.tk;
+    const rs = await Promise.all([sb.rpc('equipe_clinica', { p_clinica: PD.clin, p_de: dt, p_ate: dt }),
+      sb.from('planilha_diaria').select('*').eq('clinica_id', PD.clin).eq('data_ref', dt),
+      sb.rpc('conferencia_corrida', { p_clinica: PD.clin, p_de: dt, p_ate: dt })]);
+    if (tk !== PD.tk) return;
+    const er = rs.map(r => r.error).find(Boolean); if (er){ pdErro(er); return; }
+    const ex = {}; rs[1].data.forEach(r => { ex[r.usuario_id] = [r.visitas, r.vendas]; });
+    PD.existe = rs[1].data.length > 0; PD.motivo = '';
+    PD.pessoas = rs[0].data.filter(p => p.ativo || ex[p.id]);
+    PD.r = {}; PD.pessoas.forEach(p => { PD.r[p.id] = ex[p.id] ? ex[p.id].slice() : [0, 0]; });
+    PD.corr = {}; (rs[2].data || []).forEach(c => { PD.corr[c.usuario_id] = [c.visitas_corrida, c.vendas_corrida]; });
+    diaDesenhar();
+  }
+
+  function pdLinha(p, comCorr){
+    const v = PD.r[p.id];
+    return '<div class="pd-row'+(comCorr ? '' : ' dv2')+'"><div style="min-width:0;font-weight:600">'+esc(p.nome)+(p.ativo ? '' : ' <span class="pd-tag">I</span>')+'</div>'
+      + '<input type="number" min="0" inputmode="numeric" id="pd-v-'+p.id+'" data-p="'+p.id+'" data-i="0" value="'+v[0]+'" aria-label="Visitas de '+esc(p.nome)+'">'
+      + '<input type="number" min="0" inputmode="numeric" id="pd-s-'+p.id+'" data-p="'+p.id+'" data-i="1" value="'+v[1]+'" aria-label="Vendas de '+esc(p.nome)+'">'
+      + (comCorr ? '<span id="pd-c-'+p.id+'"></span>' : '')+'</div>';
+  }
+
+  function diaDesenhar(){
+    const hj = hoje(), min = (() => { const d = new Date(); d.setDate(d.getDate() - 7); return d.toLocaleDateString('sv-SE'); })();
+    const div = PD.pessoas.filter(p => p.cargo === 'Divulgador'), ou = PD.pessoas.filter(p => p.cargo !== 'Divulgador');
+    const nomeDia = new Date(PD.data+'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+    const cab = comCorr => '<div class="pd-row h'+(comCorr ? '' : ' dv2')+'"><span>Pessoa</span><span>Visitas</span><span>Vendas</span>'+(comCorr ? '<span>Corrida</span>' : '')+'</div>';
+    $('#area').innerHTML = '<div class="pd-card" style="padding:16px 18px"><div class="pd-bar"><div><h2 style="margin:0">Lançamento diário</h2><p class="sub" style="margin:2px 0 0">'+esc(nomeDia)+(PD.existe ? ' · já lançado' : '')+'</p></div>'
+      + '<div class="grp">'+pdSelClin()+'<div class="pd-mes"><button type="button" id="pd-dant" aria-label="Dia anterior">‹</button><input type="date" id="pd-data" value="'+esc(PD.data)+'" max="'+hj+'"'+(eu.papel === 'gerente' ? ' min="'+min+'"' : '')+' style="min-height:34px;padding:4px 8px"><button type="button" id="pd-dprox" aria-label="Próximo dia">›</button></div></div></div>'
+      + (PD.pessoas.length ? '<div class="pd-lan" style="margin-top:14px"><div class="pd-card pd-box"><h2>Promotores e teles</h2>'+cab(true)
+        + PD_ORDEM.map(cg => { const a = ou.filter(p => p.cargo === cg); return a.length ? '<div class="pd-row g">'+PD_ROT[cg]+'</div>'+a.map(p => pdLinha(p, true)).join('') : ''; }).join('')+'</div>'
+        + '<div class="pd-card pd-box"><h2>Divulgadores</h2><p class="sub" style="margin:0 0 6px">Quem atendeu as visitas. A soma precisa ser igual à dos promotores e teles, em visitas e em vendas.</p>'+cab(false)+(div.map(p => pdLinha(p, false)).join('') || '<div class="empty">Nenhum divulgador cadastrado nesta clínica.</div>')+'</div></div>'
+        + '<div class="pd-conf" id="pd-conf"></div>'
+      : '<div class="card" style="margin-top:14px"><div class="empty">Nenhuma pessoa vinculada a esta clínica nesta data. O gestor cadastra em Pessoas.</div></div>');
+    $('#pd-clin').addEventListener('change', e => { PD.clin = Number(e.target.value); diaCarregar(); });
+    const ir = d => { const x = new Date(PD.data+'T12:00:00'); x.setDate(x.getDate() + d); const s = x.toLocaleDateString('sv-SE'); if (s > hj || (eu.papel === 'gerente' && s < min)) return; PD.data = s; diaCarregar(); };
+    $('#pd-dant').addEventListener('click', () => ir(-1)); $('#pd-dprox').addEventListener('click', () => ir(1));
+    $('#pd-data').addEventListener('change', e => { const s = e.target.value; if (s && s <= hj && !(eu.papel === 'gerente' && s < min)){ PD.data = s; diaCarregar(); } });
+    $$('input[data-p]').forEach(i => i.addEventListener('input', () => { PD.r[i.dataset.p][Number(i.dataset.i)] = Math.max(0, parseInt(i.value, 10) || 0); diaConf(); }));
+    if (PD.pessoas.length) diaConf();
+  }
+
+  function diaConf(){
+    const div = PD.pessoas.filter(p => p.cargo === 'Divulgador'), ou = PD.pessoas.filter(p => p.cargo !== 'Divulgador');
+    const S = a => a.reduce((t, p) => [t[0] + PD.r[p.id][0], t[1] + PD.r[p.id][1]], [0, 0]), a = S(ou), b = S(div);
+    ou.forEach(p => { const el = $('#pd-c-'+p.id), c = PD.corr[p.id] || [0, 0], r = PD.r[p.id], ok = c[0] === r[0] && c[1] === r[1];
+      if (el) el.innerHTML = ok ? (c[0] || c[1] ? '<span class="pl ok">Bate</span>' : '<span class="pl nd">—</span>') : '<span class="pl no" title="Lançado na corrida">'+c[0]+' vis. / '+c[1]+' ven.</span>'; });
+    const rua = ou.filter(p => p.cargo === 'Promotor' || p.cargo === 'Luminoso').reduce((t, p) => t + PD.r[p.id][0], 0), tele = a[0] - rua;
+    const meta = a[0] > 0 ? (rua * 30 + tele * 45) / a[0] : null;
+    const okV = a[0] === b[0], okS = a[1] === b[1], semDiv = !div.length && a[0] > 0;
+    const maior = PD.pessoas.some(p => PD.r[p.id][1] > PD.r[p.id][0]);
+    const falta = PD.existe && PD.motivo.trim().length < 3;
+    const pode = okV && okS && !maior && !semDiv && !falta;
+    const dif = (x, y) => (y - x > 0 ? '+' : '')+(y - x);
+    $('#pd-conf').innerHTML = '<div class="lin"><span>Promotores e teles: <b>'+a[0]+'</b> vis. / <b>'+a[1]+'</b> ven.</span><span>Divulgadores: <b>'+b[0]+'</b> vis. / <b>'+b[1]+'</b> ven.</span>'
+      + (okV && okS && !semDiv ? '<span class="pl ok">Totais conferem</span>' : '<span class="pl no">'+(!okV ? 'Visitas '+dif(a[0], b[0]) : '')+(!okV && !okS ? ' · ' : '')+(!okS ? 'Vendas '+dif(a[1], b[1]) : '')+(semDiv ? 'Falta divulgador' : '')+'</span>')
+      + (maior ? '<span class="pl no">Há mais vendas do que visitas</span>' : '')
+      + '<span>Meta do divulgador hoje: <b>'+pf1(meta)+'</b></span>'
+      + (PD.existe ? '<label class="field" for="pd-motivo" style="grid-template-columns:auto 1fr;align-items:center">Motivo da correção<input type="text" id="pd-motivo" maxlength="200" value="'+esc(PD.motivo)+'" placeholder="Ex.: digitei errado"></label>' : '')
+      + '</div><div class="line"><span class="err" id="pd-err" role="alert"></span><button class="btn" type="button" id="pd-salvar"'+(pode ? '' : ' disabled')+'>'+(PD.existe ? 'Salvar correção' : 'Salvar o dia')+'</button></div>';
+    const m = $('#pd-motivo'); if (m) m.addEventListener('input', () => { PD.motivo = m.value; const bt = $('#pd-salvar'); if (bt) bt.disabled = !(okV && okS && !maior && !semDiv && m.value.trim().length >= 3); });
+    $('#pd-salvar').addEventListener('click', diaSalvar);
+  }
+
+  async function diaSalvar(){
+    const bt = $('#pd-salvar'); bt.disabled = true; $('#pd-err').textContent = '';
+    const linhas = PD.pessoas.map(p => ({ usuario_id: p.id, visitas: PD.r[p.id][0], vendas: PD.r[p.id][1] }));
+    const { error } = await sb.rpc('salvar_planilha_dia', { p_clinica: PD.clin, p_data: PD.data, p_linhas: linhas, p_motivo: PD.existe ? PD.motivo.trim() : null });
+    if (error){ $('#pd-err').textContent = msgErro(error); bt.disabled = false; return; }
+    toast('Dia salvo.'); diaCarregar();
+  }
+
+  /* ---------- entrar, sair, senha ---------- */
+  async function aposLogin(){
+    const { data: sess } = await sb.auth.getSession();
+    if (!sess.session){ view('login'); return; }
+    if (definindoSenha){ view('senha'); return; }
+    const { data, error } = await sb.from('usuarios').select('*').eq('auth_id', sess.session.user.id).maybeSingle();
+    if (error || !data){
+      await sb.auth.signOut(); view('login');
+      $('#l-err').textContent = 'Seu login existe, mas ainda não foi cadastrado no sistema. Fale com o gestor.'; return;
+    }
+    if (data.papel !== 'gestor' && data.papel !== 'gerente'){ location.replace('app/'); return; }
+    eu = data; $('#quem').textContent = data.nome;
+    const ger = data.papel === 'gerente';
+    $('#eyebrow').textContent = ger ? 'Painel da gerência' : 'Painel do gestor';
+    $$('#nav button[data-r]').forEach(b => { b.hidden = ger && !['diario', 'planilha'].includes(b.dataset.r); });
+    if (ger && !['diario', 'planilha'].includes(recurso)) recurso = 'diario';
+    PD.clinicas = []; PD.ano = 0;
+    view('app'); carregar();
+  }
+
+  $('#f-login').addEventListener('submit', async e => {
+    e.preventDefault();
+    const email = $('#l-email').value.trim(), senha = $('#l-senha').value;
+    if (!email || !senha){ $('#l-err').textContent = 'Informe o e-mail e a senha.'; return; }
+    $('#l-btn').disabled = true; $('#l-err').textContent = '';
+    const { error } = await sb.auth.signInWithPassword({ email, password: senha });
+    $('#l-btn').disabled = false;
+    if (error){ $('#l-err').textContent = msgErro(error); return; }
+    $('#l-senha').value = ''; aposLogin();
+  });
+
+  $('#l-esqueci').addEventListener('click', async () => {
+    const email = $('#l-email').value.trim();
+    if (!email){ $('#l-err').textContent = 'Digite seu e-mail acima e toque em "Esqueci minha senha" de novo.'; return; }
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+    $('#l-err').textContent = '';
+    toast(error ? msgErro(error) : 'Se o e-mail estiver cadastrado, enviamos um link para criar uma nova senha.');
+  });
+
+  $('#f-senha').addEventListener('submit', async e => {
+    e.preventDefault();
+    const a = $('#s-nova').value, b = $('#s-rep').value;
+    if (a.length < 8){ $('#s-err').textContent = 'A senha precisa ter pelo menos 8 caracteres.'; return; }
+    if (a !== b){ $('#s-err').textContent = 'As duas senhas não são iguais.'; return; }
+    const { error } = await sb.auth.updateUser({ password: a });
+    if (error){ $('#s-err').textContent = msgErro(error); return; }
+    definindoSenha = false; history.replaceState(null, '', location.pathname);
+    toast('Senha criada.'); aposLogin();
+  });
+
+  $('#sair').addEventListener('click', async () => { await sb.auth.signOut(); eu = null; view('login'); });
+
+  sb.auth.onAuthStateChange(ev => { if (ev === 'PASSWORD_RECOVERY'){ definindoSenha = true; } });
+  aposLogin();
+})();
+</script>
+</body>
+</html>
