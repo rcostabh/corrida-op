@@ -277,6 +277,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 .ds-li .n small{color:var(--muted);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ds-li .v{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12px;white-space:nowrap}
 .ds-li .p{font-weight:700;font-variant-numeric:tabular-nums;min-width:38px;text-align:right}
+.ds-ext{margin-top:12px;border-radius:14px;overflow:hidden;background:var(--surface-2);border:1px solid var(--line)}
+.ds-ext iframe{display:block;width:100%;height:calc(100vh - 230px);min-height:520px;border:0}
 </style>
 </head>
 <body>
@@ -321,6 +323,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
         <button type="button" data-r="planilha" title="Planilha do mês"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M9.5 4.5v15M15 4.5v15"/></svg><span class="tx">Planilha do mês</span></button>
         <button type="button" data-r="lancamentos" title="Lançamentos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg><span class="tx">Lançamentos</span></button>
         <button type="button" data-r="relatorios" title="Relatórios"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="tx">Relatórios</span></button>
+        <button type="button" data-r="externo" title="Relatório Looker"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><path d="M7 12l3-3 2.5 2 4-4"/></svg><span class="tx">Relatório Looker</span></button>
         <div class="sep"></div>
         <button type="button" data-g="cad" id="g-cad-btn" aria-expanded="false" aria-controls="g-cad" title="Cadastros"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7.5a2 2 0 0 1 2-2H10l2 2.5h6.5a2 2 0 0 1 2 2V17.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></svg><span class="tx">Cadastros</span><svg class="seta" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
         <div class="grupo-lista" id="g-cad">
@@ -460,6 +463,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     if (recurso === 'campanhas') return campanhasCarregar();
     if (recurso === 'corrida') return corridaCarregar();
     if (recurso === 'relatorios') return relCarregar();
+    if (recurso === 'externo') return externoCarregar();
     marcarMenu();
     if (recurso === 'inicio') return inicioCarregar();
     if (recurso === 'planilha') return planCarregar();
@@ -1438,7 +1442,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 
 
   /* ---------- menu lateral e início (dashboard) ---------- */
-  const TITULOS = { inicio: 'Início', corrida: 'Corrida', diario: 'Lançamento diário', planilha: 'Planilha do mês', lancamentos: 'Lançamentos', relatorios: 'Relatórios',
+  const TITULOS = { inicio: 'Início', corrida: 'Corrida', diario: 'Lançamento diário', planilha: 'Planilha do mês', lancamentos: 'Lançamentos', relatorios: 'Relatórios', externo: 'Relatório Looker',
     clinicas: 'Clínicas', tipos: 'Tipos de lançamento', premios: 'Prêmios', pessoas: 'Pessoas', campanhas: 'Campanhas' };
   const CADASTROS = ['clinicas', 'tipos', 'premios', 'pessoas', 'campanhas'];
   const lerLS = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
@@ -1722,6 +1726,18 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
         + '<tr class="tot"><td>'+(f ? 'Total da seleção' : 'Todas as clínicas')+'</td><td class="n">'+V+'</td><td class="n">'+S+'</td><td class="n">'+dsNum(dsMedia(V, dr))+'</td><td class="n">'+dsNum(dsMedia(S, dr))+'</td><td class="n"><b>'+pf1(pdPct(V, S))+'</b></td><td class="n">'+dr+'</td></tr></tbody></table>'
         : '<div class="empty">Nenhuma clínica ativa. Cadastre em Cadastros › Clínicas.</div>')
       + '</div></div>';
+  }
+
+
+  /* ---------- relatório externo (Looker Studio) dentro do painel ---------- */
+  const LOOKER_LINK = 'https://datastudio.google.com/reporting/51710f3a-35d4-49ec-9c0f-37022a0c752c/page/p_td0t1ca4id';
+  const lookerEmbed = u => u.replace(/^https:\/\/(datastudio|lookerstudio)\.google\.com\/reporting\//, 'https://lookerstudio.google.com/embed/reporting/');
+  function externoCarregar(){
+    marcarMenu(); $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
+    $('#area').innerHTML = '<div class="card" style="padding:14px 16px"><div class="pd-bar"><div><h2 style="margin:0">Relatório Looker</h2><p class="sub" style="margin:2px 0 0">Seu relatório do Looker Studio, aberto aqui dentro. Precisa estar com o login do Google que tem acesso a ele.</p></div>'
+      + '<div class="grp"><a class="btn ghost sm" href="'+esc(LOOKER_LINK)+'" target="_blank" rel="noopener">Abrir em outra aba</a></div></div>'
+      + '<div class="ds-ext"><iframe id="ext-frame" title="Relatório Looker Studio" src="'+esc(lookerEmbed(LOOKER_LINK))+'" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>'
+      + '<p class="sub" style="margin:10px 0 0">Se a área acima aparecer em branco ou pedir login, abra em outra aba. Para aparecer aqui, no Looker Studio use <b>Compartilhar › Incorporar relatório › Ativar incorporação</b>.</p></div>';
   }
 
   /* ---------- entrar, sair, senha ---------- */
