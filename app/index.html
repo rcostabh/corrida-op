@@ -4,303 +4,665 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Corrida de Prêmios OP</title>
-<meta name="theme-color" content="#ea580c">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Corrida OP">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root{
-  --bg:#f5f5f7; --surface:#ffffff; --surface-2:#f2f2f5; --ink:#1d1d1f; --muted:#6e6e73; --line:#e5e5ea;
+  --bg:#f5f5f7; --surface:#ffffff; --surface-2:#f5f5f7; --ink:#1d1d1f; --muted:#6e6e73; --line:#e5e5ea;
   --accent:#d95300; --accent-2:#ff8a1f; --accent-soft:#fff1e5; --on-accent:#ffffff;
   --red:#d70015; --ok:#248a3d; --warn:#b25000;
   --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.06);
-  --font:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter','Segoe UI',system-ui,sans-serif;
+  --font-display:-apple-system,BlinkMacSystemFont,'SF Pro Display','Inter','Segoe UI',system-ui,sans-serif;
+  --font-body:-apple-system,BlinkMacSystemFont,'SF Pro Text','Inter','Segoe UI',system-ui,sans-serif;
 }
 @media (prefers-color-scheme: dark){
-  :root{--bg:#000; --surface:#1c1c1e; --surface-2:#2c2c2e; --ink:#f5f5f7; --muted:#a1a1a6; --line:#3a3a3c;
+  :root{--bg:#000000; --surface:#1c1c1e; --surface-2:#2c2c2e; --ink:#f5f5f7; --muted:#a1a1a6; --line:#3a3a3c;
     --accent:#ff9f0a; --accent-2:#ff6a00; --accent-soft:#3a2308; --on-accent:#1a0e00;
     --red:#ff6961; --ok:#30d158; --warn:#ffb340; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.4); color-scheme:dark}
 }
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--font);-webkit-font-smoothing:antialiased;letter-spacing:-.01em;
-  padding:max(14px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(92px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--font-body);-webkit-font-smoothing:antialiased;letter-spacing:-.01em;
+  padding:20px max(16px,env(safe-area-inset-right,0px)) 56px max(16px,env(safe-area-inset-left,0px))}
 [hidden]{display:none!important}
 :focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 55%,transparent);outline-offset:2px}
-.wrap{max-width:640px;margin:0 auto;display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
-h1{font:700 26px/1.1 var(--font);letter-spacing:-.03em;margin:0}
-h2{font:650 18px/1.2 var(--font);letter-spacing:-.02em;margin:0 0 4px}
+.wrap{max-width:1040px;margin:0 auto;display:grid;gap:20px;grid-template-columns:minmax(0,1fr)}
+.band{display:none}
+h1{font:700 clamp(26px,5vw,34px)/1.1 var(--font-display);letter-spacing:-.03em;margin:2px 0 0}
+h2{font:650 19px/1.2 var(--font-display);letter-spacing:-.02em;margin:0 0 4px}
 .eyebrow{font-weight:600;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
-.sub{color:var(--muted);font-size:13.5px;margin:0 0 10px}
-.meta{color:var(--muted);font-size:13px;margin:0}
-.card{background:var(--surface);border-radius:22px;padding:18px;min-width:0;box-shadow:var(--shadow);border:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
-.top{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:space-between}
-.line{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
-.form{display:grid;gap:12px}
+.sub,.hint{color:var(--muted);font-size:13.5px;margin:0 0 14px}
+.card{background:var(--surface);border-radius:22px;padding:22px;min-width:0;box-shadow:var(--shadow);border:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+.top{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between}
+.who{color:var(--muted);font-size:13.5px;font-weight:500}
+.nav{display:flex;gap:2px;background:color-mix(in srgb,var(--surface) 78%,transparent);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
+  border:1px solid var(--line);padding:4px;border-radius:999px;overflow-x:auto;scrollbar-width:none;width:fit-content;max-width:100%}
+.nav button{flex:none;border:0;background:transparent;color:var(--muted);font:600 14px var(--font-body);padding:8px 18px;border-radius:999px;min-height:40px;cursor:pointer;white-space:nowrap;transition:background .2s,color .2s}
+.nav button:hover:not([disabled]):not([aria-current="page"]){color:var(--ink)}
+.nav button[aria-current="page"]{background:linear-gradient(180deg,var(--accent-2),var(--accent));color:var(--on-accent);box-shadow:0 2px 8px color-mix(in srgb,var(--accent) 40%,transparent)}
+.nav button[disabled]{opacity:.45;cursor:not-allowed}
+.two{display:grid;gap:20px;grid-template-columns:minmax(0,1fr);align-items:start}
+@media (min-width:900px){.two{grid-template-columns:minmax(0,380px) minmax(0,1fr)}}
+.form{display:grid;gap:14px}
 .field{display:grid;gap:6px;font-weight:600;font-size:13px;color:var(--muted);min-width:0}
-input,select{font:inherit;font-weight:500;font-size:16px;color:var(--ink);background:var(--surface-2);border:1px solid transparent;border-radius:12px;padding:10px 14px;min-height:48px;width:100%}
+input,select{font:inherit;font-weight:500;font-size:15px;color:var(--ink);background:var(--surface-2);border:1px solid transparent;border-radius:12px;padding:10px 14px;min-height:46px;width:100%;transition:border-color .2s,box-shadow .2s,background .2s}
+input:hover,select:hover{border-color:var(--line)}
 input:focus,select:focus{outline:none;background:var(--surface);border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)}
-.g2{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:var(--accent);flex:none}
+.chk{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface-2);border-radius:12px;min-height:46px;cursor:pointer;font-weight:500;color:var(--ink)}
 .err{color:var(--red);font-weight:500;font-size:13px;min-height:1em}
 .btns{display:flex;flex-wrap:wrap;gap:8px}
-.btn{font:600 16px var(--font);border:0;border-radius:999px;padding:10px 22px;min-height:48px;cursor:pointer;color:var(--on-accent);
-  background:linear-gradient(180deg,var(--accent-2),var(--accent));box-shadow:0 2px 10px color-mix(in srgb,var(--accent) 35%,transparent)}
+.btn{font:600 15px var(--font-body);border:0;border-radius:999px;padding:10px 22px;min-height:46px;cursor:pointer;color:var(--on-accent);
+  background:linear-gradient(180deg,var(--accent-2),var(--accent));box-shadow:0 2px 10px color-mix(in srgb,var(--accent) 35%,transparent);transition:transform .15s,filter .2s,box-shadow .2s}
+.btn:hover{filter:brightness(1.06)}
 .btn:active{transform:scale(.97)}
-.btn.ghost{background:var(--surface-2);color:var(--ink);box-shadow:none;font-size:14px}
-.btn.sm{font-size:13px;min-height:38px;padding:6px 16px}
-.btn.block{width:100%}
-.btn[disabled]{opacity:.6}
-.link{background:none;border:0;color:var(--accent);font:600 14px var(--font);cursor:pointer;padding:8px 0;text-align:center}
-.items{list-style:none;margin:0;padding:0}
-.item{padding:12px 0;border-top:1px solid var(--line);display:grid;gap:8px}
+.btn.ghost{background:var(--surface-2);color:var(--ink);box-shadow:none;font-weight:600;font-size:14px}
+.btn.ghost:hover{background:var(--line);filter:none}
+.btn.sm{font-size:13px;min-height:36px;padding:6px 16px}
+.btn[disabled]{opacity:.6;cursor:wait}
+.items{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center;padding:14px 4px;border-top:1px solid var(--line)}
 .item:first-child{border-top:0}
-.empty{padding:18px;background:var(--surface-2);border-radius:14px;color:var(--muted);text-align:center;list-style:none}
-.sigla{font:700 12px var(--font);background:var(--accent-soft);color:var(--accent);padding:3px 9px;border-radius:8px;letter-spacing:.04em}
+@media (max-width:560px){.item{grid-template-columns:minmax(0,1fr)}}
+.line{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.meta{color:var(--muted);font-size:13px;margin-top:2px}
+.empty{padding:22px;background:var(--surface-2);border-radius:14px;color:var(--muted);text-align:center;list-style:none}
+.sigla{font:700 12px var(--font-display);background:var(--accent-soft);color:var(--accent);padding:4px 9px;border-radius:8px;letter-spacing:.04em}
 .badge{font-weight:600;font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:3px 10px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
 .badge.ouro{background:linear-gradient(180deg,#ffd35c,#ffb400);color:#3a2a00}
 .badge.prata{background:linear-gradient(180deg,#e4e6ea,#c3c7ce);color:#1f2933}
 .chip{font-size:12px;font-weight:500;padding:3px 10px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
 .chip.off{color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent)}
+.dot{width:12px;height:12px;border-radius:50%;flex:none;box-shadow:0 0 0 3px color-mix(in srgb,currentColor 0%,transparent),inset 0 0 0 1px rgba(0,0,0,.12)}
+.login{max-width:420px;margin:9vh auto 0;display:grid;gap:22px}
+.login .card{display:grid;gap:16px;padding:28px}
+.link{background:none;border:0;color:var(--accent);font:600 13.5px var(--font-body);cursor:pointer;padding:6px 0;text-align:center}
+.link:hover{text-decoration:underline}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);width:min(92vw,460px);
+  background:color-mix(in srgb,var(--ink) 92%,transparent);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:var(--bg);padding:14px 18px;border-radius:16px;font-weight:500;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:20;box-shadow:var(--shadow)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion:reduce){.toast,.btn,.nav button,input,select{transition:none}.btn:active{transform:none}}
+.sec{border-top:1px solid var(--line);margin-top:22px;padding-top:20px;display:grid;gap:12px}
+.g2{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.picks{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+.rrow{display:grid;gap:8px 10px;grid-template-columns:minmax(170px,1.3fr) minmax(150px,1fr) 100px 100px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.rrow.off .r-modo,.rrow.off .r-passo,.rrow.off .r-pts{opacity:.45}
+@media (max-width:700px){.rrow{grid-template-columns:1fr 1fr}.rrow .chk,.rrow .r-modo{grid-column:1/-1}}
+.prow{display:grid;gap:8px;grid-template-columns:100px minmax(0,1fr) 150px auto;align-items:center}
+@media (max-width:700px){.prow{grid-template-columns:1fr 1fr}.prow .p-premio{grid-column:1/-1}}
+.grp{display:grid;gap:8px}
+.grp h3{margin:0;font:650 14px var(--font-display);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .chip.ok{color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent)}
-.dot{width:12px;height:12px;border-radius:50%;flex:none}
-.login{max-width:420px;margin:7vh auto 0;display:grid;gap:20px}
-.login .card{display:grid;gap:14px;padding:24px}
-.logo{width:64px;height:64px;border-radius:16px;box-shadow:var(--shadow)}
-/* avatar */
-.av{width:44px;height:44px;border-radius:50%;object-fit:cover;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font:700 15px var(--font);flex:none;overflow:hidden}
-.av.xl{width:120px;height:120px;font-size:38px;margin:0 auto}
-/* barra de abas */
-.tabs{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;gap:2px;padding:6px 10px calc(6px + env(safe-area-inset-bottom,0px));
-  background:color-mix(in srgb,var(--surface) 82%,transparent);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-top:1px solid var(--line);z-index:10}
-.tabs button{flex:1;max-width:140px;border:0;background:transparent;color:var(--muted);font:600 11px var(--font);padding:6px 4px;border-radius:12px;display:grid;justify-items:center;gap:2px;min-height:52px;cursor:pointer;position:relative}
-.tabs button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.tabs button[aria-current="page"]{color:var(--accent)}
-.tabs .n{position:absolute;top:2px;right:calc(50% - 22px);background:var(--red);color:#fff;font:700 10px var(--font);min-width:17px;height:17px;border-radius:9px;display:grid;place-items:center;padding:0 4px}
-/* corrida */
+.full{grid-column:1/-1}
 .seg{display:inline-flex;background:var(--surface-2);border-radius:999px;padding:3px}
-.seg button{border:0;background:transparent;color:var(--muted);font:600 13px var(--font);padding:7px 14px;border-radius:999px;min-height:34px;cursor:pointer}
+.seg button{border:0;background:transparent;color:var(--muted);font:600 13px var(--font-body);padding:7px 16px;border-radius:999px;min-height:34px;cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
-.pista{position:relative;border-radius:16px;overflow:hidden;background:#2a2d33;padding:4px}
+.pista{position:relative;border-radius:18px;overflow:hidden;background:#2a2d33;padding:6px}
 .pgrid{display:grid;gap:3px}
-.casa{aspect-ratio:1;border-radius:7px;background:#3a3e46;color:#aeb4bf;font:600 10px var(--font);display:flex;flex-direction:column;justify-content:space-between;padding:3px 4px;min-width:0;overflow:hidden}
+.casa{aspect-ratio:1.25;border-radius:8px;background:#3a3e46;color:#aeb4bf;font:600 11px var(--font-body);display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;padding:4px 6px;min-width:0;overflow:hidden}
+.casa small{font-size:9px;line-height:1.1;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:inherit}
 .casa.ouro{background:linear-gradient(135deg,#ffd35c,#e8a400);color:#3a2a00}
 .casa.prata{background:linear-gradient(135deg,#e4e6ea,#aeb4bd);color:#1f2933}
-.casa.largada{background:repeating-conic-gradient(#fff 0 25%,#111 0 50%) 0 0/12px 12px;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000}
-.carros{position:absolute;inset:4px;pointer-events:none}
+.casa.largada{background:repeating-conic-gradient(#fff 0 25%,#111 0 50%) 0 0/16px 16px;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000}
+.carros{position:absolute;inset:6px;pointer-events:none}
 .carro{position:absolute;display:grid;place-items:center;transition:left .9s cubic-bezier(.5,0,.2,1),top .9s cubic-bezier(.5,0,.2,1)}
-.carro .in{transform:translateX(var(--dx,0px));display:grid;justify-items:center;gap:0}
-.carro .tag{font:700 9px var(--font);color:#fff;background:rgba(0,0,0,.72);padding:1px 4px;border-radius:6px;white-space:nowrap}
-.carro.eu{z-index:3}.carro.eu .tag{background:var(--accent);box-shadow:0 0 0 2px #fff}
+.carro .in{transform:translateX(var(--dx,0px));display:grid;justify-items:center;gap:1px}
+.carro .tag{font:700 10px var(--font-body);color:#fff;background:rgba(0,0,0,.7);padding:1px 5px;border-radius:6px;white-space:nowrap}
 @media (prefers-reduced-motion:reduce){.carro{transition:none}}
-.rk{display:grid;grid-template-columns:32px 40px minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.rk{display:grid;grid-template-columns:34px 14px minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
 .rk:first-child{border-top:0}
-.rk.eu{background:var(--accent-soft);margin:0 -10px;padding:10px;border-radius:12px;border-top-color:transparent}
-.rk .pos{font:700 17px var(--font);text-align:center}
-.rk .pts{font:700 17px var(--font);text-align:right}
-.rk .av{width:40px;height:40px;font-size:13px}
-.hero{background:linear-gradient(135deg,var(--accent-2),var(--accent));color:var(--on-accent);border-radius:22px;padding:18px;box-shadow:var(--shadow)}
-.hero b{font:700 28px/1.1 var(--font);display:block;letter-spacing:-.03em}
-.hero p{margin:4px 0 0;opacity:.92;font-size:14px}
-.nt{padding:12px 0;border-top:1px solid var(--line)}
-.nt:first-child{border-top:0}
-.nt.novo{background:var(--accent-soft);margin:0 -10px;padding:12px 10px;border-radius:12px;border-top-color:transparent}
-.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);width:min(92vw,460px);
-  background:color-mix(in srgb,var(--ink) 92%,transparent);color:var(--bg);padding:13px 16px;border-radius:16px;font-weight:500;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:30}
-.toast.show{opacity:1;transform:translate(-50%,0)}
+.rk .pos{font:700 18px var(--font-display);text-align:center}
+.rk .pts{font:700 18px var(--font-display);text-align:right}
+.rk .meta{margin:0}
+#area:fullscreen{background:var(--bg);padding:24px;overflow:auto;align-content:start}
 </style>
 </head>
 <body>
 <div class="wrap">
+  
+  <!-- carregando -->
   <div id="v-load" class="login"><h1>Corrida de Prêmios OP</h1><p class="sub">Carregando...</p></div>
 
+  <!-- entrar -->
   <div id="v-login" class="login" hidden>
-    <div><img class="logo" src="icon-192.png" alt="" width="64" height="64"><div style="margin-top:14px"><span class="eyebrow">Bem-vindo</span><h1>Corrida de Prêmios OP</h1></div></div>
+    <div><span class="eyebrow">Painel do gestor</span><h1>Corrida de Prêmios OP</h1></div>
     <form class="card" id="f-login" novalidate>
-      <label class="field" for="l-email">E-mail<input id="l-email" type="email" autocomplete="username" inputmode="email" autocapitalize="off"></label>
+      <label class="field" for="l-email">E-mail<input id="l-email" type="email" autocomplete="username" inputmode="email"></label>
       <label class="field" for="l-senha">Senha<input id="l-senha" type="password" autocomplete="current-password"></label>
       <div class="err" id="l-err" role="alert"></div>
-      <button class="btn block" type="submit" id="l-btn">Entrar</button>
+      <button class="btn" type="submit" id="l-btn">Entrar</button>
       <button class="link" type="button" id="l-esqueci">Esqueci minha senha</button>
     </form>
   </div>
 
-  <div id="v-foto" class="login" hidden>
-    <div><span class="eyebrow">Quase pronto</span><h1>Coloque sua foto</h1><p class="sub">Ela aparece na corrida, junto do seu carro.</p></div>
-    <div class="card">
-      <div class="av xl" id="o-av">?</div>
-      <div class="err" id="o-err" role="alert" style="text-align:center"></div>
-      <label class="btn block" style="text-align:center;display:block;line-height:28px">Tirar foto agora<input type="file" accept="image/*" capture="user" id="o-cam" hidden></label>
-      <label class="btn ghost block" style="text-align:center;display:block;line-height:32px">Escolher da galeria<input type="file" accept="image/*" id="o-gal" hidden></label>
-      <button class="link" type="button" id="o-pular">Pular por enquanto</button>
-    </div>
+  <!-- definir senha (convite ou recuperação) -->
+  <div id="v-senha" class="login" hidden>
+    <div><span class="eyebrow">Quase lá</span><h1>Crie sua senha</h1></div>
+    <form class="card" id="f-senha" novalidate>
+      <label class="field" for="s-nova">Nova senha<input id="s-nova" type="password" autocomplete="new-password" placeholder="Mínimo de 8 caracteres"></label>
+      <label class="field" for="s-rep">Repita a senha<input id="s-rep" type="password" autocomplete="new-password"></label>
+      <div class="err" id="s-err" role="alert"></div>
+      <button class="btn" type="submit">Salvar senha</button>
+    </form>
   </div>
 
+  <!-- painel -->
   <div id="v-app" hidden>
-    <header class="top" style="margin-bottom:14px"><div><span class="eyebrow" id="h-papel"></span><h1 id="h-nome"></h1></div><div id="h-av"></div></header>
-    <main id="main" style="display:grid;gap:14px"></main>
+    <header class="top">
+      <div><span class="eyebrow">Painel do gestor</span><h1>Corrida de Prêmios OP</h1></div>
+      <div class="line"><span class="who" id="quem"></span><button class="btn ghost sm" type="button" id="sair">Sair</button></div>
+    </header>
+    <nav class="nav" id="nav" aria-label="Seções" style="margin-top:14px">
+      <button type="button" data-r="corrida">Corrida</button>
+      <button type="button" data-r="lancamentos">Lançamentos</button>
+      <button type="button" data-r="clinicas">Clínicas</button>
+      <button type="button" data-r="tipos">Tipos de lançamento</button>
+      <button type="button" data-r="premios">Prêmios</button>
+      <button type="button" data-r="pessoas">Pessoas</button>
+      <button type="button" data-r="campanhas">Campanhas</button>
+    </nav>
+    <section class="two" id="area" style="margin-top:18px"></section>
   </div>
 </div>
-<nav class="tabs" id="tabs" hidden aria-label="Seções"></nav>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
 (function(){
   'use strict';
+  /* Chaves públicas do projeto. A chave "publishable" foi feita para ficar no navegador:
+     quem protege os dados são as regras de acesso do banco. Nunca coloque a chave secreta aqui. */
   const SUPABASE_URL = 'https://fjroscujmyrjxatakcpo.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_ZuqKt7UHtpkiyQr95Ji67w_OQXS1nMV';
 
   const $ = (s, r) => (r||document).querySelector(s);
   const $$ = (s, r) => Array.from((r||document).querySelectorAll(s));
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const brl = n => n == null ? '' : Number(n).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
-  const num = v => Number(String(v).replace(',', '.'));
-  const hoje = () => new Date().toLocaleDateString('sv-SE');
-  const dBR = d => d ? d.split('-').reverse().join('/') : '';
-  const iniciais = n => { const p = String(n||'?').trim().split(/\s+/); return ((p[0]||'?')[0] + (p.length > 1 ? p[p.length-1][0] : (p[0]||'')[1] || '')).toUpperCase(); };
-  const avatar = (u, cls) => u && u.foto_url ? '<img class="av '+(cls||'')+'" src="'+esc(u.foto_url)+'" alt="">' : '<div class="av '+(cls||'')+'">'+esc(iniciais(u && u.nome))+'</div>';
+  const brl = n => Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
   let toastTimer;
   function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 4500); }
-  const msgErro = e => {
-    const m = (e && e.message) || '';
-    if (/Invalid login credentials/i.test(m)) return 'E-mail ou senha incorretos.';
-    if (/fetch|network/i.test(m)) return 'Sem conexão. Verifique a internet e tente de novo.';
-    return m || 'Algo deu errado. Tente de novo.';
-  };
-  const guarda = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k, v){ try { localStorage.setItem(k, v); } catch(e){} } };
 
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+  /* Se o convite ou a recuperação de senha chegou pelo link do e-mail, o endereço traz "type=invite" ou "type=recovery". */
+  const veioDeLink = /type=(invite|recovery)/.test(location.hash);
+  let definindoSenha = veioDeLink;
 
-  let definindoSenha = /type=(invite|recovery)/.test(location.hash);
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
-  const urlPainel = new URL('../', location.href).href;
+  let eu = null;           // linha da tabela usuarios
+  let recurso = 'corrida';
+  let editId = null;
+  let lista = [];
+  let mostrarInativos = false, confirmaExcluir = false;
 
-  let eu = null, authUid = null, minhasClin = [], aba = 'corrida', timer = null;
-  const view = id => { ['load','login','foto','app'].forEach(v => { $('#v-'+v).hidden = v !== id; }); $('#tabs').hidden = id !== 'app'; };
+  const view = id => { ['load','login','senha','app'].forEach(v => { $('#v-'+v).hidden = v !== id; }); };
+  const msgErro = e => {
+    if (!e) return '';
+    if (e.code === '23505') return 'Já existe um cadastro com esse valor. Use outro nome ou sigla.';
+    if (e.code === '42501' || /row-level security|permission denied/i.test(e.message || '')) return 'Sem permissão para esta ação.';
+    if (/Invalid login credentials/i.test(e.message || '')) return 'E-mail ou senha incorretos.';
+    if (/Email not confirmed/i.test(e.message || '')) return 'Este e-mail ainda não foi confirmado.';
+    if (/fetch|network/i.test(e.message || '')) return 'Sem conexão com o servidor. Verifique a internet e tente de novo.';
+    return e.message || 'Algo deu errado. Tente de novo.';
+  };
 
-  /* ---------- entrada ---------- */
-  async function iniciar(){
-    const { data: sess } = await sb.auth.getSession();
-    if (!sess.session){ view('login'); return; }
-    if (definindoSenha){ location.replace(urlPainel + location.hash); return; }
-    authUid = sess.session.user.id;
-    const { data, error } = await sb.from('usuarios').select('*').eq('auth_id', authUid).maybeSingle();
-    if (error || !data){ await sb.auth.signOut(); view('login'); $('#l-err').textContent = 'Seu login existe, mas ainda não foi cadastrado. Fale com o gestor.'; return; }
-    if (!data.ativo){ await sb.auth.signOut(); view('login'); $('#l-err').textContent = 'Seu acesso está desativado. Fale com o gestor.'; return; }
-    if (data.papel === 'gestor'){ location.replace(urlPainel); return; }
-    eu = data;
-    const v = await sb.from('vinculos_clinica').select('*').eq('usuario_id', eu.id);
-    minhasClin = (v.data || []).filter(x => !x.fim).map(x => x.clinica_id);
-    if (!eu.foto_url && !guarda.get('pulou-foto-'+eu.id)){ $('#o-av').innerHTML = esc(iniciais(eu.nome)); view('foto'); return; }
-    abrirApp();
+  /* ---------- cadastros ---------- */
+  const CORES = [['#5b9bff','Azul'],['#ffa23a','Laranja'],['#ff7aa8','Rosa'],['#3ecf9a','Verde'],['#b58cff','Roxo'],['#ff7a6b','Coral']];
+  const RECURSOS = {
+    clinicas: {
+      titulo: 'Clínica', plural: 'Clínicas', tabela: 'clinicas', ordem: 'nome', ativo: 'ativa',
+      intro: 'Cada clínica é uma equipe na corrida. A sigla aparece no carro da clínica.',
+      campos: [
+        {k:'sigla', rot:'Sigla (2 a 4 letras)', tipo:'text', max:4, upper:true, obrig:true},
+        {k:'nome', rot:'Nome da clínica', tipo:'text', obrig:true},
+        {k:'cor', rot:'Cor do carro', tipo:'select', opcoes:CORES, padrao:'#5b9bff'},
+        {k:'ativa', rot:'Clínica ativa', tipo:'check', padrao:true}
+      ],
+      validar: d => /^[A-Z0-9]{2,4}$/.test(d.sigla) ? '' : 'A sigla precisa ter de 2 a 4 letras ou números.',
+      resumo: r => '<div class="line"><span class="dot" style="background:'+esc(r.cor||'#999')+'"></span><span class="sigla">'+esc(r.sigla)+'</span><b>'+esc(r.nome)+'</b>'+(r.ativa?'':'<span class="chip off">Inativa</span>')+'</div>'
+    },
+    tipos: {
+      titulo: 'Tipo de lançamento', plural: 'Tipos de lançamento', tabela: 'tipos_lancamento', ordem: 'nome', ativo: 'ativo',
+      intro: 'O que pode ser lançado: visita, venda de início, raspagem, clareamento... Cada campanha escolhe quais tipos aceita e como pontuam.',
+      campos: [
+        {k:'nome', rot:'Nome', tipo:'text', obrig:true},
+        {k:'categoria', rot:'É uma visita ou uma venda?', tipo:'select', opcoes:[['visita','Visita'],['venda','Venda']], padrao:'venda'},
+        {k:'usa_valor', rot:'Pede o valor em reais no lançamento', tipo:'check', padrao:false},
+        {k:'base_fechamento', rot:'Entra no % de fechamento como', tipo:'select', opcoes:[['nenhum','Não entra'],['visita','Visita (divisor)'],['venda','Venda (dividendo)']], padrao:'nenhum'},
+        {k:'ativo', rot:'Tipo ativo', tipo:'check', padrao:true}
+      ],
+      resumo: r => '<div class="line"><b>'+esc(r.nome)+'</b><span class="badge">'+(r.categoria==='visita'?'Visita':'Venda')+'</span>'+(r.usa_valor?'<span class="chip">pede valor</span>':'')+(r.base_fechamento!=='nenhum'?'<span class="chip">fechamento: '+(r.base_fechamento==='visita'?'visita':'venda')+'</span>':'')+(r.ativo?'':'<span class="chip off">Inativo</span>')+'</div>'
+    },
+    premios: {
+      titulo: 'Prêmio', plural: 'Prêmios', tabela: 'premios', ordem: 'nome', ativo: 'ativo',
+      intro: 'Ouro: só o primeiro que passar pela casa leva. Prata: todos que passarem levam.',
+      campos: [
+        {k:'nome', rot:'Nome do prêmio', tipo:'text', obrig:true},
+        {k:'tipo', rot:'Tipo', tipo:'select', opcoes:[['ouro','Ouro (só o primeiro)'],['prata','Prata (todos que passarem)']], padrao:'prata'},
+        {k:'custo', rot:'Custo de cada prêmio (R$)', tipo:'number', padrao:0},
+        {k:'ativo', rot:'Prêmio ativo', tipo:'check', padrao:true}
+      ],
+      validar: d => d.custo >= 0 ? '' : 'O custo não pode ser negativo.',
+      resumo: r => '<div class="line"><span class="badge '+esc(r.tipo)+'">'+esc(r.tipo)+'</span><b>'+esc(r.nome)+'</b><span class="chip">'+brl(r.custo)+'</span>'+(r.ativo?'':'<span class="chip off">Inativo</span>')+'</div>'
+    }
+  };
+
+  function campoHtml(c, v){
+    const id = 'f-'+c.k;
+    if (c.tipo === 'check') return '<label class="chk" for="'+id+'"><input id="'+id+'" type="checkbox"'+(v?' checked':'')+'><span>'+esc(c.rot)+'</span></label>';
+    if (c.tipo === 'select') return '<label class="field" for="'+id+'">'+esc(c.rot)+'<select id="'+id+'">'+c.opcoes.map(o => '<option value="'+esc(o[0])+'"'+(o[0]===v?' selected':'')+'>'+esc(o[1])+'</option>').join('')+'</select></label>';
+    if (c.tipo === 'number') return '<label class="field" for="'+id+'">'+esc(c.rot)+'<input id="'+id+'" type="number" inputmode="decimal" min="0" step="0.01" value="'+esc(v)+'"></label>';
+    return '<label class="field" for="'+id+'">'+esc(c.rot)+'<input id="'+id+'" type="text"'+(c.max?' maxlength="'+c.max+'"':'')+' autocomplete="off" value="'+esc(v)+'"></label>';
   }
 
-  $('#f-login').addEventListener('submit', async e => {
+  function desenhar(){
+    const R = RECURSOS[recurso], atual = lista.find(r => r.id === editId) || null;
+    const vis = lista.filter(r => mostrarInativos || r[R.ativo] !== false || r.id === editId);
+    $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
+    $('#area').innerHTML =
+      '<div class="card"><h2>'+(atual ? 'Editar' : (recurso==='clinicas' ? 'Nova' : 'Novo'))+' '+esc(R.titulo.toLowerCase())+'</h2><p class="sub">'+esc(R.intro)+'</p>'
+      + '<form class="form" id="f-cad" novalidate>'+R.campos.map(c => campoHtml(c, atual ? atual[c.k] : c.padrao)).join('')
+      + '<div class="err" id="c-err" role="alert"></div><div class="btns"><button class="btn" type="submit" id="c-btn">Salvar</button>'
+      + (atual ? '<button class="btn ghost" type="button" id="c-cancel">Cancelar edição</button><button class="btn ghost" type="button" id="c-del">'+(confirmaExcluir?'Confirmar exclusão':'Excluir')+'</button>' : '')+'</div></form></div>'
+      + '<div class="card"><h2>'+esc(R.plural)+'</h2><label class="chk" style="margin-bottom:10px"><input type="checkbox" id="mostra-inat"'+(mostrarInativos?' checked':'')+'><span>Mostrar inativos</span></label><p class="sub">'+vis.length+' cadastrad'+(recurso==='premios'||recurso==='tipos'?'o':'a')+(vis.length===1?'':'s')+'. Excluir só funciona para o que nunca foi usado. O que já tem movimentação deve ser inativado.</p>'
+      + '<ul class="items">'+(vis.map(r => '<li class="item"><div>'+R.resumo(r)+'</div><div><button type="button" class="btn ghost sm" data-ed="'+r.id+'">Editar</button></div></li>').join('') || '<li class="empty">Nada cadastrado ainda.</li>')+'</ul></div>';
+    $('#f-cad').addEventListener('submit', salvar);
+    $('#mostra-inat').addEventListener('change', e => { mostrarInativos = e.target.checked; desenhar(); });
+    const del = $('#c-del'); if (del) del.addEventListener('click', excluir);
+    const cancel = $('#c-cancel'); if (cancel) cancel.addEventListener('click', () => { editId = null; confirmaExcluir = false; desenhar(); });
+    $$('[data-ed]').forEach(b => b.addEventListener('click', () => { editId = Number(b.dataset.ed); confirmaExcluir = false; desenhar(); const p = $('#f-cad input, #f-cad select'); if (p) p.focus(); }));
+  }
+
+  async function carregar(){
+    $('#area').style.gridTemplateColumns = '';
+    if (recurso === 'pessoas') return pessoasCarregar();
+    if (recurso === 'campanhas') return campanhasCarregar();
+    if (recurso === 'corrida') return corridaCarregar();
+    if (recurso === 'lancamentos') return lancCarregar();
+    const R = RECURSOS[recurso];
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const { data, error } = await sb.from(R.tabela).select('*').order(R.ordem);
+    if (error){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(error))+'</div></div>'; return; }
+    lista = data; desenhar();
+  }
+
+  async function salvar(e){
     e.preventDefault();
-    const email = $('#l-email').value.trim(), senha = $('#l-senha').value;
-    if (!email || !senha){ $('#l-err').textContent = 'Informe o e-mail e a senha.'; return; }
-    $('#l-btn').disabled = true; $('#l-err').textContent = '';
-    const { error } = await sb.auth.signInWithPassword({ email, password: senha });
-    $('#l-btn').disabled = false;
-    if (error){ $('#l-err').textContent = msgErro(error); return; }
-    $('#l-senha').value = ''; iniciar();
-  });
-  $('#l-esqueci').addEventListener('click', async () => {
-    const email = $('#l-email').value.trim();
-    if (!email){ $('#l-err').textContent = 'Digite seu e-mail acima e toque em "Esqueci minha senha" de novo.'; return; }
-    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: urlPainel });
-    $('#l-err').textContent = '';
-    toast(error ? msgErro(error) : 'Se o e-mail estiver cadastrado, enviamos um link para criar uma nova senha.');
+    const R = RECURSOS[recurso], d = {};
+    R.campos.forEach(c => {
+      const el = $('#f-'+c.k);
+      if (c.tipo === 'check') d[c.k] = el.checked;
+      else if (c.tipo === 'number') d[c.k] = el.value === '' ? 0 : Number(el.value);
+      else { let v = el.value.trim(); if (c.upper) v = v.toUpperCase(); d[c.k] = v; }
+    });
+    const falta = R.campos.find(c => c.obrig && !d[c.k]);
+    const erro = falta ? 'Preencha: '+falta.rot.toLowerCase()+'.' : (R.validar ? R.validar(d) : '');
+    if (erro){ $('#c-err').textContent = erro; return; }
+    const btn = $('#c-btn'); btn.disabled = true;
+    const q = editId ? sb.from(R.tabela).update(d).eq('id', editId) : sb.from(R.tabela).insert(d);
+    const { error } = await q;
+    btn.disabled = false;
+    if (error){ $('#c-err').textContent = msgErro(error); return; }
+    toast(editId ? R.titulo+' atualizado.' : R.titulo+' cadastrado.');
+    editId = null; carregar();
+  }
+
+  async function excluir(){
+    if (!confirmaExcluir){ confirmaExcluir = true; desenhar(); $('#c-err').textContent = 'Toque em "Confirmar exclusão" para apagar de vez.'; return; }
+    const R = RECURSOS[recurso];
+    const { error } = await sb.from(R.tabela).delete().eq('id', editId);
+    confirmaExcluir = false;
+    if (error){
+      desenhar();
+      $('#c-err').textContent = error.code === '23503' ? 'Este cadastro já tem movimentação e não pode ser excluído. Desmarque "ativo" e salve.' : msgErro(error);
+      return;
+    }
+    toast(R.titulo+' excluído.'); editId = null; carregar();
+  }
+
+  $('#nav').addEventListener('click', e => {
+    const b = e.target.closest('button[data-r]'); if (!b) return;
+    recurso = b.dataset.r; editId = null; confirmaExcluir = false; ed = null; carregar();
   });
 
-  /* ---------- foto ---------- */
-  function reduzirFoto(file){
-    return new Promise((ok, fail) => {
-      const img = new Image(), u = URL.createObjectURL(file);
-      img.onload = () => {
-        const s = Math.min(img.width, img.height), c = document.createElement('canvas'); c.width = c.height = 320;
-        c.getContext('2d').drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 320, 320);
-        URL.revokeObjectURL(u); c.toBlob(b => b ? ok(b) : fail(new Error('Não foi possível ler a foto.')), 'image/jpeg', .85);
-      };
-      img.onerror = () => fail(new Error('Não foi possível abrir esta imagem.'));
-      img.src = u;
+
+  /* ---------- pessoas (gerentes e promotores) ---------- */
+  let pessoas = [], vincs = [], clin = [], papelForm = 'promotor';
+  const CARGOS = ['Tele','Promotor','Tele BH'];
+  const soDigitos = v => String(v||'').replace(/\D/g,'');
+  const fmtTel = v => { const d = soDigitos(v); return d.length === 11 ? '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7) : d.length === 10 ? '('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6) : d; };
+  const clinicaDe = p => { const v = vincs.find(x => x.usuario_id === p.id); return v ? clin.find(c => c.id === v.clinica_id) : null; };
+
+  async function chamar(body){
+    body.redirectTo = location.origin + location.pathname;
+    const { data, error } = await sb.functions.invoke('bright-service', { body });
+    if (error){
+      let m = error.message || '';
+      try { const j = await error.context.json(); m = j.erro || m; } catch(e){}
+      if (/not found|404|Failed to send/i.test(m)) m = 'A função de convite ainda não está ativa no Supabase. Veja as instruções de instalação.';
+      return { erro: m };
+    }
+    if (data && data.erro) return { erro: data.erro };
+    return { data };
+  }
+
+  async function pessoasCarregar(){
+    $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const [a, b, c] = await Promise.all([
+      sb.from('usuarios').select('*').order('nome'),
+      sb.from('vinculos_clinica').select('*'),
+      sb.from('clinicas').select('*').order('nome')]);
+    const er = a.error || b.error || c.error;
+    if (er){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
+    pessoas = a.data.filter(p => p.papel !== 'gestor');
+    vincs = b.data.filter(v => !v.fim); clin = c.data;
+    pessoasDesenhar();
+  }
+
+  function pessoasDesenhar(){
+    const atual = pessoas.find(p => p.id === editId) || null;
+    if (atual) papelForm = atual.papel;
+    const cAtual = atual ? clinicaDe(atual) : null;
+    const opcClin = clin.filter(c => c.ativa || (cAtual && c.id === cAtual.id));
+    const vis = pessoas.filter(p => mostrarInativos || p.ativo || p.id === editId);
+    $('#area').innerHTML =
+      '<div class="card"><h2>'+(atual ? 'Editar pessoa' : 'Nova pessoa')+'</h2>'
+      + '<p class="sub">'+(atual ? 'Se trocar o e-mail, a pessoa recebe um link no novo endereço para criar a senha. Para tirar alguém de uso, desmarque "Pessoa ativa".' : 'A pessoa recebe um e-mail para criar a própria senha e colocar a foto.')+'</p>'
+      + '<form class="form" id="f-pes" novalidate>'
+      + '<label class="field" for="p-papel">Função<select id="p-papel"'+(atual?' disabled':'')+'><option value="promotor"'+(papelForm==='promotor'?' selected':'')+'>Promotor</option><option value="gerente"'+(papelForm==='gerente'?' selected':'')+'>Gerente de clínica</option></select></label>'
+      + '<label class="field" for="p-nome">Nome<input id="p-nome" type="text" autocomplete="off" value="'+esc(atual?atual.nome:'')+'"></label>'
+      + '<label class="field" for="p-email">E-mail<input id="p-email" type="email" inputmode="email" autocomplete="off" value="'+esc(atual?(atual.email||''):'')+'"'+'></label>'
+      + '<label class="field" for="p-tel">Telefone com DDD<input id="p-tel" type="tel" inputmode="numeric" autocomplete="off" placeholder="(31) 99999-9999" value="'+esc(atual?fmtTel(atual.telefone):'')+'"></label>'
+      + '<label class="field" for="p-clin">Clínica<select id="p-clin"><option value="">Escolha...</option>'+opcClin.map(c => '<option value="'+c.id+'"'+(cAtual&&cAtual.id===c.id?' selected':'')+'>'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="field" for="p-cargo" id="w-cargo"'+(papelForm==='promotor'?'':' hidden')+'>Cargo<select id="p-cargo"><option value="">Escolha...</option>'+CARGOS.map(g => '<option'+(atual&&atual.cargo===g?' selected':'')+'>'+g+'</option>').join('')+'</select></label>'
+      + (atual ? '<label class="chk" for="p-ativo"><input id="p-ativo" type="checkbox"'+(atual.ativo?' checked':'')+'><span>Pessoa ativa</span></label>' : '')
+      + '<div class="err" id="p-err" role="alert"></div>'
+      + '<div class="btns"><button class="btn" type="submit" id="p-btn">'+(atual?'Salvar':'Enviar convite')+'</button>'
+      + (atual ? '<button class="btn ghost" type="button" id="p-cancel">Cancelar edição</button><button class="btn ghost" type="button" id="p-reset">Enviar link de nova senha</button>' : '')
+      + '</div></form></div>'
+      + '<div class="card"><h2>Pessoas</h2><label class="chk" style="margin-bottom:10px"><input type="checkbox" id="mostra-inat"'+(mostrarInativos?' checked':'')+'><span>Mostrar inativos</span></label>'
+      + '<p class="sub">'+vis.length+' cadastrada'+(vis.length===1?'':'s')+'. Pessoas com lançamentos não são apagadas, só inativadas.</p>'
+      + '<ul class="items">'+(vis.map(p => { const c = clinicaDe(p); return '<li class="item"><div><div class="line"><b>'+esc(p.nome)+'</b><span class="badge">'+(p.papel==='gerente'?'Gerente':esc(p.cargo||'Promotor'))+'</span>'+(c?'<span class="sigla">'+esc(c.sigla)+'</span>':'<span class="chip off">Sem clínica</span>')+(p.ativo?'':'<span class="chip off">Inativa</span>')+'</div><div class="meta">'+esc(p.email||'sem e-mail')+(p.telefone?' · '+esc(fmtTel(p.telefone)):'')+'</div></div><div><button type="button" class="btn ghost sm" data-ped="'+p.id+'">Editar</button></div></li>'; }).join('') || '<li class="empty">Ninguém cadastrado ainda.</li>')+'</ul></div>';
+    $('#f-pes').addEventListener('submit', pessoaSalvar);
+    $('#p-papel').addEventListener('change', e => { papelForm = e.target.value; $('#w-cargo').hidden = papelForm !== 'promotor'; });
+    $('#mostra-inat').addEventListener('change', e => { mostrarInativos = e.target.checked; pessoasDesenhar(); });
+    $$('[data-ped]').forEach(b => b.addEventListener('click', () => { editId = Number(b.dataset.ped); pessoasDesenhar(); }));
+    const cn = $('#p-cancel'); if (cn) cn.addEventListener('click', () => { editId = null; pessoasDesenhar(); });
+    const rs = $('#p-reset'); if (rs) rs.addEventListener('click', async () => {
+      rs.disabled = true; const r = await chamar({ acao: 'redefinir', pessoa_id: editId }); rs.disabled = false;
+      toast(r.erro ? r.erro : 'Link de nova senha enviado para '+atual.email+'.');
     });
   }
-  async function enviarFoto(file){
-    const blob = await reduzirFoto(file), path = authUid+'/perfil.jpg';
-    const up = await sb.storage.from('fotos').upload(path, blob, { upsert: true, contentType: 'image/jpeg', cacheControl: '3600' });
-    if (up.error) throw up.error;
-    const url = sb.storage.from('fotos').getPublicUrl(path).data.publicUrl + '?v=' + Date.now();
-    const r = await sb.rpc('atualizar_meu_perfil', { p_nome: null, p_telefone: null, p_foto_url: url });
-    if (r.error) throw r.error;
-    eu.foto_url = url; return url;
-  }
-  async function escolheuFoto(inp, erroEl, depois){
-    const f = inp.files && inp.files[0]; inp.value = ''; if (!f) return;
-    erroEl.textContent = '';
-    try { await enviarFoto(f); depois(); } catch(e){ erroEl.textContent = msgErro(e); }
-  }
-  $('#o-cam').addEventListener('change', e => escolheuFoto(e.target, $('#o-err'), () => { toast('Foto salva.'); abrirApp(); }));
-  $('#o-gal').addEventListener('change', e => escolheuFoto(e.target, $('#o-err'), () => { toast('Foto salva.'); abrirApp(); }));
-  $('#o-pular').addEventListener('click', () => { guarda.set('pulou-foto-'+eu.id, '1'); abrirApp(); });
 
-  /* ---------- casca do app ---------- */
-  const ICONES = {
-    corrida: '<svg viewBox="0 0 24 24"><path d="M5 21V4"/><path d="M5 4h13l-2.5 4L18 12H5"/></svg>',
-    lancar: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
-    avisos: '<svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 0112 0c0 6 2 7 2 7H4s2-1 2-7z"/><path d="M10 20a2 2 0 004 0"/></svg>',
-    perfil: '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>'
-  };
-  let naoLidas = 0;
-  function abrirApp(){
-    $('#h-papel').textContent = eu.papel === 'gerente' ? 'Gerente' : (eu.cargo || 'Promotor');
-    $('#h-nome').textContent = eu.nome.split(' ')[0];
-    $('#h-av').innerHTML = avatar(eu);
-    view('app'); desenharAbas(); mostrar(aba === 'lancar' && eu.papel !== 'gerente' ? 'corrida' : aba);
-    contarAvisos();
-    clearInterval(timer); timer = setInterval(() => { if (!document.hidden && $('#v-app').hidden === false){ if (aba === 'corrida') corridaAtualizar(); contarAvisos(); } }, 15000);
-  }
-  function desenharAbas(){
-    const abas = [['corrida','Corrida']].concat(eu.papel === 'gerente' ? [['lancar','Lançar']] : [], [['avisos','Avisos'],['perfil','Perfil']]);
-    $('#tabs').innerHTML = abas.map(a => '<button type="button" data-aba="'+a[0]+'" aria-current="'+(a[0]===aba?'page':'false')+'">'+ICONES[a[0]]+'<span>'+a[1]+'</span>'+(a[0]==='avisos'&&naoLidas?'<span class="n">'+naoLidas+'</span>':'')+'</button>').join('');
-  }
-  $('#tabs').addEventListener('click', e => { const b = e.target.closest('[data-aba]'); if (b) mostrar(b.dataset.aba); });
-  function mostrar(a){
-    aba = a; desenharAbas();
-    ({ corrida: corridaCarregar, lancar: lancCarregar, avisos: avisosCarregar, perfil: perfilCarregar })[a]();
-    window.scrollTo(0, 0);
-  }
-  async function contarAvisos(){
-    const r = await sb.from('notificacoes').select('*').eq('usuario_id', eu.id);
-    if (r.error) return;
-    const n = r.data.filter(x => !x.lida_em).length;
-    if (n !== naoLidas){ naoLidas = n; desenharAbas(); }
+  async function pessoaSalvar(e){
+    e.preventDefault();
+    const atual = pessoas.find(p => p.id === editId) || null;
+    const d = { papel: atual ? atual.papel : $('#p-papel').value, nome: $('#p-nome').value.trim(), email: $('#p-email').value.trim().toLowerCase(),
+      telefone: soDigitos($('#p-tel').value), clinica_id: Number($('#p-clin').value) || null, cargo: $('#p-cargo').value };
+    if (d.papel !== 'promotor') d.cargo = null;
+    const erro = !d.nome ? 'Informe o nome.' : (!atual && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) ? 'Informe um e-mail válido.'
+      : !/^[0-9]{10,11}$/.test(d.telefone) ? 'Telefone com DDD, 10 ou 11 números.' : !d.clinica_id ? 'Escolha a clínica.'
+      : (d.papel === 'promotor' && !d.cargo) ? 'Escolha o cargo.' : '';
+    if (erro){ $('#p-err').textContent = erro; return; }
+    const btn = $('#p-btn'); btn.disabled = true; $('#p-err').textContent = '';
+    if (atual && d.email !== (atual.email||'').toLowerCase()){
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)){ btn.disabled = false; $('#p-err').textContent = 'Informe um e-mail válido.'; return; }
+      const r0 = await chamar({ acao: 'trocar_email', pessoa_id: atual.id, email: d.email });
+      if (r0.erro){ btn.disabled = false; $('#p-err').textContent = r0.erro; return; }
+      if (r0.data && r0.data.aviso) toast(r0.data.aviso);
+    }
+    if (!atual){
+      const r = await chamar(Object.assign({ acao: 'convidar' }, d));
+      btn.disabled = false;
+      if (r.erro){ $('#p-err').textContent = r.erro; return; }
+      toast('Convite enviado para '+d.email+'.'); pessoasCarregar(); return;
+    }
+    const { error } = await sb.from('usuarios').update({ nome: d.nome, telefone: d.telefone, cargo: d.cargo, ativo: $('#p-ativo').checked }).eq('id', atual.id);
+    let err2 = error;
+    const cAtual = clinicaDe(atual);
+    if (!err2 && (!cAtual || cAtual.id !== d.clinica_id)){
+      const v = vincs.find(x => x.usuario_id === atual.id);
+      if (v){ const r1 = await sb.from('vinculos_clinica').update({ fim: new Date().toISOString().slice(0,10) }).eq('id', v.id); err2 = r1.error; }
+      if (!err2){ const r2 = await sb.from('vinculos_clinica').insert({ usuario_id: atual.id, clinica_id: d.clinica_id }); err2 = r2.error; }
+    }
+    btn.disabled = false;
+    if (err2){ $('#p-err').textContent = msgErro(err2); return; }
+    toast('Pessoa atualizada.'); editId = null; pessoasCarregar();
   }
 
-  /* ---------- corrida ---------- */
-  const K = { camps: [], sel: null, modo: 'promotor', tk: 0, key: '', cars: {} };
+
+  /* ---------- campanhas ---------- */
+  let C = { camps: [], cc: [], cp: [], rg: [], cs: [], tipos: [], premios: [], promos: [] };
+  let ed = null;
+  const hoje = () => new Date().toLocaleDateString('sv-SE');
+  const dBR = d => d ? d.split('-').reverse().join('/') : '';
+  const statusCamp = c => { const h = hoje(); return h < c.inicio ? ['Agendada',''] : h > c.fim ? ['Encerrada','off'] : ['Ativa','ok']; };
+  const MODOS = { ocorrencia: 'Cada lançamento', quantidade: 'A cada N unidades', valor: 'A cada N reais' };
+
+  async function campanhasCarregar(){
+    $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
+    $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const rs = await Promise.all([
+      sb.from('campanhas').select('*').order('inicio', { ascending: false }),
+      sb.from('tipos_lancamento').select('*').order('nome'),
+      sb.from('premios').select('*').order('nome'),
+      sb.from('usuarios').select('*').order('nome'),
+      sb.from('vinculos_clinica').select('*'),
+      sb.from('clinicas').select('*').order('nome'),
+      sb.from('campanha_clinicas').select('*'),
+      sb.from('campanha_participantes').select('*'),
+      sb.from('regras_pontuacao').select('*'),
+      sb.from('casas_premio').select('*')]);
+    const er = rs.map(r => r.error).find(Boolean);
+    if (er){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
+    C.camps = rs[0].data.slice().sort((a, b) => a.inicio < b.inicio ? 1 : -1);
+    C.tipos = rs[1].data; C.premios = rs[2].data;
+    C.promos = rs[3].data.filter(u => u.papel === 'promotor' && u.ativo);
+    vincs = rs[4].data.filter(v => !v.fim); clin = rs[5].data;
+    C.cc = rs[6].data; C.cp = rs[7].data; C.rg = rs[8].data; C.cs = rs[9].data;
+    if (ed) editorDesenhar(); else campanhasLista();
+  }
+
+  function campanhasLista(){
+    $('#area').innerHTML = '<div class="card"><div class="top"><div><h2>Campanhas</h2><p class="sub" style="margin:0">Uma pessoa ou clínica pode estar em várias campanhas ao mesmo tempo.</p></div><button class="btn" type="button" id="nova-camp">Nova campanha</button></div>'
+      + '<ul class="items" style="margin-top:12px">'+(C.camps.map(c => {
+          const st = statusCamp(c), nc = C.cc.filter(x => x.campanha_id === c.id).length, np = C.cp.filter(x => x.campanha_id === c.id).length;
+          return '<li class="item"><div><div class="line"><b>'+esc(c.nome)+'</b><span class="chip '+st[1]+'">'+st[0]+'</span></div><div class="meta">'+dBR(c.inicio)+' a '+dBR(c.fim)+' · '+c.casas+' casas · '+nc+' clínica'+(nc===1?'':'s')+' · '+np+' promotor'+(np===1?'':'es')+(c.voltas_max===1?' · sem segunda volta':'')+'</div></div><div><button type="button" class="btn ghost sm" data-ec="'+c.id+'">Editar</button></div></li>'; }).join('') || '<li class="empty">Nenhuma campanha ainda. Cadastre antes as clínicas, os tipos de lançamento, os prêmios e as pessoas.</li>')+'</ul></div>';
+    $('#nova-camp').addEventListener('click', () => { ed = modeloCamp(null); editorDesenhar(); });
+    $$('[data-ec]').forEach(b => b.addEventListener('click', () => { ed = modeloCamp(C.camps.find(c => c.id === Number(b.dataset.ec))); editorDesenhar(); }));
+  }
+
+  function modeloCamp(c){
+    const id = c ? c.id : null;
+    return { id, nome: c ? c.nome : '', inicio: c ? c.inicio : hoje(), fim: c ? c.fim : '', casas: c ? c.casas : 30,
+      voltas: c ? c.voltas_max !== 1 : true, limite: c && c.voltas_max > 1 ? c.voltas_max : '', confirma: false,
+      clinicas: new Set(C.cc.filter(x => x.campanha_id === id).map(x => x.clinica_id)),
+      promotores: new Set(C.cp.filter(x => x.campanha_id === id).map(x => x.usuario_id)),
+      regras: Object.fromEntries(C.rg.filter(r => r.campanha_id === id).map(r => [r.tipo_id, { modo: r.modo, passo: Number(r.passo), pontos: r.pontos }])),
+      premios: C.cs.filter(x => x.campanha_id === id).map(x => ({ casa: x.casa, premio_id: x.premio_id, para: x.para })) };
+  }
+
+  function lerEditor(){
+    if (!$('#e-nome')) return;
+    ed.nome = $('#e-nome').value.trim(); ed.inicio = $('#e-inicio').value; ed.fim = $('#e-fim').value;
+    ed.casas = $('#e-casas').value; ed.voltas = $('#e-voltas').checked; ed.limite = $('#e-limite').value;
+    ed.clinicas = new Set($$('.e-cl:checked').map(x => Number(x.dataset.id)));
+    ed.promotores = new Set($$('.e-pr:checked').map(x => Number(x.dataset.id)));
+    ed.regras = {};
+    $$('.rrow[data-tipo]').forEach(r => {
+      if (!$('.r-on', r).checked) return;
+      ed.regras[r.dataset.tipo] = { modo: $('.r-modo', r).value, passo: $('.r-passo', r).value, pontos: $('.r-pts', r).value };
+    });
+    ed.premios = $$('.prow').map(r => ({ casa: $('.p-casa', r).value, premio_id: Number($('.p-premio', r).value) || null, para: $('.p-para', r).value }));
+  }
+
+  function editorDesenhar(){
+    const cinfo = ed.id ? C.camps.find(c => c.id === ed.id) : null;
+    const grupos = [];
+    clin.filter(c => c.ativa || ed.clinicas.has(c.id)).forEach(c => grupos.push({ c, ps: C.promos.filter(p => (clinicaDe(p) || {}).id === c.id) }));
+    const sem = C.promos.filter(p => !clinicaDe(p)); if (sem.length) grupos.push({ c: null, ps: sem });
+    const tiposVis = C.tipos.filter(t => t.ativo || ed.regras[t.id]);
+    $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
+    $('#area').innerHTML = '<div class="card"><div class="top"><div><h2>'+(ed.id ? 'Editar campanha' : 'Nova campanha')+'</h2><p class="sub" style="margin:0">Preencha as cinco partes e salve no fim da página.</p></div><button class="btn ghost sm" type="button" id="e-voltar">Voltar para a lista</button></div>'
+      + '<form id="f-camp" novalidate>'
+      + '<div class="sec" style="border:0;margin-top:14px;padding-top:0"><h2>1. Dados da corrida</h2><div class="g2">'
+      + '<label class="field full" for="e-nome">Nome da campanha<input id="e-nome" type="text" autocomplete="off" value="'+esc(ed.nome)+'"></label>'
+      + '<label class="field" for="e-inicio">Início<input id="e-inicio" type="date" value="'+esc(ed.inicio)+'"></label>'
+      + '<label class="field" for="e-fim">Fim<input id="e-fim" type="date" value="'+esc(ed.fim)+'"></label>'
+      + '<label class="field" for="e-casas">Casas da pista (5 a 120)<input id="e-casas" type="number" inputmode="numeric" min="5" max="120" value="'+esc(ed.casas)+'"></label></div>'
+      + '<label class="chk" for="e-voltas"><input id="e-voltas" type="checkbox"'+(ed.voltas?' checked':'')+'><span>Permitir segunda volta (quem completa a pista recomeça e pode ganhar os prêmios de novo)</span></label>'
+      + '<label class="field" for="e-limite">Máximo de voltas (deixe vazio para sem limite)<input id="e-limite" type="number" inputmode="numeric" min="2" value="'+esc(ed.limite)+'"></label></div>'
+      + '<div class="sec"><h2>2. Clínicas que participam</h2><div class="picks">'+(clin.filter(c => c.ativa || ed.clinicas.has(c.id)).map(c => '<label class="chk"><input class="e-cl" type="checkbox" data-id="'+c.id+'"'+(ed.clinicas.has(c.id)?' checked':'')+'><span><span class="sigla">'+esc(c.sigla)+'</span> '+esc(c.nome)+'</span></label>').join('') || '<div class="empty">Nenhuma clínica ativa cadastrada.</div>')+'</div></div>'
+      + '<div class="sec"><h2>3. Promotores que participam</h2><p class="sub" style="margin:0">Agrupados pela clínica em que atuam hoje.</p>'
+      + (grupos.map((g, i) => '<div class="grp"><h3>'+(g.c ? '<span class="sigla">'+esc(g.c.sigla)+'</span>'+esc(g.c.nome) : 'Sem clínica')+'<button type="button" class="btn ghost sm" data-grp="'+i+'">Marcar todos</button></h3><div class="picks">'+(g.ps.map(p => '<label class="chk"><input class="e-pr" data-g="'+i+'" type="checkbox" data-id="'+p.id+'"'+(ed.promotores.has(p.id)?' checked':'')+'><span>'+esc(p.nome)+' <span class="meta">'+esc(p.cargo||'')+'</span></span></label>').join('') || '<div class="meta">Nenhum promotor ativo nesta clínica.</div>')+'</div></div>').join('') || '<div class="empty">Nenhum promotor ativo cadastrado.</div>')+'</div>'
+      + '<div class="sec"><div class="top"><div><h2>4. Pontuação</h2><p class="sub" style="margin:0">Marque o que esta campanha aceita. 1 ponto = 1 casa. O que não estiver marcado não pode ser lançado nela.</p></div><button class="btn ghost sm" type="button" id="e-padrao">Usar pontuação padrão</button></div>'
+      + tiposVis.map(t => { const r = ed.regras[t.id]; const m = r ? r.modo : 'ocorrencia';
+          return '<div class="rrow'+(r?'':' off')+'" data-tipo="'+t.id+'"><label class="chk"><input class="r-on" type="checkbox"'+(r?' checked':'')+'><span>'+esc(t.nome)+'</span></label>'
+          + '<select class="r-modo" aria-label="Como pontua">'+Object.keys(MODOS).filter(k => k !== 'valor' || t.usa_valor).map(k => '<option value="'+k+'"'+(k===m?' selected':'')+'>'+MODOS[k]+'</option>').join('')+'</select>'
+          + '<input class="r-passo" type="number" min="0.01" step="0.01" inputmode="decimal" aria-label="N" placeholder="N"'+(m==='ocorrencia'?' disabled':'')+' value="'+(r && m !== 'ocorrencia' ? esc(r.passo) : '')+'">'
+          + '<input class="r-pts" type="number" min="0" step="1" inputmode="numeric" aria-label="Pontos" placeholder="pontos" value="'+(r ? esc(r.pontos) : '')+'"></div>'; }).join('')
+      + '</div>'
+      + '<div class="sec"><div class="top"><div><h2>5. Prêmios nas casas</h2><p class="sub" style="margin:0">Ouro: só o primeiro que passar leva. Prata: todos que passarem levam.</p></div><button class="btn ghost sm" type="button" id="e-addp">Adicionar casa premiada</button></div>'
+      + (ed.premios.map((p, i) => '<div class="prow"><input class="p-casa" type="number" min="1" inputmode="numeric" aria-label="Número da casa" placeholder="Casa" value="'+esc(p.casa)+'"><select class="p-premio" aria-label="Prêmio"><option value="">Prêmio...</option>'+C.premios.filter(x => x.ativo || x.id === p.premio_id).map(x => '<option value="'+x.id+'"'+(x.id===p.premio_id?' selected':'')+'>'+esc(x.nome)+' ('+x.tipo+')</option>').join('')+'</select><select class="p-para" aria-label="Quem ganha"><option value="promotor"'+(p.para==='promotor'?' selected':'')+'>Promotor</option><option value="clinica"'+(p.para==='clinica'?' selected':'')+'>Clínica</option></select><button type="button" class="btn ghost sm" data-delp="'+i+'">Remover</button></div>').join('') || '<div class="empty">Nenhuma casa premiada ainda.</div>')+'</div>'
+      + '<div class="err" id="e-err" role="alert" style="margin-top:14px"></div>'
+      + '<div class="btns" style="margin-top:6px"><button class="btn" type="submit" id="e-btn">Salvar campanha</button>'
+      + (ed.id ? '<button class="btn ghost" type="button" id="e-del">'+(ed.confirma?'Confirmar exclusão':'Excluir campanha')+'</button>' : '')+'</div></form></div>';
+    $('#e-voltar').addEventListener('click', () => { ed = null; campanhasLista(); });
+    $('#f-camp').addEventListener('submit', campanhaSalvar);
+    $('#e-addp').addEventListener('click', () => { lerEditor(); ed.premios.push({ casa: '', premio_id: null, para: 'promotor' }); editorDesenhar(); });
+    $$('[data-delp]').forEach(b => b.addEventListener('click', () => { lerEditor(); ed.premios.splice(Number(b.dataset.delp), 1); editorDesenhar(); }));
+    $$('[data-grp]').forEach(b => b.addEventListener('click', () => { $$('.e-pr[data-g="'+b.dataset.grp+'"]').forEach(x => { x.checked = true; }); }));
+    $('#e-padrao').addEventListener('click', () => {
+      lerEditor();
+      const pad = [['visita','quantidade',5,1],['venda de início','ocorrencia',1,1],['venda da nuv','ocorrencia',1,1],['venda nuv + início','ocorrencia',1,3]];
+      pad.forEach(p => { const t = C.tipos.find(x => x.ativo && x.nome.toLowerCase().includes(p[0])); if (t) ed.regras[t.id] = { modo: p[1], passo: p[2], pontos: p[3] }; });
+      editorDesenhar();
+    });
+    $$('.rrow[data-tipo]').forEach(r => {
+      const sync = () => {
+        const on = $('.r-on', r).checked, m = $('.r-modo', r).value;
+        r.classList.toggle('off', !on);
+        $('.r-passo', r).disabled = m === 'ocorrencia';
+        $('.r-passo', r).placeholder = m === 'valor' ? 'R$' : 'N';
+        if (m === 'ocorrencia') $('.r-passo', r).value = '';
+      };
+      $('.r-on', r).addEventListener('change', sync); $('.r-modo', r).addEventListener('change', sync);
+    });
+    const del = $('#e-del'); if (del) del.addEventListener('click', campanhaExcluir);
+  }
+
+  async function syncConj(tabela, col, campId, atuais, novos){
+    const add = [...novos].filter(x => !atuais.has(x)), rem = [...atuais].filter(x => !novos.has(x));
+    if (add.length){ const { error } = await sb.from(tabela).insert(add.map(x => ({ campanha_id: campId, [col]: x }))); if (error) return error; }
+    if (rem.length){ const { error } = await sb.from(tabela).delete().eq('campanha_id', campId).in(col, rem); if (error) return error; }
+    return null;
+  }
+
+  async function campanhaSalvar(e){
+    e.preventDefault(); lerEditor();
+    const falha = m => { $('#e-err').textContent = m; return null; };
+    const casas = Number(ed.casas);
+    if (!ed.nome) return falha('Informe o nome da campanha.');
+    if (!ed.inicio || !ed.fim) return falha('Informe as datas de início e fim.');
+    if (ed.fim < ed.inicio) return falha('A data final não pode ser antes da inicial.');
+    if (!Number.isInteger(casas) || casas < 5 || casas > 120) return falha('O número de casas deve ficar entre 5 e 120.');
+    if (ed.voltas && ed.limite !== '' && (!Number.isInteger(Number(ed.limite)) || Number(ed.limite) < 2)) return falha('O máximo de voltas deve ser 2 ou mais, ou fique vazio.');
+    if (!ed.clinicas.size) return falha('Escolha pelo menos uma clínica.');
+    const regras = [];
+    for (const [tid, r] of Object.entries(ed.regras)){
+      const t = C.tipos.find(x => x.id === Number(tid)), pts = Number(r.pontos), passo = r.modo === 'ocorrencia' ? 1 : Number(r.passo);
+      if (r.pontos === '' || !Number.isInteger(pts) || pts < 0) return falha('Informe os pontos de "'+t.nome+'" (número inteiro).');
+      if (!(passo > 0)) return falha('Informe o N de "'+t.nome+'" (maior que zero).');
+      regras.push({ tipo_id: Number(tid), modo: r.modo, passo, pontos: pts });
+    }
+    if (!regras.length) return falha('Marque pelo menos um tipo de lançamento na pontuação.');
+    const vistos = new Set(), casasP = [];
+    for (const p of ed.premios){
+      const n = Number(p.casa);
+      if (!Number.isInteger(n) || n < 1 || n > casas) return falha('Cada casa premiada precisa ser um número de 1 a '+casas+'.');
+      if (!p.premio_id) return falha('Escolha o prêmio da casa '+n+'.');
+      const k = n+'|'+p.para; if (vistos.has(k)) return falha('A casa '+n+' já tem prêmio para '+(p.para==='clinica'?'clínica':'promotor')+'.');
+      vistos.add(k); casasP.push({ casa: n, premio_id: p.premio_id, para: p.para });
+    }
+    const btn = $('#e-btn'); btn.disabled = true; $('#e-err').textContent = '';
+    const fim = (m) => { btn.disabled = false; $('#e-err').textContent = m; return null; };
+    const dados = { nome: ed.nome, inicio: ed.inicio, fim: ed.fim, casas, voltas_max: ed.voltas ? (ed.limite === '' ? null : Number(ed.limite)) : 1, premios_repetem: true };
+    let id = ed.id;
+    if (id){ const { error } = await sb.from('campanhas').update(dados).eq('id', id); if (error) return fim(msgErro(error)); }
+    else { const { data, error } = await sb.from('campanhas').insert(dados).select('id').single(); if (error) return fim(msgErro(error)); id = data.id; ed.id = id; }
+    let er = await syncConj('campanha_clinicas', 'clinica_id', id, new Set(C.cc.filter(x => x.campanha_id === id).map(x => x.clinica_id)), ed.clinicas);
+    if (!er) er = await syncConj('campanha_participantes', 'usuario_id', id, new Set(C.cp.filter(x => x.campanha_id === id).map(x => x.usuario_id)), ed.promotores);
+    if (!er){
+      const at = C.rg.filter(r => r.campanha_id === id), novos = [], rem = [];
+      for (const r of regras){
+        const ex = at.find(x => x.tipo_id === r.tipo_id);
+        if (!ex) novos.push(Object.assign({ campanha_id: id }, r));
+        else if (ex.modo !== r.modo || Number(ex.passo) !== r.passo || ex.pontos !== r.pontos){ const u = await sb.from('regras_pontuacao').update({ modo: r.modo, passo: r.passo, pontos: r.pontos }).eq('id', ex.id); if (u.error){ er = u.error; break; } }
+      }
+      at.forEach(x => { if (!regras.some(r => r.tipo_id === x.tipo_id)) rem.push(x.id); });
+      if (!er && novos.length){ const i = await sb.from('regras_pontuacao').insert(novos); er = i.error; }
+      if (!er && rem.length){ const d = await sb.from('regras_pontuacao').delete().in('id', rem); er = d.error; }
+    }
+    if (!er){
+      const at = C.cs.filter(x => x.campanha_id === id), novos = [], rem = [];
+      for (const c of casasP){
+        const ex = at.find(x => x.casa === c.casa && x.para === c.para);
+        if (!ex) novos.push(Object.assign({ campanha_id: id }, c));
+        else if (ex.premio_id !== c.premio_id){ const u = await sb.from('casas_premio').update({ premio_id: c.premio_id }).eq('id', ex.id); if (u.error){ er = u.error; break; } }
+      }
+      at.forEach(x => { if (!casasP.some(c => c.casa === x.casa && c.para === x.para)) rem.push(x); });
+      if (!er && novos.length){ const i = await sb.from('casas_premio').insert(novos); er = i.error; }
+      for (const x of rem){ if (er) break; const d = await sb.from('casas_premio').delete().eq('id', x.id); if (d.error) er = d.error.code === '23503' ? { message: 'A casa '+x.casa+' já tem ganhador e não pode ser removida.' } : d.error; }
+    }
+    if (er){ await campanhasCarregarSilencioso(); return fim('Salvo só em parte: '+msgErro(er)); }
+    await sb.rpc('recalcular', { p_camp: id });
+    toast('Campanha salva.'); ed = null; campanhasCarregar();
+  }
+
+  async function campanhasCarregarSilencioso(){
+    const rs = await Promise.all([sb.from('campanhas').select('*'), sb.from('campanha_clinicas').select('*'), sb.from('campanha_participantes').select('*'), sb.from('regras_pontuacao').select('*'), sb.from('casas_premio').select('*')]);
+    if (rs.some(r => r.error)) return;
+    C.camps = rs[0].data; C.cc = rs[1].data; C.cp = rs[2].data; C.rg = rs[3].data; C.cs = rs[4].data;
+  }
+
+  async function campanhaExcluir(){
+    if (!ed.confirma){ lerEditor(); ed.confirma = true; editorDesenhar(); $('#e-err').textContent = 'Toque em "Confirmar exclusão" para apagar de vez.'; return; }
+    const { error } = await sb.from('campanhas').delete().eq('id', ed.id);
+    ed.confirma = false;
+    if (error){ editorDesenhar(); $('#e-err').textContent = error.code === '23503' ? 'Esta campanha já tem lançamentos ou ganhadores e não pode ser excluída.' : msgErro(error); return; }
+    toast('Campanha excluída.'); ed = null; campanhasCarregar();
+  }
+
+
+  /* ---------- corrida (acompanhamento ao vivo) ---------- */
+  const K = { camps: [], sel: null, modo: 'promotor', tk: 0, key: '', cars: {}, cols: 10, timer: null };
   const PALETA = ['#e10600','#ff8700','#00a6ff','#34c759','#af52de','#ffd60a','#ff375f','#5ac8fa','#a2845e','#8e8e93'];
-  const statusCamp = c => { const h = hoje(); return h < c.inicio ? 'Agendada' : h > c.fim ? 'Encerrada' : 'Ativa'; };
+  const iniciais = n => { const p = String(n||'?').trim().split(/\s+/); return ((p[0]||'?')[0] + (p.length > 1 ? p[p.length-1][0] : (p[0]||'')[1] || '')).toUpperCase(); };
 
   async function corridaCarregar(){
-    $('#main').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
+    $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
     const { data, error } = await sb.from('campanhas').select('*');
-    if (error){ $('#main').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(error))+'</div></div>'; return; }
+    if (error){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(error))+'</div></div>'; return; }
     K.camps = data.slice().sort((a, b) => a.inicio < b.inicio ? 1 : -1);
-    if (!K.camps.some(c => c.id === K.sel)){ const a = K.camps.find(c => statusCamp(c) === 'Ativa'); K.sel = (a || K.camps[0] || {}).id || null; }
-    if (!K.sel){ $('#main').innerHTML = '<div class="card"><h2>Corrida</h2><div class="empty">Você ainda não está em nenhuma campanha.</div></div>'; return; }
-    if (eu.papel === 'gerente' && !K.modoEscolhido) K.modo = 'clinica';
-    K.key = ''; K.cars = {};
-    $('#main').innerHTML =
-      '<div class="card"><div class="top"><select id="k-camp" aria-label="Campanha" style="width:100%">'+K.camps.map(c => '<option value="'+c.id+'"'+(c.id===K.sel?' selected':'')+'>'+esc(c.nome)+' ('+statusCamp(c)+')</option>').join('')+'</select>'
-      + '<div class="seg" role="group" aria-label="Tipo de corrida"><button type="button" data-modo="promotor" aria-pressed="'+(K.modo==='promotor')+'">Promotores</button><button type="button" data-modo="clinica" aria-pressed="'+(K.modo==='clinica')+'">Clínicas</button></div>'
-      + '<span class="meta" id="k-hora"></span></div></div>'
-      + '<div id="k-hero"></div><div class="card"><div class="pista" id="k-pista"></div></div>'
-      + '<div class="card"><h2>Classificação</h2><div id="k-rank"></div></div><div class="card"><h2>Prêmios</h2><div id="k-prem"></div></div>';
+    if (!K.camps.some(c => c.id === K.sel)){ const a = K.camps.find(c => statusCamp(c)[0] === 'Ativa'); K.sel = (a || K.camps[0] || {}).id || null; }
+    if (!K.sel){ $('#area').innerHTML = '<div class="card"><h2>Corrida</h2><div class="empty">Nenhuma campanha ainda. Crie uma em "Campanhas".</div></div>'; return; }
+    K.key = '';
+    $('#area').innerHTML =
+      '<div class="card"><div class="top"><div class="line"><select id="k-camp" aria-label="Campanha" style="width:auto;min-width:220px">'+K.camps.map(c => '<option value="'+c.id+'"'+(c.id===K.sel?' selected':'')+'>'+esc(c.nome)+' ('+statusCamp(c)[0]+')</option>').join('')+'</select>'
+      + '<div class="seg" role="group" aria-label="Tipo de corrida"><button type="button" data-modo="promotor" aria-pressed="'+(K.modo==='promotor')+'">Promotores</button><button type="button" data-modo="clinica" aria-pressed="'+(K.modo==='clinica')+'">Clínicas</button></div></div>'
+      + '<div class="line"><span class="meta" id="k-hora" style="margin:0"></span><button class="btn ghost sm" type="button" id="k-tela">Tela cheia</button></div></div></div>'
+      + '<div class="card"><div class="pista" id="k-pista"></div></div>'
+      + '<div class="two"><div class="card"><h2>Classificação</h2><div id="k-rank"></div></div><div class="card"><h2>Prêmios</h2><div id="k-prem"></div></div></div>';
     $('#k-camp').addEventListener('change', e => { K.sel = Number(e.target.value); K.key = ''; corridaAtualizar(); });
-    $$('[data-modo]').forEach(b => b.addEventListener('click', () => { K.modo = b.dataset.modo; K.modoEscolhido = true; K.key = ''; $$('[data-modo]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); corridaAtualizar(); }));
+    $$('[data-modo]').forEach(b => b.addEventListener('click', () => { K.modo = b.dataset.modo; K.key = ''; $$('[data-modo]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); corridaAtualizar(); }));
+    $('#k-tela').addEventListener('click', () => { const a = $('#area'); if (document.fullscreenElement) document.exitFullscreen(); else if (a.requestFullscreen) a.requestFullscreen(); });
+    $('#k-prem').addEventListener('click', async e => {
+      const b = e.target.closest('[data-ent]'); if (!b) return;
+      b.disabled = true;
+      const { error: er } = await sb.from('ganhadores').update({ entregue_em: new Date().toISOString(), entregue_por: eu.id }).eq('id', Number(b.dataset.ent));
+      if (er){ b.disabled = false; toast(msgErro(er)); return; }
+      toast('Prêmio marcado como entregue.'); corridaAtualizar();
+    });
     await corridaAtualizar();
   }
 
@@ -310,35 +672,25 @@ input:focus,select:focus{outline:none;background:var(--surface);border-color:var
     const rs = await Promise.all([
       sb.from(view).select('*').eq('campanha_id', c.id).order('ordem'),
       sb.from('casas_premio').select('*').eq('campanha_id', c.id).eq('para', modo),
-      sb.from('premios').select('*'), sb.from('participantes').select('*'), sb.from('clinicas').select('*')]);
-    if (tk !== K.tk || !$('#k-pista')) return;
+      sb.from('premios').select('*'), sb.from('usuarios').select('*'), sb.from('clinicas').select('*'), sb.from('vinculos_clinica').select('*')]);
     const er = rs.map(r => r.error).find(Boolean);
+    if (tk !== K.tk || !$('#k-pista')) return;
     if (er){ $('#k-rank').innerHTML = '<div class="err">'+esc(msgErro(er))+'</div>'; return; }
-    const rank = rs[0].data, casasP = rs[1].data, premios = rs[2].data, pessoas = rs[3].data, cls = rs[4].data;
+    const rank = rs[0].data, casasP = rs[1].data, premios = rs[2].data, usu = rs[3].data, cls = rs[4].data;
+    const vcs = rs[5].data.filter(v => !v.fim);
     let gan = [];
     if (casasP.length){ const g = await sb.from('ganhadores').select('*').in('casa_premio_id', casasP.map(x => x.id)); if (tk !== K.tk) return; if (!g.error) gan = g.data; }
 
-    const meuAlvo = modo === 'promotor' ? (eu.papel === 'promotor' ? eu.id : null) : (minhasClin.length ? minhasClin[0] : null);
-    const ehMeu = id => modo === 'promotor' ? id === eu.id : minhasClin.includes(id);
     const ents = {};
     rank.forEach((r, i) => {
       const id = r[idCol];
-      if (modo === 'promotor'){ const u = pessoas.find(x => x.id === id) || {}; ents[id] = { nome: u.nome || 'Participante', tag: iniciais(u.nome), sub: u.cargo || '', cor: PALETA[i % PALETA.length], foto_url: u.foto_url }; }
-      else { const cl = cls.find(x => x.id === id) || {}; ents[id] = { nome: cl.nome || 'Clínica', tag: cl.sigla || '?', sub: cl.sigla || '', cor: cl.cor || PALETA[i % PALETA.length], foto_url: null }; }
+      if (modo === 'promotor'){ const u = usu.find(x => x.id === id) || {}; const v = vcs.find(x => x.usuario_id === id); const cl = v && cls.find(x => x.id === v.clinica_id);
+        ents[id] = { nome: u.nome || '#'+id, tag: iniciais(u.nome), sub: (cl ? cl.sigla : '') + (u.cargo ? ' · '+u.cargo : ''), cor: PALETA[i % PALETA.length] }; }
+      else { const cl = cls.find(x => x.id === id) || {}; ents[id] = { nome: cl.nome || '#'+id, tag: cl.sigla || '?', sub: cl.sigla || '', cor: cl.cor || PALETA[i % PALETA.length] }; }
     });
 
-    // resumo pessoal
-    const meu = rank.find(r => ehMeu(r[idCol]));
-    if (meu){
-      const N = c.casas, pos = meu.casa_na_volta % N;
-      const prox = casasP.map(x => x.casa).filter(k => k > pos && k < N + 1).sort((a, b) => a - b)[0];
-      const pr = prox && premios.find(p => p.id === (casasP.find(x => x.casa === prox) || {}).premio_id);
-      $('#k-hero').innerHTML = '<div class="hero"><p style="margin:0">'+(modo==='promotor'?'Você':'Sua clínica')+' está em</p><b>'+meu.posicao+'º lugar</b><p>'+meu.pontos+' pontos · volta '+meu.volta+', casa '+meu.casa_na_volta
-        +(prox ? ' · faltam '+(prox - pos)+' para a casa '+prox+(pr ? ' ('+esc(pr.nome)+')' : '') : '')+'</p></div>';
-    } else $('#k-hero').innerHTML = '';
-
-    const N = c.casas, cols = 6, rows = Math.ceil(N / cols);
-    const key = [c.id, modo, N, casasP.map(x => x.casa+':'+x.premio_id).join(',')].join('|');
+    const N = c.casas, cols = Math.max(4, Math.min(10, Math.floor(($('#k-pista').clientWidth || 800) / 78))), rows = Math.ceil(N / cols);
+    const key = [c.id, modo, N, cols, casasP.map(x => x.casa+':'+x.premio_id).join(',')].join('|');
     const pos = i => { const r = Math.floor(i / cols); let col = i % cols; if (r % 2) col = cols - 1 - col; return { r, col }; };
     if (key !== K.key){
       K.key = key; K.cars = {};
@@ -348,60 +700,93 @@ input:focus,select:focus{outline:none;background:var(--surface);border-color:var
         const col = r % 2 ? cols - 1 - k : k, i = r * cols + col;
         if (i >= N){ cells += '<div></div>'; continue; }
         const pr = pm[i];
-        cells += '<div class="casa'+(i===0?' largada':'')+(pr?' '+pr.tipo:'')+'"><span>'+(i===0?'Largada':i)+'</span>'+(pr?'<span>★</span>':'')+'</div>';
+        cells += '<div class="casa'+(i===0?' largada':'')+(pr?' '+pr.tipo:'')+'"'+(pr?' title="'+esc(pr.nome)+'"':'')+'><span>'+(i===0?'Largada':i)+'</span>'+(pr?'<small>'+esc(pr.nome)+'</small>':'')+'</div>';
       }
       $('#k-pista').innerHTML = '<div class="pgrid" style="grid-template-columns:repeat('+cols+',minmax(0,1fr))">'+cells+'</div><div class="carros" id="k-carros"></div>';
     }
+    // carros
     const grupos = {}; rank.forEach(r => { const i = (r.casa_na_volta || 0) % N; (grupos[i] = grupos[i] || []).push(r[idCol]); });
     const camada = $('#k-carros'), vivos = new Set();
     Object.keys(grupos).forEach(ci => grupos[ci].forEach((id, j, arr) => {
       const e = ents[id], p = pos(Number(ci)); vivos.add(id);
       let el = K.cars[id];
       if (!el){ el = document.createElement('div'); el.className = 'carro'; camada.appendChild(el); K.cars[id] = el;
-        el.innerHTML = '<div class="in"><span class="tag"></span><svg viewBox="0 0 40 20" width="30" height="15" aria-hidden="true"><rect x="4" y="6" width="26" height="8" rx="4" fill="'+esc(e.cor)+'"/><rect x="28" y="8" width="10" height="4" rx="2" fill="'+esc(e.cor)+'"/><rect x="1" y="3" width="4" height="14" rx="1.5" fill="#111"/><rect x="26" y="2" width="5" height="16" rx="2" fill="#111"/><circle cx="17" cy="10" r="3" fill="#fff" opacity=".85"/></svg></div>'; }
-      el.classList.toggle('eu', ehMeu(id));
+        el.innerHTML = '<div class="in"><span class="tag"></span><svg viewBox="0 0 40 20" width="42" height="21" aria-hidden="true"><rect x="4" y="6" width="26" height="8" rx="4" fill="'+esc(e.cor)+'"/><rect x="28" y="8" width="10" height="4" rx="2" fill="'+esc(e.cor)+'"/><rect x="1" y="3" width="4" height="14" rx="1.5" fill="#111"/><rect x="26" y="2" width="5" height="16" rx="2" fill="#111"/><circle cx="17" cy="10" r="3" fill="#fff" opacity=".85"/></svg></div>'; }
       $('.tag', el).textContent = e.tag; el.title = e.nome;
       el.style.width = (100 / cols)+'%'; el.style.height = (100 / rows)+'%';
       el.style.left = (p.col * 100 / cols)+'%'; el.style.top = (p.r * 100 / rows)+'%';
-      el.style.setProperty('--dx', ((j - (arr.length - 1) / 2) * 12)+'px');
+      el.style.setProperty('--dx', ((j - (arr.length - 1) / 2) * 26)+'px');
     }));
     Object.keys(K.cars).forEach(id => { if (!vivos.has(Number(id))){ K.cars[id].remove(); delete K.cars[id]; } });
 
-    $('#k-rank').innerHTML = rank.map(r => { const e = ents[r[idCol]];
-      return '<div class="rk'+(ehMeu(r[idCol])?' eu':'')+'"><span class="pos">'+r.posicao+'º</span>'+(modo==='promotor'?avatar({nome:e.nome,foto_url:e.foto_url}):'<span class="av" style="background:'+esc(e.cor)+';color:#fff">'+esc(e.tag)+'</span>')+'<div style="min-width:0"><b>'+esc(e.nome)+'</b><p class="meta">'+esc(e.sub)+' · volta '+r.volta+', casa '+r.casa_na_volta+'</p></div><span class="pts">'+r.pontos+'</span></div>'; }).join('')
-      || '<div class="empty">Ninguém participa desta corrida ainda.</div>';
+    // classificação
+    $('#k-rank').innerHTML = rank.map(r => { const e = ents[r[idCol]]; const fim = c.voltas_max && r.pontos >= c.voltas_max * N;
+      return '<div class="rk"><span class="pos">'+r.posicao+'º</span><span class="dot" style="background:'+esc(e.cor)+'"></span><div><b>'+esc(e.nome)+'</b><p class="meta">'+esc(e.sub)+' · volta '+r.volta+', casa '+r.casa_na_volta+(fim?' · terminou':'')+'</p></div><span class="pts">'+r.pontos+' <span class="meta">pts</span></span></div>'; }).join('')
+      || '<div class="empty">Ninguém participa desta campanha ainda.</div>';
 
+    // prêmios
     $('#k-prem').innerHTML = casasP.slice().sort((a, b) => a.casa - b.casa).map(x => {
       const pr = premios.find(p => p.id === x.premio_id) || { nome: '?', tipo: 'prata' };
-      const meus = gan.filter(g => g.casa_premio_id === x.id && ehMeu(g.alvo_id));
-      return '<div class="item"><div class="line"><span class="badge '+esc(pr.tipo)+'">'+esc(pr.tipo)+'</span><b>Casa '+x.casa+'</b><span>'+esc(pr.nome)+'</span></div>'
-        + (meus.length ? '<div class="line">'+meus.map(g => '<span class="chip ok">'+(modo==='promotor'?'Você ganhou':'Sua clínica ganhou')+(g.volta>1?' (volta '+g.volta+')':'')+'</span>'+(g.entregue_em?'<span class="chip">Entregue</span>':'')).join('')+'</div>' : '')+'</div>'; }).join('')
+      const gs = gan.filter(g => g.casa_premio_id === x.id).sort((a, b) => a.volta - b.volta);
+      return '<div class="item" style="grid-template-columns:minmax(0,1fr)"><div class="line"><span class="badge '+esc(pr.tipo)+'">'+esc(pr.tipo)+'</span><b>Casa '+x.casa+'</b><span>'+esc(pr.nome)+'</span></div>'
+        + (gs.length ? gs.map(g => { const e = ents[g.alvo_id] || { nome: '#'+g.alvo_id };
+            return '<div class="line"><span>'+esc(e.nome)+(g.volta > 1 ? ' <span class="meta">(volta '+g.volta+')</span>' : '')+'</span>'
+              + (g.pendente_revisao ? '<span class="chip off">Revisar</span>' : '')
+              + (g.entregue_em ? '<span class="chip ok">Entregue</span>' : '<button type="button" class="btn ghost sm" data-ent="'+g.id+'">Marcar entregue</button>')+'</div>'; }).join('')
+          : '<div class="meta">Ninguém passou ainda.</div>')+'</div>'; }).join('')
       || '<div class="empty">Esta campanha não tem casas premiadas para '+(modo==='promotor'?'promotores':'clínicas')+'.</div>';
-    $('#k-hora').textContent = 'Atualizado às '+new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    $('#k-hora').textContent = 'Atualizado às '+new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }
 
-  /* ---------- lançar (gerente) ---------- */
-  const L = { tipos: [], clin: [], pess: [], camps: [], rows: [], lcs: [], acao: null, hist: [] };
+  setInterval(() => { if (recurso === 'corrida' && !$('#v-app').hidden && !document.hidden && $('#k-pista')) corridaAtualizar(); }, 15000);
+
+
+  /* ---------- lançamentos (visitas e vendas) ---------- */
+  const L = { tipos: [], clin: [], usu: [], camps: [], vincs: [], rows: [], lcs: [], filtroClin: '', dias: 30, acao: null, hist: [] };
+  const num = v => Number(String(v).replace(',', '.'));
+  const rpcMsg = e => (e && e.message) || 'Algo deu errado. Tente de novo.';
+
   async function lancCarregar(){
-    $('#main').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
-    const rs = await Promise.all([sb.from('tipos_lancamento').select('*').order('nome'), sb.from('clinicas').select('*').order('nome'), sb.from('participantes').select('*').order('nome'), sb.from('campanhas').select('*')]);
+    $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const rs = await Promise.all([sb.from('tipos_lancamento').select('*').order('nome'), sb.from('clinicas').select('*').order('nome'), sb.from('usuarios').select('*').order('nome'),
+      sb.from('campanhas').select('*'), sb.from('vinculos_clinica').select('*')]);
     const er = rs.map(r => r.error).find(Boolean);
-    if (er){ $('#main').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
-    L.tipos = rs[0].data.filter(t => t.ativo); L.clin = rs[1].data.filter(c => minhasClin.includes(c.id));
-    L.pess = rs[2].data.filter(p => p.papel === 'promotor'); L.camps = rs[3].data; L.acao = null;
-    if (!L.clin.length){ $('#main').innerHTML = '<div class="card"><h2>Lançar</h2><div class="empty">Você ainda não está vinculado a uma clínica. Fale com o gestor.</div></div>'; return; }
-    $('#main').innerHTML =
-      '<div class="card"><h2>Novo lançamento</h2><p class="sub">Conta em todas as campanhas em que o promotor e a clínica participam.</p><form class="form" id="f-lanc" novalidate>'
-      + (L.clin.length > 1 ? '<label class="field" for="n-clin">Clínica<select id="n-clin">'+L.clin.map(c => '<option value="'+c.id+'">'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>' : '<input type="hidden" id="n-clin" value="'+L.clin[0].id+'">')
-      + '<label class="field" for="n-prom">Promotor<select id="n-prom"><option value="">Escolha...</option>'+L.pess.map(p => '<option value="'+p.id+'">'+esc(p.nome)+(p.cargo?' · '+esc(p.cargo):'')+'</option>').join('')+'</select></label>'
+    if (er){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
+    L.tipos = rs[0].data.filter(t => t.ativo); L.clin = rs[1].data; L.usu = rs[2].data; L.camps = rs[3].data; L.vincs = rs[4].data.filter(v => !v.fim);
+    L.acao = null; lancDesenhar();
+  }
+
+  function lancOpcPromotores(clinicaId){
+    const ativos = L.usu.filter(u => u.papel === 'promotor' && u.ativo);
+    const daClin = ativos.filter(u => L.vincs.some(v => v.usuario_id === u.id && v.clinica_id === clinicaId));
+    const outros = ativos.filter(u => !daClin.includes(u));
+    const o = u => '<option value="'+u.id+'">'+esc(u.nome)+(u.cargo ? ' · '+esc(u.cargo) : '')+'</option>';
+    return '<option value="">Escolha...</option>'+(daClin.length ? '<optgroup label="Desta clínica">'+daClin.map(o).join('')+'</optgroup>' : '')+(outros.length ? '<optgroup label="Outros promotores">'+outros.map(o).join('')+'</optgroup>' : '');
+  }
+
+  function lancDesenhar(){
+    $('#area').style.gridTemplateColumns = '';
+    const clAt = L.clin.filter(c => c.ativa);
+    $('#area').innerHTML =
+      '<div class="card"><h2>Novo lançamento</h2><p class="sub">Registre uma visita ou venda. Ela conta em todas as campanhas em que o promotor e a clínica participam e que aceitam esse tipo.</p>'
+      + '<form class="form" id="f-lanc" novalidate>'
+      + '<label class="field" for="n-clin">Clínica<select id="n-clin"><option value="">Escolha...</option>'+clAt.map(c => '<option value="'+c.id+'">'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="field" for="n-prom">Promotor<select id="n-prom">'+lancOpcPromotores(0)+'</select></label>'
       + '<label class="field" for="n-tipo">O que foi feito<select id="n-tipo"><option value="">Escolha...</option>'+L.tipos.map(t => '<option value="'+t.id+'" data-v="'+(t.usa_valor?1:0)+'">'+esc(t.nome)+'</option>').join('')+'</select></label>'
       + '<div class="g2"><label class="field" for="n-qtd">Quantidade<input id="n-qtd" type="number" inputmode="decimal" min="0.01" step="any" value="1"></label>'
       + '<label class="field" for="n-data">Data<input id="n-data" type="date" value="'+hoje()+'" max="'+hoje()+'"></label></div>'
       + '<label class="field" for="n-valor" id="w-valor" hidden>Valor da venda (R$)<input id="n-valor" type="number" inputmode="decimal" min="0.01" step="0.01"></label>'
-      + '<div class="err" id="n-err" role="alert"></div><button class="btn block" type="submit" id="n-btn">Lançar</button></form></div>'
-      + '<div class="card"><h2>Lançamentos da clínica</h2><p class="sub">Últimos 30 dias. Correções só até 7 dias depois da data do lançamento.</p><div id="l-lista"><p class="sub">Carregando...</p></div></div>';
+      + '<div class="err" id="n-err" role="alert"></div><div class="btns"><button class="btn" type="submit" id="n-btn">Lançar</button></div></form></div>'
+      + '<div class="card"><div class="top"><h2>Lançamentos recentes</h2><div class="line">'
+      + '<select id="l-fclin" aria-label="Filtrar por clínica" style="width:auto"><option value="">Todas as clínicas</option>'+L.clin.map(c => '<option value="'+c.id+'"'+(String(c.id)===L.filtroClin?' selected':'')+'>'+esc(c.sigla)+'</option>').join('')+'</select>'
+      + '<select id="l-fdias" aria-label="Período" style="width:auto">'+[7,30,90].map(d => '<option value="'+d+'"'+(d===L.dias?' selected':'')+'>Últimos '+d+' dias</option>').join('')+'</select></div></div>'
+      + '<div id="l-lista" style="margin-top:8px"><p class="sub">Carregando...</p></div></div>';
+    $('#n-clin').addEventListener('change', e => { $('#n-prom').innerHTML = lancOpcPromotores(Number(e.target.value)); });
     $('#n-tipo').addEventListener('change', e => { const o = e.target.selectedOptions[0]; $('#w-valor').hidden = !(o && o.dataset.v === '1'); });
     $('#f-lanc').addEventListener('submit', lancarSalvar);
+    $('#l-fclin').addEventListener('change', e => { L.filtroClin = e.target.value; L.acao = null; lancLista(); });
+    $('#l-fdias').addEventListener('change', e => { L.dias = Number(e.target.value); L.acao = null; lancLista(); });
     $('#l-lista').addEventListener('click', lancClique);
     lancLista();
   }
@@ -410,20 +795,22 @@ input:focus,select:focus{outline:none;background:var(--surface);border-color:var
     e.preventDefault();
     const clinica = Number($('#n-clin').value), prom = Number($('#n-prom').value), tipo = Number($('#n-tipo').value), qtd = num($('#n-qtd').value);
     const t = L.tipos.find(x => x.id === tipo), valor = $('#n-valor').value === '' ? null : num($('#n-valor').value);
-    const erro = !prom ? 'Escolha o promotor.' : !tipo ? 'Escolha o que foi feito.' : !(qtd > 0) ? 'A quantidade precisa ser maior que zero.'
+    const erro = !clinica ? 'Escolha a clínica.' : !prom ? 'Escolha o promotor.' : !tipo ? 'Escolha o que foi feito.' : !(qtd > 0) ? 'A quantidade precisa ser maior que zero.'
       : (t.usa_valor && !(valor > 0)) ? 'Este tipo exige o valor da venda.' : !$('#n-data').value ? 'Informe a data.' : '';
     if (erro){ $('#n-err').textContent = erro; return; }
     const btn = $('#n-btn'); btn.disabled = true; $('#n-err').textContent = '';
     const { error } = await sb.rpc('lancar', { p_promotor: prom, p_clinica: clinica, p_tipo: tipo, p_quantidade: qtd, p_valor: t.usa_valor ? valor : null, p_data: $('#n-data').value });
     btn.disabled = false;
-    if (error){ $('#n-err').textContent = msgErro(error); return; }
+    if (error){ $('#n-err').textContent = rpcMsg(error); return; }
     toast('Lançamento registrado.'); $('#n-qtd').value = '1'; $('#n-valor').value = ''; lancLista();
   }
 
   async function lancLista(){
     const alvo = $('#l-lista'); if (!alvo) return;
-    const desde = new Date(Date.now() - 30 * 864e5).toLocaleDateString('sv-SE');
-    const { data, error } = await sb.from('lancamentos').select('*').gte('data_ref', desde).order('criado_em', { ascending: false }).limit(100);
+    const desde = new Date(Date.now() - L.dias * 864e5).toLocaleDateString('sv-SE');
+    let q = sb.from('lancamentos').select('*').gte('data_ref', desde).order('criado_em', { ascending: false }).limit(200);
+    if (L.filtroClin) q = q.eq('clinica_id', Number(L.filtroClin));
+    const { data, error } = await q;
     if (error){ alvo.innerHTML = '<div class="err">'+esc(msgErro(error))+'</div>'; return; }
     L.rows = data; L.lcs = [];
     if (data.length){ const r = await sb.from('lancamento_campanhas').select('*').in('lancamento_id', data.map(x => x.id)); if (!r.error) L.lcs = r.data; }
@@ -433,31 +820,33 @@ input:focus,select:focus{outline:none;background:var(--surface);border-color:var
   function lancRender(){
     const alvo = $('#l-lista'); if (!alvo) return;
     alvo.innerHTML = '<ul class="items">'+(L.rows.map(r => {
-      const u = L.pess.find(x => x.id === r.promotor_id) || { nome: 'Promotor' }, t = L.tipos.find(x => x.id === r.tipo_id) || { nome: 'Tipo #'+r.tipo_id };
+      const u = L.usu.find(x => x.id === r.promotor_id) || { nome: '#'+r.promotor_id }, c = L.clin.find(x => x.id === r.clinica_id) || { sigla: '?' }, t = L.tipos.find(x => x.id === r.tipo_id) || {};
+      const nomeT = t.nome || 'Tipo #'+r.tipo_id;
       const lcs = L.lcs.filter(x => x.lancamento_id === r.id), validos = lcs.filter(x => x.status === 'valido');
       const st = !lcs.length ? '' : !validos.length ? '<span class="chip off">Cancelado</span>' : validos.length < lcs.length ? '<span class="chip off">Cancelado em parte</span>' : '';
       const aberto = L.acao && L.acao.id === r.id ? L.acao.tipo : null;
-      return '<li class="item"><div><div class="line"><b>'+esc(u.nome)+'</b>'+st+'</div><p class="meta">'+esc(t.nome)+' · '+dBR(r.data_ref)+' · qtd '+Number(r.quantidade)+(r.valor != null ? ' · '+brl(r.valor) : '')+'</p>'
-        + '<p class="meta">'+lcs.map(x => esc((L.camps.find(k => k.id === x.campanha_id) || {}).nome || 'Campanha')+(x.status==='valido'?'':' (cancelado)')).join(' · ')+'</p></div>'
+      return '<li class="item" style="grid-template-columns:minmax(0,1fr)"><div class="line" style="justify-content:space-between"><div style="min-width:0"><div class="line"><b>'+esc(u.nome)+'</b><span class="sigla">'+esc(c.sigla)+'</span><span>'+esc(nomeT)+'</span>'+st+'</div>'
+        + '<div class="meta">'+dBR(r.data_ref)+' · qtd '+Number(r.quantidade)+(r.valor != null ? ' · '+brl(r.valor) : '')+' · '+lcs.map(x => '<span class="chip'+(x.status==='valido'?'':' off')+'">'+esc((L.camps.find(k => k.id === x.campanha_id) || {}).nome || '#'+x.campanha_id)+'</span>').join(' ')+'</div></div>'
         + '<div class="btns"><button type="button" class="btn ghost sm" data-a="hi" data-id="'+r.id+'">Histórico</button>'
-        + (validos.length ? '<button type="button" class="btn ghost sm" data-a="ed" data-id="'+r.id+'">Corrigir</button><button type="button" class="btn ghost sm" data-a="ca" data-id="'+r.id+'">Cancelar</button>' : '')+'</div>'
+        + (validos.length ? '<button type="button" class="btn ghost sm" data-a="ed" data-id="'+r.id+'">Corrigir</button><button type="button" class="btn ghost sm" data-a="ca" data-id="'+r.id+'">Cancelar</button>' : '')+'</div></div>'
         + (aberto ? lancPainel(r, aberto, validos, t) : '')+'</li>'; }).join('') || '<li class="empty">Nenhum lançamento neste período.</li>')+'</ul>';
   }
 
   function lancPainel(r, tipo, validos, t){
-    const caixa = 'style="padding:12px;background:var(--surface-2);border-radius:14px"';
-    if (tipo === 'ed') return '<div class="form" '+caixa+'><div class="g2"><label class="field">Quantidade<input id="a-qtd" type="number" step="any" min="0.01" value="'+Number(r.quantidade)+'"></label>'
+    if (tipo === 'ed') return '<div class="form" style="margin-top:10px;padding:12px;background:var(--surface-2);border-radius:14px"><div class="g2"><label class="field">Quantidade<input id="a-qtd" type="number" step="any" min="0.01" value="'+Number(r.quantidade)+'"></label>'
       + (t.usa_valor ? '<label class="field">Valor (R$)<input id="a-valor" type="number" step="0.01" min="0.01" value="'+(r.valor != null ? Number(r.valor) : '')+'"></label>' : '')+'</div>'
       + '<label class="field">Motivo da correção<input id="a-motivo" type="text" autocomplete="off" placeholder="Ex.: digitei o valor errado"></label><div class="err" id="a-err" role="alert"></div>'
       + '<div class="btns"><button type="button" class="btn sm" data-a="ok-ed" data-id="'+r.id+'">Salvar correção</button><button type="button" class="btn ghost sm" data-a="fechar">Fechar</button></div></div>';
-    if (tipo === 'ca') return '<div class="form" '+caixa+'><label class="field">Cancelar em<select id="a-camp"><option value="">Todas as campanhas</option>'
-      + validos.map(x => '<option value="'+x.campanha_id+'">'+esc((L.camps.find(k => k.id === x.campanha_id) || {}).nome || 'Campanha')+'</option>').join('')+'</select></label>'
+    if (tipo === 'ca') return '<div class="form" style="margin-top:10px;padding:12px;background:var(--surface-2);border-radius:14px"><label class="field">Cancelar em<select id="a-camp"><option value="">Todas as campanhas</option>'
+      + validos.map(x => '<option value="'+x.campanha_id+'">'+esc((L.camps.find(k => k.id === x.campanha_id) || {}).nome || '#'+x.campanha_id)+'</option>').join('')+'</select></label>'
       + '<label class="field">Motivo do cancelamento<input id="a-motivo" type="text" autocomplete="off" placeholder="Ex.: lançado em duplicidade"></label><div class="err" id="a-err" role="alert"></div>'
       + '<div class="btns"><button type="button" class="btn sm" data-a="ok-ca" data-id="'+r.id+'">Confirmar cancelamento</button><button type="button" class="btn ghost sm" data-a="fechar">Fechar</button></div></div>';
-    const nome = id => (id === eu.id ? 'você' : ((L.pess.find(x => x.id === id) || {}).nome || 'o gestor'));
-    return '<div '+caixa+'>'+(L.hist.length ? L.hist.map(a => {
-      const det = a.acao === 'editar' && a.antes && a.depois ? ' · qtd '+Number(a.antes.quantidade)+' → '+Number(a.depois.quantidade)+(a.antes.valor != null || a.depois.valor != null ? ' · valor '+brl(a.antes.valor)+' → '+brl(a.depois.valor) : '') : '';
-      return '<p class="meta" style="margin:4px 0"><b>'+({criar:'Criado',editar:'Corrigido',cancelar:'Cancelado'}[a.acao]||esc(a.acao))+'</b> por '+esc(nome(a.usuario_id))+' em '+new Date(a.quando).toLocaleString('pt-BR')+esc(det)+(a.motivo ? ' · motivo: '+esc(a.motivo) : '')+'</p>'; }).join('') : '<p class="meta">Sem histórico.</p>')
+    const h = L.hist;
+    return '<div style="margin-top:10px;padding:12px;background:var(--surface-2);border-radius:14px">'+(h.length ? h.map(a => {
+      const u = L.usu.find(x => x.id === a.usuario_id) || { nome: '#'+a.usuario_id };
+      const det = a.acao === 'editar' && a.antes && a.depois ? ' · qtd '+Number(a.antes.quantidade)+' → '+Number(a.depois.quantidade)+(a.antes.valor != null || a.depois.valor != null ? ' · valor '+brl(a.antes.valor)+' → '+brl(a.depois.valor) : '')
+        : a.acao === 'criar' && a.depois ? ' · qtd '+Number(a.depois.quantidade)+(a.depois.valor != null ? ' · '+brl(a.depois.valor) : '') : '';
+      return '<div class="meta" style="margin:4px 0"><b>'+({criar:'Criado',editar:'Corrigido',cancelar:'Cancelado'}[a.acao]||esc(a.acao))+'</b> por '+esc(u.nome)+' em '+new Date(a.quando).toLocaleString('pt-BR')+esc(det)+(a.motivo ? ' · motivo: '+esc(a.motivo) : '')+'</div>'; }).join('') : '<div class="meta">Sem histórico.</div>')
       + '<div class="btns" style="margin-top:8px"><button type="button" class="btn ghost sm" data-a="fechar">Fechar</button></div></div>';
   }
 
@@ -483,64 +872,58 @@ input:focus,select:focus{outline:none;background:var(--surface);border-color:var
       r = await sb.rpc('cancelar_lancamento', { p_id: id, p_motivo: motivo.trim(), p_campanha: c ? Number(c) : null });
     }
     b.disabled = false;
-    if (r.error){ $('#a-err').textContent = msgErro(r.error); return; }
+    if (r.error){ $('#a-err').textContent = rpcMsg(r.error); return; }
     toast(a === 'ok-ed' ? 'Lançamento corrigido.' : 'Lançamento cancelado.'); L.acao = null; lancLista();
   }
 
-  /* ---------- avisos ---------- */
-  async function avisosCarregar(){
-    $('#main').innerHTML = '<div class="card"><h2>Avisos</h2><p class="sub">Posição na corrida e prêmios.</p><div id="av-lista"><p class="sub">Carregando...</p></div></div>';
-    const { data, error } = await sb.from('notificacoes').select('*').eq('usuario_id', eu.id).order('criada_em', { ascending: false }).limit(60);
-    if (error){ $('#av-lista').innerHTML = '<div class="err">'+esc(msgErro(error))+'</div>'; return; }
-    $('#av-lista').innerHTML = data.map(n => '<div class="nt'+(n.lida_em?'':' novo')+'"><b>'+esc(n.titulo)+'</b><p style="margin:2px 0">'+esc(n.texto)+'</p><p class="meta">'+new Date(n.criada_em).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })+'</p></div>').join('')
-      || '<div class="empty">Nenhum aviso ainda.</div>';
-    if (data.some(n => !n.lida_em)){
-      await sb.from('notificacoes').update({ lida_em: new Date().toISOString() }).eq('usuario_id', eu.id).is('lida_em', null);
-      naoLidas = 0; desenharAbas();
+  /* ---------- entrar, sair, senha ---------- */
+  async function aposLogin(){
+    const { data: sess } = await sb.auth.getSession();
+    if (!sess.session){ view('login'); return; }
+    if (definindoSenha){ view('senha'); return; }
+    const { data, error } = await sb.from('usuarios').select('*').eq('auth_id', sess.session.user.id).maybeSingle();
+    if (error || !data){
+      await sb.auth.signOut(); view('login');
+      $('#l-err').textContent = 'Seu login existe, mas ainda não foi cadastrado no sistema. Fale com o gestor.'; return;
     }
+    if (data.papel !== 'gestor'){ location.replace('app/'); return; }
+    eu = data; $('#quem').textContent = data.nome; view('app'); carregar();
   }
 
-  /* ---------- perfil ---------- */
-  const fmtTel = v => { const d = String(v||'').replace(/\D/g,''); return d.length === 11 ? '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7) : d.length === 10 ? '('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6) : d; };
-  async function perfilCarregar(){
-    const cl = await sb.from('clinicas').select('*');
-    const minhas = (cl.data || []).filter(c => minhasClin.includes(c.id));
-    $('#main').innerHTML =
-      '<div class="card" style="text-align:center"><div id="p-av">'+avatar(eu, 'xl')+'</div><h2 style="margin-top:10px">'+esc(eu.nome)+'</h2>'
-      + '<p class="meta">'+esc(eu.email || '')+'</p><p class="meta">'+(eu.papel==='gerente'?'Gerente':esc(eu.cargo||'Promotor'))+(minhas.length?' · '+minhas.map(c => esc(c.sigla)).join(', '):'')+'</p>'
-      + '<div class="err" id="p-ferr" role="alert"></div><div class="btns" style="justify-content:center"><label class="btn sm" style="line-height:24px">Tirar foto<input type="file" accept="image/*" capture="user" id="p-cam" hidden></label>'
-      + '<label class="btn ghost sm" style="line-height:26px">Escolher da galeria<input type="file" accept="image/*" id="p-gal" hidden></label></div></div>'
-      + '<div class="card"><h2>Meus dados</h2><form class="form" id="f-perfil" novalidate><label class="field" for="p-nome">Nome<input id="p-nome" type="text" autocomplete="name" value="'+esc(eu.nome)+'"></label>'
-      + '<label class="field" for="p-tel">Telefone com DDD<input id="p-tel" type="tel" inputmode="numeric" autocomplete="tel" value="'+esc(fmtTel(eu.telefone))+'"></label>'
-      + '<p class="meta">Clínica e cargo só o gestor altera.</p><div class="err" id="p-err" role="alert"></div><button class="btn block" type="submit">Salvar dados</button></form></div>'
-      + '<div class="card"><h2>Trocar senha</h2><form class="form" id="f-senha" novalidate><label class="field" for="s-nova">Nova senha<input id="s-nova" type="password" autocomplete="new-password" placeholder="Mínimo de 8 caracteres"></label>'
-      + '<label class="field" for="s-rep">Repita a senha<input id="s-rep" type="password" autocomplete="new-password"></label><div class="err" id="s-err" role="alert"></div><button class="btn block" type="submit">Trocar senha</button></form></div>'
-      + '<button class="btn ghost block" type="button" id="p-sair">Sair</button>';
-    const depois = () => { toast('Foto atualizada.'); $('#p-av').innerHTML = avatar(eu, 'xl'); $('#h-av').innerHTML = avatar(eu); };
-    $('#p-cam').addEventListener('change', e => escolheuFoto(e.target, $('#p-ferr'), depois));
-    $('#p-gal').addEventListener('change', e => escolheuFoto(e.target, $('#p-ferr'), depois));
-    $('#f-perfil').addEventListener('submit', async e => {
-      e.preventDefault();
-      const nome = $('#p-nome').value.trim(), tel = $('#p-tel').value.replace(/\D/g, '');
-      if (!nome){ $('#p-err').textContent = 'Informe o nome.'; return; }
-      if (tel && !/^[0-9]{10,11}$/.test(tel)){ $('#p-err').textContent = 'Telefone com DDD, 10 ou 11 números.'; return; }
-      const { error } = await sb.rpc('atualizar_meu_perfil', { p_nome: nome, p_telefone: tel || null, p_foto_url: null });
-      if (error){ $('#p-err').textContent = msgErro(error); return; }
-      eu.nome = nome; if (tel) eu.telefone = tel; $('#p-err').textContent = ''; $('#h-nome').textContent = nome.split(' ')[0]; toast('Dados salvos.');
-    });
-    $('#f-senha').addEventListener('submit', async e => {
-      e.preventDefault();
-      const a = $('#s-nova').value, b = $('#s-rep').value;
-      if (a.length < 8){ $('#s-err').textContent = 'A senha precisa ter pelo menos 8 caracteres.'; return; }
-      if (a !== b){ $('#s-err').textContent = 'As duas senhas não são iguais.'; return; }
-      const { error } = await sb.auth.updateUser({ password: a });
-      if (error){ $('#s-err').textContent = msgErro(error); return; }
-      $('#s-err').textContent = ''; $('#s-nova').value = ''; $('#s-rep').value = ''; toast('Senha trocada.');
-    });
-    $('#p-sair').addEventListener('click', async () => { clearInterval(timer); await sb.auth.signOut(); eu = null; view('login'); });
-  }
+  $('#f-login').addEventListener('submit', async e => {
+    e.preventDefault();
+    const email = $('#l-email').value.trim(), senha = $('#l-senha').value;
+    if (!email || !senha){ $('#l-err').textContent = 'Informe o e-mail e a senha.'; return; }
+    $('#l-btn').disabled = true; $('#l-err').textContent = '';
+    const { error } = await sb.auth.signInWithPassword({ email, password: senha });
+    $('#l-btn').disabled = false;
+    if (error){ $('#l-err').textContent = msgErro(error); return; }
+    $('#l-senha').value = ''; aposLogin();
+  });
 
-  iniciar();
+  $('#l-esqueci').addEventListener('click', async () => {
+    const email = $('#l-email').value.trim();
+    if (!email){ $('#l-err').textContent = 'Digite seu e-mail acima e toque em "Esqueci minha senha" de novo.'; return; }
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+    $('#l-err').textContent = '';
+    toast(error ? msgErro(error) : 'Se o e-mail estiver cadastrado, enviamos um link para criar uma nova senha.');
+  });
+
+  $('#f-senha').addEventListener('submit', async e => {
+    e.preventDefault();
+    const a = $('#s-nova').value, b = $('#s-rep').value;
+    if (a.length < 8){ $('#s-err').textContent = 'A senha precisa ter pelo menos 8 caracteres.'; return; }
+    if (a !== b){ $('#s-err').textContent = 'As duas senhas não são iguais.'; return; }
+    const { error } = await sb.auth.updateUser({ password: a });
+    if (error){ $('#s-err').textContent = msgErro(error); return; }
+    definindoSenha = false; history.replaceState(null, '', location.pathname);
+    toast('Senha criada.'); aposLogin();
+  });
+
+  $('#sair').addEventListener('click', async () => { await sb.auth.signOut(); eu = null; view('login'); });
+
+  sb.auth.onAuthStateChange(ev => { if (ev === 'PASSWORD_RECOVERY'){ definindoSenha = true; } });
+  aposLogin();
 })();
 </script>
 </body>
