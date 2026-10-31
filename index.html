@@ -143,6 +143,7 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
   let recurso = 'clinicas';
   let editId = null;
   let lista = [];
+  let mostrarInativos = false, confirmaExcluir = false;
 
   const view = id => { ['load','login','senha','app'].forEach(v => { $('#v-'+v).hidden = v !== id; }); };
   const msgErro = e => {
@@ -206,17 +207,20 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
 
   function desenhar(){
     const R = RECURSOS[recurso], atual = lista.find(r => r.id === editId) || null;
+    const vis = lista.filter(r => mostrarInativos || r[R.ativo] !== false || r.id === editId);
     $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
     $('#area').innerHTML =
       '<div class="card"><h2>'+(atual ? 'Editar' : 'Novo')+' '+esc(R.titulo.toLowerCase())+'</h2><p class="sub">'+esc(R.intro)+'</p>'
       + '<form class="form" id="f-cad" novalidate>'+R.campos.map(c => campoHtml(c, atual ? atual[c.k] : c.padrao)).join('')
       + '<div class="err" id="c-err" role="alert"></div><div class="btns"><button class="btn" type="submit" id="c-btn">Salvar</button>'
-      + (atual ? '<button class="btn ghost" type="button" id="c-cancel">Cancelar edição</button>' : '')+'</div></form></div>'
-      + '<div class="card"><h2>'+esc(R.plural)+'</h2><p class="sub">'+lista.length+' cadastrad'+(recurso==='premios'||recurso==='tipos'?'o':'a')+(lista.length===1?'':'s')+'. Para tirar algo de uso, edite e desmarque "ativ'+(recurso==='clinicas'?'a':'o')+'". Nada é apagado.</p>'
-      + '<ul class="items">'+(lista.map(r => '<li class="item"><div>'+R.resumo(r)+'</div><div><button type="button" class="btn ghost sm" data-ed="'+r.id+'">Editar</button></div></li>').join('') || '<li class="empty">Nada cadastrado ainda.</li>')+'</ul></div>';
+      + (atual ? '<button class="btn ghost" type="button" id="c-cancel">Cancelar edição</button><button class="btn ghost" type="button" id="c-del">'+(confirmaExcluir?'Confirmar exclusão':'Excluir')+'</button>' : '')+'</div></form></div>'
+      + '<div class="card"><h2>'+esc(R.plural)+'</h2><label class="chk" style="margin-bottom:10px"><input type="checkbox" id="mostra-inat"'+(mostrarInativos?' checked':'')+'><span>Mostrar inativos</span></label><p class="sub">'+vis.length+' cadastrad'+(recurso==='premios'||recurso==='tipos'?'o':'a')+(vis.length===1?'':'s')+'. Excluir só funciona para o que nunca foi usado. O que já tem movimentação deve ser inativado.</p>'
+      + '<ul class="items">'+(vis.map(r => '<li class="item"><div>'+R.resumo(r)+'</div><div><button type="button" class="btn ghost sm" data-ed="'+r.id+'">Editar</button></div></li>').join('') || '<li class="empty">Nada cadastrado ainda.</li>')+'</ul></div>';
     $('#f-cad').addEventListener('submit', salvar);
-    const cancel = $('#c-cancel'); if (cancel) cancel.addEventListener('click', () => { editId = null; desenhar(); });
-    $$('[data-ed]').forEach(b => b.addEventListener('click', () => { editId = Number(b.dataset.ed); desenhar(); const p = $('#f-cad input, #f-cad select'); if (p) p.focus(); }));
+    $('#mostra-inat').addEventListener('change', e => { mostrarInativos = e.target.checked; desenhar(); });
+    const del = $('#c-del'); if (del) del.addEventListener('click', excluir);
+    const cancel = $('#c-cancel'); if (cancel) cancel.addEventListener('click', () => { editId = null; confirmaExcluir = false; desenhar(); });
+    $$('[data-ed]').forEach(b => b.addEventListener('click', () => { editId = Number(b.dataset.ed); confirmaExcluir = false; desenhar(); const p = $('#f-cad input, #f-cad select'); if (p) p.focus(); }));
   }
 
   async function carregar(){
@@ -248,9 +252,22 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
     editId = null; carregar();
   }
 
+  async function excluir(){
+    if (!confirmaExcluir){ confirmaExcluir = true; desenhar(); $('#c-err').textContent = 'Toque em "Confirmar exclusão" para apagar de vez.'; return; }
+    const R = RECURSOS[recurso];
+    const { error } = await sb.from(R.tabela).delete().eq('id', editId);
+    confirmaExcluir = false;
+    if (error){
+      desenhar();
+      $('#c-err').textContent = error.code === '23503' ? 'Este cadastro já tem movimentação e não pode ser excluído. Desmarque "ativo" e salve.' : msgErro(error);
+      return;
+    }
+    toast(R.titulo+' excluído.'); editId = null; carregar();
+  }
+
   $('#nav').addEventListener('click', e => {
     const b = e.target.closest('button[data-r]'); if (!b) return;
-    recurso = b.dataset.r; editId = null; carregar();
+    recurso = b.dataset.r; editId = null; confirmaExcluir = false; carregar();
   });
 
   /* ---------- entrar, sair, senha ---------- */
