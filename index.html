@@ -178,6 +178,20 @@ table.pd tr.tot td{font-weight:700}
 .pd-tag.a{background:var(--accent-soft);color:var(--accent)}
 .pd-leg{display:flex;flex-wrap:wrap;gap:6px 18px;color:var(--muted);font-size:12.5px;padding:12px 16px;align-items:center}
 .pd-div{padding:12px 16px}
+.mp-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+@media (max-width:900px){.mp-grid{grid-template-columns:minmax(0,1fr)}}
+.mp-vars{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
+.mp-vars button,.mp-dias button{border:0;background:var(--surface-2);color:var(--ink);font:600 12px var(--font-body);padding:5px 10px;border-radius:999px;cursor:pointer;min-height:30px}
+.mp-dias{display:flex;flex-wrap:wrap;gap:6px}
+.mp-dias button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
+.mp-opts{display:flex;flex-wrap:wrap;gap:4px 14px;max-height:160px;overflow:auto;padding:2px}
+.mp-opts .chk{min-height:32px}
+.mp-prev{background:var(--surface-2);border-radius:14px;padding:12px 14px;margin-top:10px}
+.mp-prev b{display:block}
+.mp-item{display:grid;gap:4px;padding:12px 0;border-top:1px solid var(--line)}
+.mp-item:first-child{border-top:0}
+.mp-item .txt{color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+
 .vr-bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:end}
 .vr-bar .field{min-width:150px}
 .vr-q{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
@@ -373,6 +387,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
           <button type="button" data-r="diario">Lançamento diário</button><button type="button" data-r="planilha">Planilha do mês</button><button type="button" data-r="ranking">Ranking de vendas</button>
         </div>
         <button type="button" data-r="relatorios" title="Relatórios"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="tx">Relatórios</span></button>
+        <button type="button" data-r="mensagens" title="Mensagens push"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0c0 6 2 7 2 7H4s2-1 2-7z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span class="tx">Mensagens push</span></button>
         <button type="button" data-r="externo" title="Relatório NUV"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><path d="M7 12l3-3 2.5 2 4-4"/></svg><span class="tx">Relatório NUV</span></button>
         <div class="sep"></div>
         <button type="button" data-g="cad" id="g-cad-btn" aria-expanded="false" aria-controls="g-cad" title="Cadastros"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7.5a2 2 0 0 1 2-2H10l2 2.5h6.5a2 2 0 0 1 2 2V17.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></svg><span class="tx">Cadastros</span><svg class="seta" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
@@ -515,6 +530,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     if (recurso === 'corrida') return corridaCarregar();
     if (recurso === 'relatorios') return relCarregar();
     if (recurso === 'externo') return externoCarregar();
+    if (recurso === 'mensagens') return msgCarregar();
     if (recurso === 'inicio') return inicioCarregar();
     if (recurso === 'planilha') return planCarregar();
     if (recurso === 'ranking') return rankCarregar();
@@ -1672,8 +1688,138 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     alvo.innerHTML = h;
   }
 
+
+  /* ---------- mensagens push (enviar agora e programar) ---------- */
+  const MP_CARGOS = ['Promotor', 'Tele BH', 'Tele interno', 'Luminoso', 'Divulgador', 'Promotor de teste', 'Gerente'];
+  const MP_DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  const MP_VARS = [['{nome}', 'Nome'], ['{visitas_ontem}', 'Visitas de ontem'], ['{vendas_ontem}', 'Vendas de ontem'], ['{vendas_semana}', 'Vendas 7 dias'], ['{visitas_mes}', 'Visitas do mês'], ['{vendas_mes}', 'Vendas do mês'], ['{fechamento_mes}', '% do mês'], ['{projecao}', 'Projeção do mês'], ['{falta_manter}', 'Falta p/ manter'], ['{falta_subir}', 'Falta p/ subir'], ['{situacao}', 'Situação (desce/mantém/sobe)']];
+  const MP_MODELO = { titulo: 'Bom dia, {nome}! Seu resultado até ontem', texto: 'Ontem: {visitas_ontem} visitas e {vendas_ontem} vendas. Últimos 7 dias: {vendas_semana} vendas. No mês: {vendas_mes} vendas em {visitas_mes} visitas. Projeção do mês: {projecao} vendas. {situacao}' };
+  const MP = { clin: [], prog: [], niveis: { desce_abaixo: 25, sobe_acima: 30 }, f: null, modo: 'agora', editId: null, conf: false, tk: 0, ct: 0 };
+  const mpNovo = () => ({ titulo: MP_MODELO.titulo, texto: MP_MODELO.texto, clinicas: [], cargos: ['Promotor', 'Tele BH', 'Tele interno'], sortear: '', nome: 'Resumo diário', hora: '09:00', dias: [0, 1, 2, 3, 4, 5, 6] });
+  const mpAlvoTxt = m => { const c = (m.clinicas || []).map(id => (MP.clin.find(x => x.id === id) || {}).sigla || '#'+id), g = m.cargos || [];
+    return (c.length ? 'Clínicas: '+c.join(', ') : 'Todas as clínicas')+' · '+(g.length ? g.join(', ') : 'todos os cargos')+(m.sortear ? ' · sorteio de '+m.sortear : ''); };
+
+  async function msgCarregar(){
+    $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const rs = await Promise.all([sb.from('clinicas').select('*').order('nome'), sb.from('mensagens_programadas').select('*').order('hora'), sb.from('config_niveis').select('*')]);
+    const er = rs.map(r => r.error).find(Boolean); if (er){ pdErro(er); return; }
+    MP.clin = rs[0].data.filter(c => c.ativa !== false); MP.prog = rs[1].data;
+    if (rs[2].data && rs[2].data[0]) MP.niveis = rs[2].data[0];
+    if (!MP.f) MP.f = mpNovo();
+    msgDesenhar();
+  }
+
+  function msgDesenhar(){
+    const f = MP.f, prog = MP.modo === 'programar';
+    const alvo = '<div class="field"><span>Para quem</span><div class="sub" style="margin:0 0 4px">Escolha clínicas e/ou cargos. Deixe tudo desmarcado para enviar a todos. Só recebe quem já aceitou o convite.</div>'
+      + '<div class="sub" style="margin:6px 0 2px"><b>Clínicas</b></div><div class="mp-opts" id="mp-clin">'+MP.clin.map(c => '<label class="chk"><input type="checkbox" data-c="'+c.id+'"'+(f.clinicas.includes(c.id) ? ' checked' : '')+'><span>'+esc(c.sigla)+'</span></label>').join('')+'</div>'
+      + '<div class="sub" style="margin:6px 0 2px"><b>Cargos</b></div><div class="mp-opts" id="mp-cargo">'+MP_CARGOS.map(g => '<label class="chk"><input type="checkbox" data-g="'+esc(g)+'"'+(f.cargos.includes(g) ? ' checked' : '')+'><span>'+esc(g)+'</span></label>').join('')+'</div>'
+      + '<label class="field" for="mp-sorteio" style="margin-top:8px">Sortear só algumas pessoas (opcional)<input id="mp-sorteio" type="number" min="1" inputmode="numeric" placeholder="Ex.: 5" value="'+esc(f.sortear)+'"></label>'
+      + '<div class="sub" id="mp-cont" style="margin:6px 0 0"></div></div>';
+    const form = '<div class="card"><h2>'+(MP.editId ? 'Editar mensagem programada' : 'Nova mensagem')+'</h2>'
+      + '<div class="seg" role="group" aria-label="Quando enviar" id="mp-modo"><button type="button" data-m="agora" aria-pressed="'+!prog+'">Enviar agora</button><button type="button" data-m="programar" aria-pressed="'+prog+'">Programar todo dia</button></div>'
+      + '<div class="mp-grid" style="margin-top:12px"><div class="form">'
+      + (prog ? '<label class="field" for="mp-nome">Nome (só para você)<input id="mp-nome" type="text" maxlength="60" value="'+esc(f.nome)+'"></label>'
+        + '<div class="g2"><label class="field" for="mp-hora">Horário (Brasília)<input id="mp-hora" type="time" value="'+esc(f.hora)+'"></label></div>'
+        + '<div class="field"><span>Dias da semana</span><div class="mp-dias" id="mp-dias">'+MP_DIAS.map((d, i) => '<button type="button" data-d="'+i+'" aria-pressed="'+f.dias.includes(i)+'">'+d+'</button>').join('')+'</div></div>' : '')
+      + '<label class="field" for="mp-titulo">Título<input id="mp-titulo" type="text" maxlength="80" value="'+esc(f.titulo)+'"></label>'
+      + '<label class="field" for="mp-texto">Mensagem<textarea id="mp-texto" rows="6" maxlength="500">'+esc(f.texto)+'</textarea></label>'
+      + '<div class="sub" style="margin:0">Toque para inserir um número da pessoa na mensagem:</div><div class="mp-vars" id="mp-vars">'+MP_VARS.map(v => '<button type="button" data-v="'+esc(v[0])+'">'+esc(v[1])+'</button>').join('')+'</div>'
+      + '</div><div class="form">'+alvo+'</div></div>'
+      + '<div class="err" id="mp-err" role="alert"></div>'
+      + '<div class="btns"><button class="btn ghost" type="button" id="mp-prev">Ver prévia</button><button class="btn" type="button" id="mp-ok">'+(prog ? (MP.editId ? 'Salvar alterações' : 'Salvar programação') : 'Enviar agora')+'</button>'+(MP.editId ? '<button class="btn ghost" type="button" id="mp-cancel">Cancelar edição</button>' : '')+'</div>'
+      + '<div id="mp-previa"></div></div>';
+    const lista = '<div class="card"><h2>Mensagens programadas</h2>'+(MP.prog.length ? MP.prog.map(m => '<div class="mp-item"><div class="line"><b>'+esc(m.nome)+'</b><span class="chip'+(m.ativa ? ' ok' : ' off')+'">'+(m.ativa ? 'Ativa' : 'Pausada')+'</span><span class="chip">'+esc(String(m.hora).slice(0, 5))+'</span><span class="chip">'+(m.dias.length === 7 ? 'Todos os dias' : m.dias.map(i => MP_DIAS[i]).join(' '))+'</span></div>'
+        + '<div class="meta" style="margin:0">'+esc(mpAlvoTxt(m))+(m.ultimo_envio ? ' · último envio '+dBR(m.ultimo_envio) : ' · ainda não enviada')+'</div><div class="txt">'+esc(m.titulo)+' — '+esc(m.texto)+'</div>'
+        + '<div class="btns"><button class="btn ghost sm" type="button" data-pe="'+m.id+'">Editar</button><button class="btn ghost sm" type="button" data-pn="'+m.id+'">Enviar agora</button><button class="btn ghost sm" type="button" data-pa="'+m.id+'">'+(m.ativa ? 'Pausar' : 'Ativar')+'</button><button class="btn ghost sm" type="button" data-px="'+m.id+'">Excluir</button></div></div>').join('')
+      : '<div class="empty">Nenhuma mensagem programada. Escolha "Programar todo dia" acima.</div>')+'</div>';
+    const n = MP.niveis;
+    const niveis = '<div class="card"><h2>Níveis: vendas no mês</h2><p class="sub">Usado na projeção e na situação das mensagens. Abaixo do primeiro número a pessoa <b>desce</b> de nível; do primeiro até o segundo ela <b>mantém</b>; acima do segundo ela <b>sobe</b>.</p>'
+      + '<div class="g2"><label class="field" for="mp-desce">Desce se vender menos de<input id="mp-desce" type="number" min="0" inputmode="numeric" value="'+esc(n.desce_abaixo)+'"></label><label class="field" for="mp-sobe">Sobe se vender mais de<input id="mp-sobe" type="number" min="0" inputmode="numeric" value="'+esc(n.sobe_acima)+'"></label></div>'
+      + '<div class="err" id="mp-nerr" role="alert"></div><div class="btns"><button class="btn ghost" type="button" id="mp-nsalva">Salvar níveis</button></div></div>';
+    $('#area').innerHTML = '<div class="card" style="background:transparent;box-shadow:none;padding:0"><h2 style="margin:0">Mensagens push</h2><p class="sub" style="margin:4px 0 0">Avisos no celular da equipe: na hora, ou todo dia no horário que você escolher.</p></div>'+form+lista+niveis;
+    msgEventos();
+    msgContar();
+  }
+
+  function msgLer(){
+    const f = MP.f;
+    f.titulo = ($('#mp-titulo') || {}).value || ''; f.texto = ($('#mp-texto') || {}).value || '';
+    f.clinicas = $$('#mp-clin input:checked').map(i => Number(i.dataset.c)); f.cargos = $$('#mp-cargo input:checked').map(i => i.dataset.g);
+    f.sortear = ($('#mp-sorteio') || {}).value || '';
+    if ($('#mp-nome')){ f.nome = $('#mp-nome').value; f.hora = $('#mp-hora').value; }
+    return f;
+  }
+  const msgSort = f => { const n = parseInt(f.sortear, 10); return n > 0 ? n : null; };
+
+  async function msgContar(){
+    const f = msgLer(), tk = ++MP.ct, el = $('#mp-cont'); if (!el) return;
+    el.textContent = 'Contando...';
+    const { data, error } = await sb.rpc('contar_destinatarios', { p_clinicas: f.clinicas, p_cargos: f.cargos, p_sortear: msgSort(f) });
+    if (tk !== MP.ct || !$('#mp-cont')) return;
+    if (error){ $('#mp-cont').textContent = ''; return; }
+    const d = (data && (Array.isArray(data) ? data[0] : data)) || { pessoas: 0, com_aparelho: 0 };
+    MP.n = d.pessoas;
+    $('#mp-cont').innerHTML = '<b>'+d.pessoas+' pessoa'+(d.pessoas === 1 ? '' : 's')+'</b> '+(d.pessoas ? '· '+d.com_aparelho+' já ativaram os avisos no celular (as outras veem a mensagem dentro do app)' : '· ninguém com esses filtros')+'.';
+  }
+
+  function msgEventos(){
+    let t; const lerContar = () => { clearTimeout(t); MP.conf = false; const b = $('#mp-ok'); if (b && MP.modo === 'agora') b.textContent = 'Enviar agora'; t = setTimeout(msgContar, 250); };
+    $$('#mp-modo button').forEach(b => b.addEventListener('click', () => { msgLer(); MP.modo = b.dataset.m; MP.conf = false; msgDesenhar(); }));
+    $$('#mp-clin input, #mp-cargo input').forEach(i => i.addEventListener('change', lerContar));
+    $('#mp-sorteio').addEventListener('input', lerContar);
+    $$('#mp-dias button').forEach(b => b.addEventListener('click', () => { const d = Number(b.dataset.d), f = MP.f; f.dias = f.dias.includes(d) ? f.dias.filter(x => x !== d) : f.dias.concat(d).sort(); b.setAttribute('aria-pressed', String(f.dias.includes(d))); }));
+    $$('#mp-vars button').forEach(b => b.addEventListener('click', () => { const ta = $('#mp-texto'), a = ta.selectionStart == null ? ta.value.length : ta.selectionStart, z = ta.selectionEnd == null ? a : ta.selectionEnd; ta.value = ta.value.slice(0, a)+b.dataset.v+ta.value.slice(z); ta.focus(); ta.selectionStart = ta.selectionEnd = a + b.dataset.v.length; }));
+    $('#mp-prev').addEventListener('click', msgPrevia);
+    $('#mp-ok').addEventListener('click', msgConfirmar);
+    const cn = $('#mp-cancel'); if (cn) cn.addEventListener('click', () => { MP.editId = null; MP.f = mpNovo(); MP.modo = 'agora'; msgDesenhar(); });
+    $$('[data-pe]').forEach(b => b.addEventListener('click', () => { const m = MP.prog.find(x => x.id === Number(b.dataset.pe)); MP.editId = m.id; MP.modo = 'programar';
+      MP.f = { titulo: m.titulo, texto: m.texto, clinicas: m.clinicas.slice(), cargos: m.cargos.slice(), sortear: m.sortear || '', nome: m.nome, hora: String(m.hora).slice(0, 5), dias: m.dias.slice() }; msgDesenhar(); window.scrollTo(0, 0); }));
+    $$('[data-pn]').forEach(b => b.addEventListener('click', async () => { if (b.dataset.ok !== '1'){ b.dataset.ok = '1'; b.textContent = 'Confirmar envio'; return; }
+      b.disabled = true; const { data, error } = await sb.rpc('enviar_programada_agora', { p_id: Number(b.dataset.pn) }); b.disabled = false;
+      if (error){ toast(msgErro(error)); return; } toast('Enviada para '+data+' pessoa'+(data === 1 ? '' : 's')+'.'); b.dataset.ok = ''; b.textContent = 'Enviar agora'; }));
+    $$('[data-pa]').forEach(b => b.addEventListener('click', async () => { const m = MP.prog.find(x => x.id === Number(b.dataset.pa)); const { error } = await sb.from('mensagens_programadas').update({ ativa: !m.ativa }).eq('id', m.id); if (error){ toast(msgErro(error)); return; } msgCarregar(); }));
+    $$('[data-px]').forEach(b => b.addEventListener('click', async () => { if (b.dataset.ok !== '1'){ b.dataset.ok = '1'; b.textContent = 'Confirmar exclusão'; return; }
+      const { error } = await sb.from('mensagens_programadas').delete().eq('id', Number(b.dataset.px)); if (error){ toast(msgErro(error)); return; } toast('Mensagem excluída.'); if (MP.editId === Number(b.dataset.px)){ MP.editId = null; MP.f = mpNovo(); } msgCarregar(); }));
+    $('#mp-nsalva').addEventListener('click', async () => {
+      const d = Number($('#mp-desce').value), s = Number($('#mp-sobe').value);
+      if (!(d >= 0) || !(s >= d) || !Number.isInteger(d) || !Number.isInteger(s)){ $('#mp-nerr').textContent = 'Use números inteiros, e o segundo não pode ser menor que o primeiro.'; return; }
+      const { error } = await sb.from('config_niveis').update({ desce_abaixo: d, sobe_acima: s }).eq('id', 1);
+      if (error){ $('#mp-nerr').textContent = msgErro(error); return; } MP.niveis = { desce_abaixo: d, sobe_acima: s }; $('#mp-nerr').textContent = ''; toast('Níveis salvos.'); });
+  }
+
+  async function msgPrevia(){
+    const f = msgLer(); $('#mp-err').textContent = '';
+    if (f.titulo.trim().length < 2 || f.texto.trim().length < 2){ $('#mp-err').textContent = 'Escreva o título e a mensagem.'; return; }
+    const { data, error } = await sb.rpc('previa_mensagem', { p_titulo: f.titulo, p_modelo: f.texto, p_clinicas: f.clinicas, p_cargos: f.cargos });
+    if (error){ $('#mp-err').textContent = msgErro(error); return; }
+    $('#mp-previa').innerHTML = data ? '<div class="mp-prev"><span class="meta">Exemplo, com os números de '+esc(data.quem)+' (ontem = dia anterior):</span><b>'+esc(data.titulo)+'</b><span>'+esc(data.texto)+'</span></div>' : '<div class="mp-prev">Ninguém recebe com esses filtros, então não há prévia.</div>';
+  }
+
+  async function msgConfirmar(){
+    const f = msgLer(), b = $('#mp-ok'); $('#mp-err').textContent = '';
+    if (f.titulo.trim().length < 2 || f.texto.trim().length < 2){ $('#mp-err').textContent = 'Escreva o título e a mensagem.'; return; }
+    if (MP.modo === 'agora'){
+      if (!MP.n){ $('#mp-err').textContent = 'Ninguém recebe com esses filtros.'; return; }
+      if (!MP.conf){ MP.conf = true; b.textContent = 'Confirmar envio para '+MP.n+' pessoa'+(MP.n === 1 ? '' : 's'); return; }
+      b.disabled = true; const { data, error } = await sb.rpc('enviar_mensagem', { p_titulo: f.titulo, p_texto: f.texto, p_clinicas: f.clinicas, p_cargos: f.cargos, p_sortear: msgSort(f) }); b.disabled = false; MP.conf = false;
+      if (error){ $('#mp-err').textContent = msgErro(error); b.textContent = 'Enviar agora'; return; }
+      b.textContent = 'Enviar agora'; toast('Mensagem enviada para '+data+' pessoa'+(data === 1 ? '' : 's')+'.'); return;
+    }
+    if (!f.nome.trim()){ $('#mp-err').textContent = 'Dê um nome para a programação.'; return; }
+    if (!/^\d{2}:\d{2}/.test(f.hora)){ $('#mp-err').textContent = 'Escolha o horário.'; return; }
+    if (!f.dias.length){ $('#mp-err').textContent = 'Escolha pelo menos um dia da semana.'; return; }
+    const reg = { nome: f.nome.trim(), hora: f.hora, dias: f.dias, titulo: f.titulo.trim(), texto: f.texto.trim(), clinicas: f.clinicas, cargos: f.cargos, sortear: msgSort(f) };
+    b.disabled = true;
+    const r = MP.editId ? await sb.from('mensagens_programadas').update(reg).eq('id', MP.editId) : await sb.from('mensagens_programadas').insert(Object.assign({ criado_por: eu.id, ativa: true }, reg));
+    b.disabled = false;
+    if (r.error){ $('#mp-err').textContent = msgErro(r.error); return; }
+    toast(MP.editId ? 'Programação atualizada.' : 'Mensagem programada. Ela sai no horário escolhido.'); MP.editId = null; MP.f = mpNovo(); MP.modo = 'agora'; msgCarregar();
+  }
+
   /* ---------- menu lateral e início (dashboard) ---------- */
-  const TITULOS = { inicio: 'Início', corrida: 'Corrida', diario: 'Lançamento diário', planilha: 'Planilha do mês', ranking: 'Ranking de vendas', lancamentos: 'Lançamentos', relatorios: 'Relatórios', externo: 'Relatório NUV',
+  const TITULOS = { inicio: 'Início', corrida: 'Corrida', diario: 'Lançamento diário', planilha: 'Planilha do mês', ranking: 'Ranking de vendas', mensagens: 'Mensagens push', lancamentos: 'Lançamentos', relatorios: 'Relatórios', externo: 'Relatório NUV',
     clinicas: 'Clínicas', tipos: 'Tipos de lançamento', premios: 'Prêmios', pessoas: 'Pessoas', campanhas: 'Campanhas' };
   const CADASTROS = ['clinicas', 'tipos', 'premios', 'pessoas', 'campanhas'];
   const lerLS = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
