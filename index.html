@@ -1256,7 +1256,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 
 
   /* ---------- planilha diária: lançamento do dia e planilha do mês ---------- */
-  const PD = { clinicas: [], clin: null, ano: 0, mes: 0, inativos: true, data: '', tk: 0, pessoas: [], r: {}, corr: {}, existe: false, testeMes: false, testeDia: false };
+  const PD = { clinicas: [], clin: null, ano: 0, mes: 0, inativos: true, data: '', tk: 0, pessoas: [], r: {}, corr: {}, existe: false, testeMes: false };
   const TESTE = 'Promotor de teste';
   const PD_META = { 'Promotor': 30, 'Luminoso': 30, 'Tele BH': 45, 'Tele interno': 45, 'Promotor de teste': 30 };
   const PD_ORDEM = ['Promotor', 'Tele BH', 'Tele interno', 'Luminoso'];
@@ -1427,15 +1427,14 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 
   function diaDesenhar(){
     const hj = hoje();
-    const div = PD.pessoas.filter(p => p.cargo === 'Divulgador'), ou = PD.pessoas.filter(p => p.cargo !== 'Divulgador'), tt = ou.filter(p => p.cargo === TESTE);
+    const div = PD.pessoas.filter(p => p.cargo === 'Divulgador'), ou = PD.pessoas.filter(p => p.cargo !== 'Divulgador');
     const nomeDia = new Date(PD.data+'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
     const cab = comCorr => '<div class="pd-row h'+(comCorr ? '' : ' dv2')+'"><span>Pessoa</span><span>Visitas</span><span>Vendas</span>'+(comCorr ? '<span>Corrida</span>' : '')+'</div>';
     $('#area').innerHTML = '<div class="pd-card" style="padding:16px 18px"><div class="pd-bar"><div><h2 style="margin:0">Lançamento diário</h2><p class="sub" style="margin:2px 0 0">'+esc(nomeDia)+(PD.existe ? ' · já lançado' : '')+'</p></div>'
       + '<div class="grp">'+pdSelClin()+'<div class="pd-mes"><button type="button" id="pd-dant" aria-label="Dia anterior">‹</button><input type="date" id="pd-data" value="'+esc(PD.data)+'" max="'+hj+'"'+' style="min-height:34px;padding:4px 8px"><button type="button" id="pd-dprox" aria-label="Próximo dia">›</button></div></div></div>'
       + (PD.pessoas.length ? '<div class="pd-lan" style="margin-top:14px"><div class="pd-card pd-box"><h2>Promotores e teles</h2>'+cab(true)
-        + PD_ORDEM.map(cg => { const a = ou.filter(p => p.cargo === cg); return a.length ? '<div class="pd-row g">'+PD_ROT[cg]+'</div>'+a.map(p => pdLinha(p, true)).join('') : ''; }).join('')
-          + (tt.length ? '<div class="pd-row g">Promotores de teste</div><div class="pd-row pd-agg"><div style="min-width:0;font-weight:600"><button type="button" class="pd-exp" data-teste="dia" aria-expanded="'+PD.testeDia+'" aria-label="Mostrar cada promotor de teste">'+(PD.testeDia ? '▾' : '▸')+'</button>Promotores de teste ('+tt.length+')</div><b id="pd-tv" style="text-align:center">0</b><b id="pd-ts" style="text-align:center">0</b><span id="pd-tc"></span></div>'+(PD.testeDia ? tt.map(p => pdLinha(p, true)).join('') : '') : '')
-          +'</div>'
+        + PD_ORDEM.concat(TESTE).map(cg => { const a = ou.filter(p => p.cargo === cg); return a.length ? '<div class="pd-row g">'+(PD_ROT[cg] || 'Promotores de teste')+'</div>'+a.map(p => pdLinha(p, true)).join('') : ''; }).join('')
+          +'<p class="sub" style="margin:10px 0 0">Tab ou Enter passa para o próximo campo; setas ↑ ↓ descem e sobem na mesma coluna. Não achou alguém? A pessoa precisa atuar nesta clínica desde este dia (Cadastros › Pessoas › "Atua na clínica desde").</p></div>'
         + '<div class="pd-card pd-box"><h2>Divulgadores</h2><p class="sub" style="margin:0 0 6px">Quem atendeu as visitas. A soma deve ser igual à dos promotores e teles. Se não for, o dia fica marcado com !, mas pode ser salvo e corrigido depois.</p>'+cab(false)+(div.map(p => pdLinha(p, false)).join('') || '<div class="empty">Nenhum divulgador cadastrado nesta clínica.</div>')+'</div></div>'
         + '<div class="pd-conf" id="pd-conf"></div>'
       : '<div class="card" style="margin-top:14px"><div class="empty">Nenhuma pessoa vinculada a esta clínica nesta data. O gestor cadastra em Pessoas.</div></div>');
@@ -1443,7 +1442,14 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const ir = d => { const x = new Date(PD.data+'T12:00:00'); x.setDate(x.getDate() + d); const s = x.toLocaleDateString('sv-SE'); if (s > hj) return; PD.data = s; diaCarregar(); };
     $('#pd-dant').addEventListener('click', () => ir(-1)); $('#pd-dprox').addEventListener('click', () => ir(1));
     $('#pd-data').addEventListener('change', e => { const s = e.target.value; if (s && s <= hj){ PD.data = s; diaCarregar(); } });
-    const et = $('[data-teste=dia]'); if (et) et.addEventListener('click', () => { PD.testeDia = !PD.testeDia; diaDesenhar(); });
+    const campos = $$('input[data-p]');
+    campos.forEach((i, k) => {
+      i.addEventListener('focus', () => i.select());
+      i.addEventListener('keydown', e => {
+        const alvo = e.key === 'Enter' ? campos[k + 1] : e.key === 'ArrowDown' ? campos[k + 2] : e.key === 'ArrowUp' ? campos[k - 2] : null;
+        if (e.key === 'Enter' || e.key === 'ArrowDown' || e.key === 'ArrowUp'){ e.preventDefault(); if (alvo) alvo.focus(); else if (e.key === 'Enter' && $('#pd-salvar')) $('#pd-salvar').focus(); }
+      });
+    });
     $$('input[data-p]').forEach(i => i.addEventListener('input', () => { PD.r[i.dataset.p][Number(i.dataset.i)] = Math.max(0, parseInt(i.value, 10) || 0); diaConf(); }));
     if (PD.pessoas.length) diaConf();
   }
@@ -1462,10 +1468,6 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + (!difere ? '<span class="pl ok">Totais conferem</span>' : '<span class="pl no ex" title="Divulgadores e promotores/teles deveriam somar o mesmo. Pode salvar assim, mas o dia fica marcado com !"><b>!</b> '+(!okV ? 'Visitas '+dif(a[0], b[0]) : '')+(!okV && !okS ? ' · ' : '')+(!okS ? 'Vendas '+dif(a[1], b[1]) : '')+(semDiv ? 'Falta divulgador' : '')+'</span>')
       + '<span>Meta do divulgador hoje: <b>'+pf1(meta)+'</b></span>'
       + '</div><div class="line"><span class="err" id="pd-err" role="alert"></span><button class="btn" type="button" id="pd-salvar">'+(PD.existe ? 'Salvar correção' : 'Salvar o dia')+'</button></div>';
-    const tt = ou.filter(p => p.cargo === TESTE);
-    if (tt.length){ const tv = $('#pd-tv'), ts = $('#pd-ts'), tc = $('#pd-tc'); if (tv){ const sv = tt.reduce((t, p) => [t[0] + PD.r[p.id][0], t[1] + PD.r[p.id][1]], [0, 0]), cc = tt.reduce((t, p) => { const c = PD.corr[p.id] || [0, 0]; return [t[0] + c[0], t[1] + c[1]]; }, [0, 0]);
-      tv.textContent = sv[0]; ts.textContent = sv[1];
-      tc.innerHTML = cc[0] === sv[0] && cc[1] === sv[1] ? (cc[0] || cc[1] ? '<span class="pl ok">Bate</span>' : '<span class="pl nd">—</span>') : '<span class="pl no" title="Lançado na corrida">'+cc[0]+' vis. / '+cc[1]+' ven.</span>'; } }
     $('#pd-salvar').addEventListener('click', diaSalvar);
   }
 
