@@ -255,6 +255,28 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 #ds-svg .selr{fill:color-mix(in srgb,var(--accent) 16%,transparent);stroke:var(--accent);stroke-width:1.5;stroke-dasharray:5 4;vector-effect:non-scaling-stroke;pointer-events:none}
 .ds-sem{color:var(--muted);font-size:12.5px;margin-top:8px}
 .ds-sem:empty{display:none}
+
+.ds-mapa-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:stretch}
+@media (max-width:1000px){.ds-mapa-grid{grid-template-columns:minmax(0,1fr)}}
+.ds-lado{display:flex;flex-direction:column;gap:12px;min-width:0}
+.ds-lado h3{margin:0;font:650 13px var(--font-body);color:var(--muted);letter-spacing:.02em}
+.ds-tot{background:linear-gradient(160deg,var(--accent-2),var(--accent));color:var(--on-accent);border-radius:18px;padding:16px 18px;display:grid;gap:10px}
+.ds-tot .eyebrow{color:inherit;opacity:.8}
+.ds-tot .ds-tt{font:700 22px/1.15 var(--font-display);letter-spacing:-.02em;color:inherit;margin:0;overflow-wrap:anywhere}
+.ds-tg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ds-tg span,.ds-pc span{display:block;font-size:12px;font-weight:600;opacity:.8}
+.ds-tg b{font-size:28px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.1}
+.ds-pc{background:color-mix(in srgb,var(--on-accent) 18%,transparent);border-radius:12px;padding:10px 12px}
+.ds-pc b{font-size:32px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.1}
+.ds-tot small{opacity:.8;font-size:12px}
+.ds-li{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:2px;max-height:300px;overflow-y:auto}
+.ds-li button{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px 10px;align-items:center;width:100%;text-align:left;border:0;background:transparent;color:var(--ink);font:500 13px var(--font-body);padding:8px 8px;border-radius:10px;cursor:pointer}
+.ds-li button:hover{background:var(--surface-2)}
+.ds-li .n{min-width:0;display:grid}
+.ds-li .n b{font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ds-li .n small{color:var(--muted);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ds-li .v{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12px;white-space:nowrap}
+.ds-li .p{font-weight:700;font-variant-numeric:tabular-nums;min-width:38px;text-align:right}
 </style>
 </head>
 <body>
@@ -1521,7 +1543,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + '<div class="pd-bar"><p class="sub" style="margin:0" id="ds-info"></p>'
       + '<div class="pd-mes"><button type="button" id="ds-ant" aria-label="Mês anterior">‹</button><b>'+new Date(DS.ano, DS.mes, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })+'</b><button type="button" id="ds-prox" aria-label="Próximo mês">›</button></div></div>'
       + '<div class="card ds-mapa-card"><div class="pd-bar" style="margin-bottom:8px"><div><h2 style="margin:0">Mapa de Minas Gerais</h2><p class="sub" style="margin:2px 0 0" id="ds-dica"></p></div><div id="ds-filtro"></div></div>'
-      + (fechado ? '<div class="empty">Cadastre a cidade de cada clínica em Cadastros › Clínicas para ver o mapa.</div>' : '<div class="ds-mapa"><svg id="ds-svg" preserveAspectRatio="xMidYMid meet" role="group" aria-label="Mapa de Minas Gerais com as clínicas"></svg></div>')
+      + (fechado ? '<div class="empty">Cadastre a cidade de cada clínica em Cadastros › Clínicas para ver o mapa.</div>' : '<div class="ds-mapa-grid"><div class="ds-mapa"><svg id="ds-svg" preserveAspectRatio="xMidYMid meet" role="group" aria-label="Mapa de Minas Gerais com as clínicas"></svg></div><aside class="ds-lado" id="ds-lado" aria-live="polite"></aside></div>')
       + '<div class="ds-sem" id="ds-sem"></div></div>'
       + '<div id="ds-paineis" class="ds-sec"></div></div>';
     const h = hoje(); $('#ds-prox').disabled = DS.ano === Number(h.slice(0, 4)) && DS.mes >= Number(h.slice(5, 7)) - 1;
@@ -1531,7 +1553,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const sem = DS.base.filter(o => o.x == null);
     $('#ds-sem').innerHTML = (DS.geoErro && DS.proj ? 'Não consegui carregar o contorno das regiões agora ('+esc(DS.geoErro)+'). Os pontos mostram onde ficam as clínicas. ' : '')
       + (sem.length && DS.proj ? 'Sem localização no mapa: '+sem.map(o => esc(o.c.sigla)).join(', ')+'. Informe a cidade em Cadastros › Clínicas.' : '');
-    inicioPaineis(); filtroBarra();
+    inicioPaineis(); filtroBarra(); ladoDesenhar();
   }
 
   function mapaDesenhar(){
@@ -1567,7 +1589,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     $$('#ds-svg .reg').forEach(p => p.classList.toggle('sel', !!f && f.tipo === 'regiao' && f.chave === p.dataset.reg));
   }
   function filtrar(f){
-    DS.filtro = f; mapaEstado(); inicioPaineis(); filtroBarra();
+    DS.filtro = f; mapaEstado(); inicioPaineis(); filtroBarra(); ladoDesenhar();
     const pts = f ? ptsDe(f.ids) : [];
     if (!f) mapaIr(DS.full);
     else if (f.tipo === 'regiao'){ const r = DS.regs.find(x => x.key === f.chave); mapaIr(caixa([r ? r.bbox : [0, 0, DS.proj.W, DS.proj.H]], 120)); }
@@ -1601,7 +1623,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       if (mk){ const o = DS.base.find(x => String(x.c.id) === mk.dataset.id); filtrar({ tipo: 'sel', ids: new Set([o.c.id]), rotulo: o.c.sigla+' · '+o.c.nome }); return; }
       if (rg){ const chave = rg.dataset.reg, ids = new Set(DS.base.filter(o => o.reg === chave).map(o => o.c.id));
         if (DS.filtro && DS.filtro.chave === chave){ filtrar(null); return; }
-        if (ids.size){ const r = DS.regs.find(x => x.key === chave); filtrar({ tipo: 'regiao', chave, ids, rotulo: 'Região '+((r && r.nome) || '').replace(/^Região (Geográfica )?(Intermediária de )?/, '') }); } return; }
+        if (ids.size){ const r = DS.regs.find(x => x.key === chave); filtrar({ tipo: 'regiao', chave, ids, rotulo: 'Região '+nomeCurto(r && r.nome) }); } return; }
       if (DS.filtro) filtrar(null);
     };
     svg.addEventListener('pointerup', fim);
@@ -1609,6 +1631,32 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     document.addEventListener('keydown', function esc1(e){ if (!$('#ds-svg')){ document.removeEventListener('keydown', esc1); return; } if (e.key === 'Escape' && DS.filtro) filtrar(null); });
     window.addEventListener('resize', aplicarVb);
   }
+
+
+  /* ---- números consolidados ao lado do mapa, de acordo com o que está em foco ---- */
+  const nomeCurto = n => String(n || 'Região').replace(/^Região (Geográfica )?(Intermediária de )?/, '');
+  function ladoDesenhar(){
+    const el = $('#ds-lado'); if (!el) return; const f = DS.filtro;
+    const em = DS.base.filter(o => !f || f.ids.has(o.c.id)), V = em.reduce((t, o) => t + o.v, 0), S = em.reduce((t, o) => t + o.s, 0), pc = pdPct(V, S);
+    const titulo = !f ? 'Minas Gerais' : f.rotulo, sub = !f ? 'Todas as clínicas' : (f.tipo === 'regiao' ? 'Região em foco' : (f.ids.size === 1 ? 'Clínica em foco' : 'Clínicas selecionadas'));
+    let lista = '';
+    if (!f){
+      const gr = {}; DS.base.forEach(o => { if (o.x == null || !o.reg) return; const g = gr[o.reg] = gr[o.reg] || { v: 0, s: 0, n: 0 }; g.v += o.v; g.s += o.s; g.n++; });
+      const rows = Object.keys(gr).map(k => { const r = (DS.regs || []).find(x => x.key === k); return { k, nome: nomeCurto(r && r.nome), n: gr[k].n, v: gr[k].v, s: gr[k].s, pct: pdPct(gr[k].v, gr[k].s) }; }).sort((a, b) => b.v - a.v);
+      lista = rows.length ? '<h3>Por região</h3><ul class="ds-li">'+rows.map(r => '<li><button type="button" data-lreg="'+esc(r.k)+'"><span class="n"><b>'+esc(r.nome)+'</b><small>'+r.n+' clínica'+(r.n === 1 ? '' : 's')+'</small></span><span class="v">'+r.v+' vis · '+r.s+' ven</span><span class="p">'+pf0(r.pct)+'</span></button></li>').join('')+'</ul>' : '';
+    } else if (em.length > 1 || f.tipo === 'regiao'){
+      const rows = em.slice().sort((a, b) => b.v - a.v);
+      lista = '<h3>Clínicas</h3><ul class="ds-li">'+rows.map(o => '<li><button type="button" data-lcli="'+o.c.id+'"><span class="n"><b>'+esc(o.c.sigla)+'</b><small>'+esc(o.c.cidade || o.c.nome)+'</small></span><span class="v">'+o.v+' vis · '+o.s+' ven</span><span class="p">'+pf0(pdPct(o.v, o.s))+'</span></button></li>').join('')+'</ul>';
+    }
+    el.innerHTML = '<div class="ds-tot"><span class="eyebrow">'+esc(sub)+'</span><h3 class="ds-tt">'+esc(titulo)+'</h3>'
+      + '<div class="ds-tg"><div><span>Visitas</span><b>'+V.toLocaleString('pt-BR')+'</b></div><div><span>Vendas</span><b>'+S.toLocaleString('pt-BR')+'</b></div></div>'
+      + '<div class="ds-pc"><span>% de fechamento</span><b>'+pf1(pc)+'</b></div><small>'+em.length+' clínica'+(em.length === 1 ? '' : 's')+' · '+esc(new Date(DS.ano, DS.mes, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }))+'</small></div>'+lista;
+  }
+  document.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('#ds-lado button'); if (!b) return;
+    if (b.dataset.lreg){ const chave = b.dataset.lreg, ids = new Set(DS.base.filter(o => o.reg === chave).map(o => o.c.id)), r = (DS.regs || []).find(x => x.key === chave); filtrar({ tipo: 'regiao', chave, ids, rotulo: 'Região '+nomeCurto(r && r.nome) }); }
+    else if (b.dataset.lcli){ const o = DS.base.find(x => String(x.c.id) === b.dataset.lcli); if (o) filtrar({ tipo: 'sel', ids: new Set([o.c.id]), rotulo: o.c.sigla+' · '+o.c.nome }); }
+  });
 
   function inicioPaineis(){
     const f = DS.filtro, L = DS.base.filter(o => !f || f.ids.has(o.c.id)).map(o => { const dd = Object.keys(o.d).filter(k => o.d[k][0] > 0).length;
