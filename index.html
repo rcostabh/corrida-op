@@ -115,6 +115,122 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
 .rk .pts{font:700 18px var(--font-display);text-align:right}
 .rk .meta{margin:0}
 #area:fullscreen{background:var(--bg);padding:24px;overflow:auto;align-content:start}
+.g3{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+table.tab{width:100%;border-collapse:collapse;font-size:14px}
+table.tab th{text-align:left;font-weight:600;font-size:12px;color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.tab td{padding:10px;border-bottom:1px solid var(--line)}
+table.tab .n{text-align:right;white-space:nowrap}
+table.tab tr.tot td{font-weight:700;border-top:2px solid var(--line);background:var(--surface-2)}
+.barra{display:inline-block;width:70px;height:8px;border-radius:4px;background:var(--surface-2);vertical-align:middle;overflow:hidden;margin-right:6px}
+.barra i{display:block;height:100%;background:linear-gradient(90deg,var(--accent-2),var(--accent));border-radius:4px}
+.pd-card{background:var(--surface);border-radius:20px;box-shadow:var(--shadow);min-width:0;border:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+.pd-bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between}
+.pd-bar .grp{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pd-mes{display:inline-flex;align-items:center;gap:2px;background:var(--surface-2);border-radius:12px;padding:2px}
+.pd-mes button{border:0;background:transparent;color:var(--ink);font:700 16px var(--font-body);width:34px;height:34px;border-radius:10px;cursor:pointer}
+.pd-mes button:disabled{opacity:.35;cursor:default}
+.pd-mes b{min-width:130px;text-align:center;font-size:14px;display:inline-block}.pd-mes b::first-letter,.pd-bar .sub::first-letter{text-transform:uppercase}.pd-bar select{width:auto;min-width:200px}
+.pd-placar{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.pd-pc{background:var(--surface);border-radius:18px;padding:14px 16px;box-shadow:var(--shadow);display:grid;gap:6px;min-width:0}
+.pd-pc .k{font-size:12px;font-weight:600;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.pd-pc .v{font-size:30px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
+.pd-pc .v small{font-size:14px;font-weight:600;color:var(--muted);margin-left:4px}
+.pd-pc .b{position:relative;height:8px;border-radius:4px;background:var(--surface-2)}
+.pd-pc .b i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent-2),var(--accent))}
+.pd-pc .b u{position:absolute;top:-4px;width:2px;height:16px;background:var(--ink);border-radius:1px}
+.pd-pc .f{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pl{display:inline-block;font-weight:700;font-size:12px;padding:2px 9px;border-radius:999px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pl.ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.pl.no{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red)}
+.pl.nd{background:var(--surface-2);color:var(--muted)}
+.pd-scroll{overflow:auto;max-width:100%;border-radius:20px;max-height:76vh}
+table.pd{border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums;table-layout:fixed}
+table.pd th,table.pd td{padding:0;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
+table.pd thead th{position:sticky;top:0;z-index:3;background:var(--surface);font-size:12px;font-weight:700;height:46px}
+table.pd thead th small{display:block;font-weight:600;color:var(--muted);font-size:10.5px}
+table.pd .dom{background:var(--surface-2)}
+table.pd td.c{height:40px;font-size:13px;font-weight:600}
+table.pd td.c.z{color:var(--muted);opacity:.55;font-weight:500}
+table.pd td.c.hj,table.pd thead th.hj{box-shadow:inset 0 -2px 0 var(--accent)}
+table.pd td.c.dv{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red);cursor:help}
+table.pd .nm{position:sticky;left:0;z-index:2;background:var(--surface);text-align:left;padding:0 12px;font-weight:600;border-right:1px solid var(--line);overflow:hidden;text-overflow:ellipsis}
+table.pd thead th.nm{z-index:5}
+table.pd .rt{position:sticky;background:var(--surface);z-index:2;font-weight:700}
+table.pd thead th.rt{z-index:5}
+table.pd .r1{right:186px;border-left:1px solid var(--line)} table.pd .r2{right:132px} table.pd .r3{right:62px} table.pd .r4{right:0;color:var(--muted);font-weight:600}
+table.pd tr.gr td{background:var(--surface-2)!important;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;height:32px}
+table.pd tr.in td.nm{color:var(--muted)}
+table.pd tr.tot td{font-weight:700}
+.pd-tag{display:inline-block;font-size:10.5px;font-weight:700;border-radius:6px;padding:1px 6px;margin-right:6px;background:var(--surface-2);color:var(--muted)}
+.pd-tag.a{background:var(--accent-soft);color:var(--accent)}
+.pd-leg{display:flex;flex-wrap:wrap;gap:6px 18px;color:var(--muted);font-size:12.5px;padding:12px 16px;align-items:center}
+.pd-div{padding:12px 16px}
+.pd-div summary{cursor:pointer;font-weight:600}
+.pd-div ul{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:13px}
+.pd-lan{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:900px){.pd-lan{grid-template-columns:minmax(0,1fr)}}
+.pd-box{padding:16px 18px;display:grid;gap:2px}
+.pd-box h2{margin:0 0 4px;font-size:16px}
+.pd-row{display:grid;grid-template-columns:minmax(0,1fr) 90px 90px minmax(110px,auto);gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.pd-row.dv2{grid-template-columns:minmax(0,1fr) 90px 90px}
+.pd-row.h{border-top:0;color:var(--muted);font-size:12px;font-weight:700;padding-bottom:2px}
+.pd-row.h span{text-align:center}.pd-row.h span:first-child{text-align:left}
+.pd-row.g{display:block;border-top:0;padding:12px 0 0;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.pd-row input{width:100%;text-align:center;font-size:16px;font-weight:600}
+.pd-conf{position:sticky;bottom:calc(10px + env(safe-area-inset-bottom,0px));background:var(--surface);border-radius:18px;box-shadow:var(--shadow),0 0 0 1px var(--line);padding:12px 16px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between;margin-top:14px}
+.pd-conf .lin{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-variant-numeric:tabular-nums;min-width:0}
+.pd-conf input[type=text]{min-width:220px}
+/* ---- menu lateral laranja + dashboard ---- */
+body.em-app{padding:0}
+body.em-app .wrap{max-width:none;margin:0;gap:0}
+#v-app{--sw:68px;display:block;min-height:100vh}
+#v-app.aberto{--sw:252px}
+.side{position:fixed;left:0;top:0;bottom:0;width:var(--sw);z-index:30;display:flex;flex-direction:column;gap:4px;padding:14px 10px;padding-left:max(10px,env(safe-area-inset-left,0px));
+  background:linear-gradient(180deg,var(--accent-2),var(--accent));color:var(--on-accent);overflow-y:auto;overflow-x:hidden;scrollbar-width:none;transition:width .22s cubic-bezier(.3,.7,.2,1);box-shadow:2px 0 24px rgba(0,0,0,.12)}
+.side::-webkit-scrollbar{display:none}
+.side .marca{display:flex;align-items:center;gap:10px;padding:2px 4px 12px;min-height:52px}
+.side .marca img{width:40px;height:40px;border-radius:12px;flex:none;background:rgba(255,255,255,.18)}
+.side .marca b{font:700 15px/1.15 var(--font-display);letter-spacing:-.02em;white-space:nowrap}
+.side .marca small{display:block;font-weight:600;font-size:11px;opacity:.8;letter-spacing:.02em}
+.side .tx{white-space:nowrap;overflow:hidden;opacity:0;width:0;transition:opacity .15s}
+#v-app.aberto .side .tx{opacity:1;width:auto}
+.side button{display:flex;align-items:center;gap:12px;width:100%;border:0;background:transparent;color:inherit;font:600 14px var(--font-body);padding:0 14px;min-height:44px;border-radius:14px;cursor:pointer;text-align:left;flex:none;transition:background .15s}
+.side button svg{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.side button:hover{background:color-mix(in srgb,var(--on-accent) 14%,transparent)}
+.side button[aria-current="page"]{background:color-mix(in srgb,var(--on-accent) 24%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--on-accent) 20%,transparent)}
+.side button:focus-visible{outline:3px solid var(--on-accent);outline-offset:-3px}
+.side .sep{height:1px;background:color-mix(in srgb,var(--on-accent) 22%,transparent);margin:8px 6px;flex:none}
+.side .grupo-lista{display:none;flex-direction:column;gap:2px;margin:0 0 4px 14px;padding-left:12px;border-left:2px solid color-mix(in srgb,var(--on-accent) 28%,transparent)}
+#v-app.aberto .side .grupo-lista.on{display:flex}
+.side .grupo-lista button{min-height:38px;font-weight:500;font-size:13.5px;padding:0 12px}
+.side .seta{margin-left:auto;transition:transform .2s;width:16px;height:16px}
+.side [aria-expanded="true"] .seta{transform:rotate(90deg)}
+.side .rodape{margin-top:auto;display:grid;gap:4px;padding-top:10px}
+.principal{margin-left:var(--sw);transition:margin-left .22s cubic-bezier(.3,.7,.2,1);padding:18px 24px 56px;padding-right:max(24px,env(safe-area-inset-right,0px));min-width:0;max-width:1500px}
+@media (max-width:1000px){#v-app.aberto{--sw:252px}.principal{margin-left:68px}.side{box-shadow:none}#v-app.aberto .side{box-shadow:4px 0 40px rgba(0,0,0,.35)}}
+@media (max-width:600px){.principal{padding-inline:max(14px,env(safe-area-inset-left,0px)) max(14px,env(safe-area-inset-right,0px))}}
+.topo{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.topo h1{font-size:clamp(24px,4vw,30px);margin:0}
+.topo .line{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
+.ds-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.ds-k{background:var(--surface);border-radius:20px;padding:16px 18px;box-shadow:var(--shadow);display:grid;gap:6px;min-width:0;border:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+.ds-k.destaque{background:linear-gradient(160deg,var(--accent-2),var(--accent));color:var(--on-accent);border-color:transparent}
+.ds-k .k{font-size:12.5px;font-weight:600;opacity:.8}
+.ds-k:not(.destaque) .k{color:var(--muted);opacity:1}
+.ds-k .v{font-size:34px;font-weight:700;letter-spacing:-.035em;font-variant-numeric:tabular-nums;line-height:1}
+.ds-k .v small{font-size:15px;font-weight:600;opacity:.7;margin-left:3px;letter-spacing:0}
+.ds-k .f{font-size:12px;opacity:.8;font-variant-numeric:tabular-nums}
+.ds-k:not(.destaque) .f{color:var(--muted);opacity:1}
+.ds-grafico{display:flex;align-items:flex-end;gap:3px;height:150px;padding-top:8px}
+.ds-dia{flex:1;min-width:0;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px}
+.ds-dia .cols{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;gap:1px}
+.ds-dia i{display:block;flex:1;max-width:14px;border-radius:4px 4px 0 0;min-height:0}
+.ds-dia i.vi{background:color-mix(in srgb,var(--accent) 32%,var(--surface-2))}
+.ds-dia i.ve{background:var(--accent)}
+.ds-dia span{font-size:10px;color:var(--muted);height:12px;line-height:12px;font-variant-numeric:tabular-nums}
+.ds-leg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted);margin-top:8px}
+.ds-leg b{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.ds-sec{display:grid;gap:14px;grid-column:1/-1;min-width:0}
 </style>
 </head>
 <body>
@@ -148,20 +264,32 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
 
   <!-- painel -->
   <div id="v-app" hidden>
-    <header class="top">
-      <div><span class="eyebrow">Painel do gestor</span><h1>Corrida de Prêmios OP</h1></div>
-      <div class="line"><span class="who" id="quem"></span><button class="btn ghost sm" type="button" id="sair">Sair</button></div>
-    </header>
-    <nav class="nav" id="nav" aria-label="Seções" style="margin-top:14px">
-      <button type="button" data-r="corrida">Corrida</button>
-      <button type="button" data-r="lancamentos">Lançamentos</button>
-      <button type="button" data-r="clinicas">Clínicas</button>
-      <button type="button" data-r="tipos">Tipos de lançamento</button>
-      <button type="button" data-r="premios">Prêmios</button>
-      <button type="button" data-r="pessoas">Pessoas</button>
-      <button type="button" data-r="campanhas">Campanhas</button>
-    </nav>
-    <section class="two" id="area" style="margin-top:18px"></section>
+    <aside class="side" id="side" aria-label="Menu principal">
+      <div class="marca"><img src="app/icon-192.png" alt="" width="40" height="40"><div class="tx"><b>Corrida OP</b><small id="eyebrow">Painel do gestor</small></div></div>
+      <button type="button" id="side-toggle" aria-expanded="false" aria-controls="nav" title="Abrir ou fechar o menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="tx">Recolher menu</span></button>
+      <div class="sep"></div>
+      <nav id="nav" aria-label="Seções" style="display:flex;flex-direction:column;gap:4px">
+        <button type="button" data-r="inicio" title="Início"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/></svg><span class="tx">Início</span></button>
+        <button type="button" data-r="corrida" title="Corrida"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"/><path d="M5 4h12l-2 4 2 4H5"/></svg><span class="tx">Corrida</span></button>
+        <button type="button" data-r="diario" title="Lançamento diário"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg><span class="tx">Lançamento diário</span></button>
+        <button type="button" data-r="planilha" title="Planilha do mês"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M9.5 4.5v15M15 4.5v15"/></svg><span class="tx">Planilha do mês</span></button>
+        <button type="button" data-r="lancamentos" title="Lançamentos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg><span class="tx">Lançamentos</span></button>
+        <button type="button" data-r="relatorios" title="Relatórios"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="tx">Relatórios</span></button>
+        <div class="sep"></div>
+        <button type="button" data-g="cad" id="g-cad-btn" aria-expanded="false" aria-controls="g-cad" title="Cadastros"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7.5a2 2 0 0 1 2-2H10l2 2.5h6.5a2 2 0 0 1 2 2V17.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></svg><span class="tx">Cadastros</span><svg class="seta" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
+        <div class="grupo-lista" id="g-cad">
+          <button type="button" data-r="clinicas">Clínicas</button><button type="button" data-r="tipos">Tipos de lançamento</button><button type="button" data-r="premios">Prêmios</button><button type="button" data-r="pessoas">Pessoas</button><button type="button" data-r="campanhas">Campanhas</button>
+        </div>
+      </nav>
+      <div class="rodape"><button type="button" id="sair" title="Sair"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5.5a1.5 1.5 0 0 0-1.5 1.5v13A1.5 1.5 0 0 0 5.5 20H10"/><path d="M15 8l4 4-4 4M19 12H9"/></svg><span class="tx">Sair</span></button></div>
+    </aside>
+    <main class="principal">
+      <header class="topo">
+        <h1 id="titulo-tela">Início</h1>
+        <div class="line"><div class="seg" role="group" aria-label="Entrar como" id="modo" hidden><button type="button" data-m="gestor" aria-pressed="true">Gestor</button><button type="button" data-m="gerente" aria-pressed="false">Gerente</button></div><span class="who" id="quem"></span></div>
+      </header>
+      <section class="two" id="area"></section>
+    </main>
   </div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -188,12 +316,12 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
 
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   let eu = null;           // linha da tabela usuarios
-  let recurso = 'corrida';
+  let recurso = 'inicio';
   let editId = null;
   let lista = [];
   let mostrarInativos = false, confirmaExcluir = false;
 
-  const view = id => { ['load','login','senha','app'].forEach(v => { $('#v-'+v).hidden = v !== id; }); };
+  const view = id => { ['load','login','senha','app'].forEach(v => { $('#v-'+v).hidden = v !== id; }); document.body.classList.toggle('em-app', id === 'app'); };
   const msgErro = e => {
     if (!e) return '';
     if (e.code === '23505') return 'Já existe um cadastro com esse valor. Use outro nome ou sigla.';
@@ -276,6 +404,11 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
     if (recurso === 'pessoas') return pessoasCarregar();
     if (recurso === 'campanhas') return campanhasCarregar();
     if (recurso === 'corrida') return corridaCarregar();
+    if (recurso === 'relatorios') return relCarregar();
+    marcarMenu();
+    if (recurso === 'inicio') return inicioCarregar();
+    if (recurso === 'planilha') return planCarregar();
+    if (recurso === 'diario') return diaCarregar();
     if (recurso === 'lancamentos') return lancCarregar();
     const R = RECURSOS[recurso];
     $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
@@ -326,7 +459,7 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
 
   /* ---------- pessoas (gerentes e promotores) ---------- */
   let pessoas = [], vincs = [], clin = [], papelForm = 'promotor';
-  const CARGOS = ['Tele','Promotor','Tele BH'];
+  const CARGOS = ['Promotor','Tele BH','Tele interno','Divulgador','Luminoso'];
   const soDigitos = v => String(v||'').replace(/\D/g,'');
   const fmtTel = v => { const d = soDigitos(v); return d.length === 11 ? '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7) : d.length === 10 ? '('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6) : d; };
   const clinicaDe = p => { const v = vincs.find(x => x.usuario_id === p.id); return v ? clin.find(c => c.id === v.clinica_id) : null; };
@@ -878,7 +1011,442 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
     toast(a === 'ok-ed' ? 'Lançamento corrigido.' : 'Lançamento cancelado.'); L.acao = null; lancLista();
   }
 
+
+  /* ---------- relatórios: fechamento e auditoria ---------- */
+  const RP = { tipos: [], clin: [], usu: [], camps: [], aba: 'fech', f: { de: '', ate: '', camp: '', clin: '', por: 'promotor' }, a: { de: '', ate: '', quem: '', acao: '', so: true }, linhas: [], tk: 0 };
+  const pct1 = n => n == null ? '—' : n.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })+'%';
+  const nfmt = n => Number(n).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+
+  async function relCarregar(){
+    $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
+    $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const rs = await Promise.all([sb.from('tipos_lancamento').select('*'), sb.from('clinicas').select('*').order('nome'), sb.from('usuarios').select('*').order('nome'), sb.from('campanhas').select('*')]);
+    const er = rs.map(r => r.error).find(Boolean);
+    if (er){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
+    RP.tipos = rs[0].data; RP.clin = rs[1].data; RP.usu = rs[2].data; RP.camps = rs[3].data;
+    const h = hoje(), ini = h.slice(0, 8)+'01';
+    if (!RP.f.de){ RP.f.de = ini; RP.f.ate = h; RP.a.de = ini; RP.a.ate = h; }
+    relDesenhar();
+  }
+
+  function relDesenhar(){
+    $('#area').innerHTML = '<div class="card"><div class="top"><h2>Relatórios</h2><div class="seg" role="group" aria-label="Relatório"><button type="button" data-ra="fech" aria-pressed="'+(RP.aba==='fech')+'">% pela corrida</button><button type="button" data-ra="aud" aria-pressed="'+(RP.aba==='aud')+'">Auditoria</button></div></div><div id="r-corpo" style="margin-top:12px"></div></div>';
+    $$('[data-ra]').forEach(b => b.addEventListener('click', () => { RP.aba = b.dataset.ra; relDesenhar(); }));
+    if (RP.aba === 'fech') relFiltrosFech(); else relFiltrosAud();
+  }
+
+  const optsPessoas = (sel, papeis) => '<option value="">Todas as pessoas</option>'+RP.usu.filter(u => papeis.includes(u.papel)).map(u => '<option value="'+u.id+'"'+(String(u.id)===String(sel)?' selected':'')+'>'+esc(u.nome)+'</option>').join('');
+
+  function relFiltrosFech(){
+    const f = RP.f;
+    $('#r-corpo').innerHTML = '<p class="sub">% de fechamento = vendas de início ÷ visitas. Só entram lançamentos que continuam válidos.</p>'
+      + '<div class="g3"><label class="field">De<input id="f-de" type="date" value="'+esc(f.de)+'"></label><label class="field">Até<input id="f-ate" type="date" value="'+esc(f.ate)+'"></label>'
+      + '<label class="field">Campanha<select id="f-camp"><option value="">Todas</option>'+RP.camps.map(c => '<option value="'+c.id+'"'+(String(c.id)===f.camp?' selected':'')+'>'+esc(c.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="field">Clínica<select id="f-clin"><option value="">Todas</option>'+RP.clin.map(c => '<option value="'+c.id+'"'+(String(c.id)===f.clin?' selected':'')+'>'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="field">Agrupar por<select id="f-por"><option value="promotor"'+(f.por==='promotor'?' selected':'')+'>Promotor</option><option value="clinica"'+(f.por==='clinica'?' selected':'')+'>Clínica</option><option value="mes"'+(f.por==='mes'?' selected':'')+'>Mês</option></select></label></div>'
+      + '<div class="btns" style="margin:10px 0"><button class="btn ghost sm" type="button" data-p="mes">Este mês</button><button class="btn ghost sm" type="button" data-p="ant">Mês passado</button><button class="btn ghost sm" type="button" data-p="90">Últimos 90 dias</button><button class="btn ghost sm" type="button" id="f-csv">Baixar planilha</button></div><div id="f-res"><p class="sub">Carregando...</p></div>';
+    const ler = () => { f.de = $('#f-de').value; f.ate = $('#f-ate').value; f.camp = $('#f-camp').value; f.clin = $('#f-clin').value; f.por = $('#f-por').value; relFechamento(); };
+    ['f-de','f-ate','f-camp','f-clin','f-por'].forEach(id => $('#'+id).addEventListener('change', ler));
+    $$('[data-p]').forEach(b => b.addEventListener('click', () => {
+      const h = new Date(), d = n => new Date(h.getFullYear(), h.getMonth() + n, 1), iso = x => x.toLocaleDateString('sv-SE');
+      if (b.dataset.p === 'mes'){ f.de = iso(d(0)); f.ate = hoje(); }
+      else if (b.dataset.p === 'ant'){ f.de = iso(d(-1)); f.ate = iso(new Date(h.getFullYear(), h.getMonth(), 0)); }
+      else { f.de = iso(new Date(Date.now() - 90 * 864e5)); f.ate = hoje(); }
+      $('#f-de').value = f.de; $('#f-ate').value = f.ate; relFechamento();
+    }));
+    $('#f-csv').addEventListener('click', baixarCsv);
+    relFechamento();
+  }
+
+  async function buscarLanc(de, ate){
+    let tudo = [];
+    for (let i = 0; ; i += 1000){
+      const { data, error } = await sb.from('lancamentos').select('*, lancamento_campanhas(campanha_id,status)').gte('data_ref', de).lte('data_ref', ate).order('data_ref').range(i, i + 999);
+      if (error) return { error };
+      tudo = tudo.concat(data);
+      if (data.length < 1000 || tudo.length >= 20000) break;
+    }
+    return { data: tudo };
+  }
+
+  async function relFechamento(){
+    const f = RP.f, tk = ++RP.tk, alvo = $('#f-res'); if (!alvo) return;
+    if (!f.de || !f.ate || f.de > f.ate){ alvo.innerHTML = '<div class="err">Informe um período válido.</div>'; return; }
+    alvo.innerHTML = '<p class="sub">Calculando...</p>';
+    const r = await buscarLanc(f.de, f.ate);
+    if (tk !== RP.tk || !$('#f-res')) return;
+    if (r.error){ alvo.innerHTML = '<div class="err">'+esc(msgErro(r.error))+'</div>'; return; }
+    const camp = f.camp ? Number(f.camp) : null, g = {};
+    r.data.forEach(l => {
+      if (f.clin && l.clinica_id !== Number(f.clin)) return;
+      if (!(l.lancamento_campanhas || []).some(x => x.status === 'valido' && (!camp || x.campanha_id === camp))) return;
+      const t = RP.tipos.find(x => x.id === l.tipo_id); if (!t || t.base_fechamento === 'nenhum') return;
+      const k = f.por === 'promotor' ? l.promotor_id : f.por === 'clinica' ? l.clinica_id : String(l.data_ref).slice(0, 7);
+      const o = g[k] = g[k] || { k, visitas: 0, vendas: 0 };
+      if (t.base_fechamento === 'visita') o.visitas += Number(l.quantidade); else o.vendas += Number(l.quantidade);
+    });
+    const nome = k => f.por === 'promotor' ? ((RP.usu.find(u => u.id === k) || {}).nome || '#'+k)
+      : f.por === 'clinica' ? (c => c ? c.sigla+' · '+c.nome : '#'+k)(RP.clin.find(c => c.id === k)) : k.slice(5)+'/'+k.slice(0, 4);
+    const linhas = Object.values(g).map(o => ({ nome: nome(o.k), visitas: o.visitas, vendas: o.vendas, pct: o.visitas > 0 ? 100 * o.vendas / o.visitas : null, k: o.k }));
+    linhas.sort((a, b) => f.por === 'mes' ? (a.k < b.k ? -1 : 1) : ((b.pct == null ? -1 : b.pct) - (a.pct == null ? -1 : a.pct)) || b.visitas - a.visitas);
+    const tv = linhas.reduce((s, x) => s + x.visitas, 0), tn = linhas.reduce((s, x) => s + x.vendas, 0);
+    RP.linhas = linhas.concat([{ nome: 'Total', visitas: tv, vendas: tn, pct: tv > 0 ? 100 * tn / tv : null, total: true }]);
+    alvo.innerHTML = linhas.length
+      ? '<div style="overflow-x:auto"><table class="tab"><thead><tr><th>'+({promotor:'Promotor',clinica:'Clínica',mes:'Mês'}[f.por])+'</th><th class="n">Visitas</th><th class="n">Vendas de início</th><th class="n">% de fechamento</th></tr></thead><tbody>'
+        + RP.linhas.map(x => '<tr'+(x.total?' class="tot"':'')+'><td>'+esc(x.nome)+'</td><td class="n">'+nfmt(x.visitas)+'</td><td class="n">'+nfmt(x.vendas)+'</td><td class="n"><span class="barra"><i style="width:'+Math.min(100, x.pct || 0)+'%"></i></span> <b>'+pct1(x.pct)+'</b></td></tr>').join('')+'</tbody></table></div>'
+      : '<div class="empty">Nenhuma visita ou venda de início neste período.</div>';
+  }
+
+  function baixarCsv(){
+    if (!RP.linhas.length){ toast('Nada para baixar neste período.'); return; }
+    const n = v => String(v).replace('.', ',');
+    const csv = '﻿'+['Nome;Visitas;Vendas de início;% de fechamento'].concat(RP.linhas.map(x => [x.nome, n(x.visitas), n(x.vendas), x.pct == null ? '' : n(x.pct.toFixed(1))].map(c => '"'+String(c).replace(/"/g, '""')+'"').join(';'))).join('\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = 'fechamento-'+RP.f.de+'-a-'+RP.f.ate+'.csv';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+
+  function relFiltrosAud(){
+    const a = RP.a;
+    $('#r-corpo').innerHTML = '<p class="sub">Tudo que foi criado, corrigido ou cancelado, com quem fez, quando e o motivo. Nada aqui pode ser apagado.</p>'
+      + '<div class="g3"><label class="field">De<input id="a-de" type="date" value="'+esc(a.de)+'"></label><label class="field">Até<input id="a-ate" type="date" value="'+esc(a.ate)+'"></label>'
+      + '<label class="field">Quem fez<select id="a-quem">'+optsPessoas(a.quem, ['gestor','gerente'])+'</select></label>'
+      + '<label class="field">Ação<select id="a-acao"><option value="">Todas</option><option value="criar"'+(a.acao==='criar'?' selected':'')+'>Criou</option><option value="editar"'+(a.acao==='editar'?' selected':'')+'>Corrigiu</option><option value="cancelar"'+(a.acao==='cancelar'?' selected':'')+'>Cancelou</option></select></label></div>'
+      + '<label class="chk" style="margin:10px 0"><input id="a-so" type="checkbox"'+(a.so?' checked':'')+'><span>Mostrar só correções e cancelamentos</span></label><div id="a-res"><p class="sub">Carregando...</p></div>';
+    const ler = () => { a.de = $('#a-de').value; a.ate = $('#a-ate').value; a.quem = $('#a-quem').value; a.acao = $('#a-acao').value; a.so = $('#a-so').checked; relAuditoria(); };
+    ['a-de','a-ate','a-quem','a-acao','a-so'].forEach(id => $('#'+id).addEventListener('change', ler));
+    relAuditoria();
+  }
+
+  async function relAuditoria(){
+    const a = RP.a, tk = ++RP.tk, alvo = $('#a-res'); if (!alvo) return;
+    if (!a.de || !a.ate || a.de > a.ate){ alvo.innerHTML = '<div class="err">Informe um período válido.</div>'; return; }
+    alvo.innerHTML = '<p class="sub">Carregando...</p>';
+    let q = sb.from('auditoria').select('*, lancamentos(promotor_id,clinica_id,tipo_id,quantidade,valor,data_ref)')
+      .gte('quando', new Date(a.de+'T00:00:00').toISOString()).lte('quando', new Date(a.ate+'T23:59:59').toISOString()).order('quando', { ascending: false }).limit(300);
+    if (a.quem) q = q.eq('usuario_id', Number(a.quem));
+    if (a.acao) q = q.eq('acao', a.acao); else if (a.so) q = q.in('acao', ['editar', 'cancelar']);
+    const { data, error } = await q;
+    if (tk !== RP.tk || !$('#a-res')) return;
+    if (error){ alvo.innerHTML = '<div class="err">'+esc(msgErro(error))+'</div>'; return; }
+    alvo.innerHTML = data.length ? '<p class="meta" style="margin-bottom:6px">'+data.length+(data.length === 300 ? ' (mostrando os 300 mais recentes)' : '')+' registro'+(data.length === 1 ? '' : 's')+'</p><ul class="items">'+data.map(x => {
+      const l = x.lancamentos || {}, quem = (RP.usu.find(u => u.id === x.usuario_id) || { nome: '#'+x.usuario_id }).nome,
+        pr = (RP.usu.find(u => u.id === l.promotor_id) || { nome: '—' }).nome, cl = (RP.clin.find(c => c.id === l.clinica_id) || { sigla: '?' }).sigla, tp = (RP.tipos.find(t => t.id === l.tipo_id) || { nome: 'Lançamento' }).nome;
+      const det = x.acao === 'editar' && x.antes && x.depois ? ' · quantidade '+nfmt(x.antes.quantidade)+' → '+nfmt(x.depois.quantidade)+(x.antes.valor != null || x.depois.valor != null ? ' · valor '+brl(x.antes.valor)+' → '+brl(x.depois.valor) : '') : '';
+      return '<li class="item" style="grid-template-columns:minmax(0,1fr)"><div class="line"><span class="badge '+(x.acao==='criar'?'':'ouro')+'">'+({criar:'Criou',editar:'Corrigiu',cancelar:'Cancelou'}[x.acao]||esc(x.acao))+'</span><b>'+esc(quem)+'</b><span class="meta" style="margin:0">'+new Date(x.quando).toLocaleString('pt-BR')+'</span></div>'
+        + '<div class="meta">'+esc(tp)+' de '+esc(pr)+' · '+esc(cl)+(l.data_ref ? ' · '+dBR(l.data_ref) : '')+esc(det)+'</div>'+(x.motivo ? '<div>Motivo: '+esc(x.motivo)+'</div>' : '')+'</li>'; }).join('')+'</ul>'
+      : '<div class="empty">Nenhum registro neste período.</div>';
+  }
+
+
+  /* ---------- planilha diária: lançamento do dia e planilha do mês ---------- */
+  const PD = { clinicas: [], clin: null, ano: 0, mes: 0, inativos: true, data: '', tk: 0, pessoas: [], r: {}, corr: {}, existe: false, motivo: '' };
+  const PD_META = { 'Promotor': 30, 'Luminoso': 30, 'Tele BH': 45, 'Tele interno': 45 };
+  const PD_ORDEM = ['Promotor', 'Tele BH', 'Tele interno', 'Luminoso'];
+  const PD_ROT = { 'Promotor': 'Promotores', 'Tele BH': 'Tele BH', 'Tele interno': 'Tele interno', 'Luminoso': 'Luminoso', 'Divulgador': 'Divulgadores' };
+  const pd2 = n => String(n).padStart(2, '0');
+  const pdIso = (a, m, d) => a+'-'+pd2(m + 1)+'-'+pd2(d);
+  const pdN = (a, m) => new Date(a, m + 1, 0).getDate();
+  const pf1 = x => x == null ? '—' : x.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })+'%';
+  const pf0 = x => x == null ? '—' : Math.round(x)+'%';
+  const pdPct = (v, s) => v > 0 ? 100 * s / v : null;
+  const pdMarcar = () => $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
+  const pdErro = e => { $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(e))+'</div></div>'; };
+
+  async function pdBase(){
+    if (PD.clinicas.length && PD.ano) return null;
+    const q = await sb.from('clinicas').select('*').order('nome');
+    if (q.error) return q.error;
+    let lista = q.data.filter(c => c.ativa !== false);
+    if (eu.papel === 'gerente'){
+      const v = await sb.from('vinculos_clinica').select('*').eq('usuario_id', eu.id);
+      if (v.error) return v.error;
+      const ids = v.data.filter(x => !x.fim || x.fim >= hoje()).map(x => x.clinica_id);
+      lista = lista.filter(c => ids.includes(c.id));
+    }
+    PD.clinicas = lista; PD.clin = lista[0] ? lista[0].id : null;
+    const h = hoje(); PD.ano = Number(h.slice(0, 4)); PD.mes = Number(h.slice(5, 7)) - 1; PD.data = h;
+    return null;
+  }
+
+  const pdSelClin = () => '<select id="pd-clin" aria-label="Clínica">'+PD.clinicas.map(c => '<option value="'+c.id+'"'+(c.id === PD.clin ? ' selected' : '')+'>'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select>';
+  const pdVazio = () => { $('#area').innerHTML = '<div class="card"><div class="empty">'+(eu.papel === 'gerente' ? 'Você ainda não está vinculada a uma clínica. Fale com o gestor.' : 'Cadastre uma clínica primeiro.')+'</div></div>'; };
+
+  /* meta do divulgador num dia: média das metas por tipo de visita (rua 30%, tele 45%) */
+  function pdMetaDia(pes, M, d){
+    let rua = 0, tele = 0;
+    pes.forEach(p => { if (p.cargo === 'Divulgador') return; const v = ((M[p.id] || {})[d] || [0, 0])[0]; if (p.cargo === 'Tele BH' || p.cargo === 'Tele interno') tele += v; else rua += v; });
+    return rua + tele > 0 ? (rua * 30 + tele * 45) / (rua + tele) : null;
+  }
+  function pdMetaDiv(pes, M, ids, n){
+    let num = 0, den = 0;
+    ids.forEach(id => { for (let d = 1; d <= n; d++){ const c = (M[id] || {})[d]; if (!c || c[0] <= 0) continue; const m = pdMetaDia(pes, M, d); if (m != null){ num += c[0] * m; den += c[0]; } } });
+    return den > 0 ? num / den : null;
+  }
+  const pdSoma = (ids, M, n) => { let v = 0, s = 0; ids.forEach(id => { for (let d = 1; d <= n; d++){ const c = (M[id] || {})[d]; if (c){ v += c[0]; s += c[1]; } } }); return { v, s }; };
+  function pdPill(p, m){
+    if (p == null) return '<span class="pl nd">sem visitas</span>';
+    if (m == null) return '<span class="pl nd">'+pf1(p)+'</span>';
+    return '<span class="pl '+(p >= m ? 'ok' : 'no')+'">'+(p >= m ? '+' : '−')+Math.abs(p - m).toLocaleString('pt-BR', { maximumFractionDigits: 1 })+' pp</span>';
+  }
+
+  /* ----- planilha do mês ----- */
+  async function planCarregar(){
+    pdMarcar(); $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const e0 = await pdBase(); if (e0){ pdErro(e0); return; }
+    if (!PD.clin){ pdVazio(); return; }
+    const n = pdN(PD.ano, PD.mes), de = pdIso(PD.ano, PD.mes, 1), ate = pdIso(PD.ano, PD.mes, n), tk = ++PD.tk;
+    const rs = await Promise.all([sb.rpc('equipe_clinica', { p_clinica: PD.clin, p_de: de, p_ate: ate }),
+      sb.from('planilha_diaria').select('*').eq('clinica_id', PD.clin).gte('data_ref', de).lte('data_ref', ate).limit(5000),
+      sb.rpc('conferencia_corrida', { p_clinica: PD.clin, p_de: de, p_ate: ate })]);
+    if (tk !== PD.tk) return;
+    const er = rs.map(r => r.error).find(Boolean); if (er){ pdErro(er); return; }
+    const M = {}, lanc = {}, C = {};
+    rs[1].data.forEach(r => { const d = Number(String(r.data_ref).slice(8)); (M[r.usuario_id] = M[r.usuario_id] || {})[d] = [r.visitas, r.vendas]; lanc[d] = true; });
+    (rs[2].data || []).forEach(c => { C[c.usuario_id+'|'+Number(String(c.data_ref).slice(8))] = c; });
+    const pes = rs[0].data.filter(p => p.ativo || M[p.id]);
+    PD.mapa = { M, lanc, C, pes, n };
+    planDesenhar();
+  }
+
+  function planDesenhar(){
+    const { M, lanc, C, pes, n } = PD.mapa, hj = hoje(), ehHj = d => pdIso(PD.ano, PD.mes, d) === hj, SEM = ['D','S','T','Q','Q','S','S'];
+    const div = pes.filter(p => p.cargo === 'Divulgador'), ou = pes.filter(p => p.cargo !== 'Divulgador');
+    const ids = a => a.map(p => p.id), idsC = c => ids(pes.filter(p => p.cargo === c));
+    const tdiv = pdSoma(ids(div), M, n), rua = pdSoma(idsC('Promotor').concat(idsC('Luminoso')), M, n), tele = pdSoma(idsC('Tele BH').concat(idsC('Tele interno')), M, n), todos = pdSoma(ids(ou), M, n);
+    const mdiv = pdMetaDiv(pes, M, ids(div), n), rp = pdPct(rua.v, rua.s), tp = pdPct(tele.v, tele.s);
+    const cards = [['Eficiência da clínica', pdPct(todos.v, todos.s), mdiv, todos], ['Promotores e Luminoso', rp, 30, rua], ['Teles (BH e interno)', tp, 45, tele], ['Divulgadores', pdPct(tdiv.v, tdiv.s), mdiv, tdiv]];
+    const placar = '<div class="pd-placar">'+cards.map(c => '<div class="pd-pc"><div class="k"><span>'+c[0]+'</span>'+pdPill(c[1], c[2])+'</div><div class="v">'+pf1(c[1]).replace('%','')+'<small>%</small></div>'
+      + '<div class="b" title="Escala de 0 a 60%"><i style="width:'+Math.min(100, (c[1] || 0) / 60 * 100)+'%"></i>'+(c[2] != null ? '<u style="left:calc('+Math.min(100, c[2] / 60 * 100)+'% - 1px)"></u>' : '')+'</div>'
+      + '<div class="f">Meta '+(c[2] != null ? pf1(c[2]) : '—')+' · '+c[3].s+' vendas · '+c[3].v+' visitas</div></div>').join('')+'</div>';
+
+    const dvs = [];
+    Object.keys(C).forEach(k => { const c = C[k], d = Number(k.split('|')[1]); if (d >= 1 && d <= n && pdIso(PD.ano, PD.mes, d) <= hj && (c.visitas_planilha !== c.visitas_corrida || c.vendas_planilha !== c.vendas_corrida)) dvs.push({ p: pes.find(x => x.id === c.usuario_id), d, c }); });
+    dvs.sort((a, b) => a.d - b.d);
+    const aviso = '<div class="pd-card pd-div">'+(dvs.length
+      ? '<details><summary><span class="pl no">'+dvs.length+' divergência'+(dvs.length === 1 ? '' : 's')+' com a corrida</span> A planilha e a corrida precisam mostrar os mesmos números de cada pessoa no dia.</summary><ul>'
+        + dvs.map(x => '<li><b>'+esc(x.p ? x.p.nome : '#'+x.c.usuario_id)+'</b> em '+pd2(x.d)+'/'+pd2(PD.mes + 1)+': planilha '+x.c.visitas_planilha+' vis. / '+x.c.vendas_planilha+' ven., corrida '+x.c.visitas_corrida+' vis. / '+x.c.vendas_corrida+' ven.</li>').join('')+'</ul></details>'
+      : '<span class="pl ok">Sem divergências</span> Planilha e corrida mostram os mesmos números neste mês.')+'</div>';
+
+    let h = '<table class="pd" style="width:'+(168 + n * 50 + 240)+'px"><colgroup><col style="width:168px">'+new Array(n + 1).join('<col style="width:50px">')+'<col style="width:54px"><col style="width:54px"><col style="width:70px"><col style="width:62px"></colgroup><thead><tr><th class="nm">Pessoa</th>';
+    for (let d = 1; d <= n; d++){ const w = new Date(PD.ano, PD.mes, d).getDay(); h += '<th class="'+(w === 0 ? 'dom' : '')+(ehHj(d) ? ' hj' : '')+'">'+d+'<small>'+SEM[w]+'</small></th>'; }
+    h += '<th class="rt r1">Vis.</th><th class="rt r2">Ven.</th><th class="rt r3">%</th><th class="rt r4">Meta</th></tr></thead><tbody>';
+    const grupo = (tit, arr, meta) => { const t = pdSoma(ids(arr), M, n), pc = pdPct(t.v, t.s);
+      return '<tr class="gr"><td class="nm">'+tit+'</td><td colspan="'+n+'"></td><td class="rt r1">'+t.v+'</td><td class="rt r2">'+t.s+'</td><td class="rt r3">'+(pc == null ? '–' : '<span class="pl '+(meta != null && pc >= meta ? 'ok' : 'no')+'">'+pf0(pc)+'</span>')+'</td><td class="rt r4">'+(meta != null ? pf0(meta) : '')+'</td></tr>'; };
+    const linha = (p, meta, conf) => {
+      const t = pdSoma([p.id], M, n), pc = pdPct(t.v, t.s); let tds = '';
+      for (let d = 1; d <= n; d++){
+        const c = (M[p.id] || {})[d], w = new Date(PD.ano, PD.mes, d).getDay() === 0, cf = conf && C[p.id+'|'+d];
+        const dv = cf && pdIso(PD.ano, PD.mes, d) <= hj && (cf.visitas_planilha !== cf.visitas_corrida || cf.vendas_planilha !== cf.vendas_corrida);
+        tds += '<td class="c'+(c ? '' : ' z')+(w ? ' dom' : '')+(ehHj(d) ? ' hj' : '')+(dv ? ' dv' : '')+'"'+(dv ? ' title="Corrida: '+cf.visitas_corrida+' visitas / '+cf.vendas_corrida+' vendas"' : '')+'>'+(c ? c[0]+' / '+c[1] : '·')+'</td>';
+      }
+      return '<tr class="'+(p.ativo ? '' : 'in')+'"><td class="nm" title="'+esc(p.nome)+'"><span class="pd-tag'+(p.ativo ? ' a' : '')+'">'+(p.ativo ? 'A' : 'I')+'</span>'+esc(p.nome)+'</td>'+tds+'<td class="rt r1">'+(t.v || '–')+'</td><td class="rt r2">'+(t.v ? t.s : '–')+'</td><td class="rt r3">'+(pc == null ? '–' : '<span class="pl '+(meta != null && pc >= meta ? 'ok' : 'no')+'">'+pf0(pc)+'</span>')+'</td><td class="rt r4">'+(meta != null ? pf0(meta) : '–')+'</td></tr>';
+    };
+    const vis = a => PD.inativos ? a : a.filter(p => p.ativo);
+    h += grupo('Divulgadores', div, mdiv);
+    vis(div).forEach(p => { h += linha(p, pdMetaDiv(pes, M, [p.id], n), false); });
+    PD_ORDEM.forEach(cg => { const a = pes.filter(p => p.cargo === cg); if (!a.length) return; h += grupo(PD_ROT[cg], a, PD_META[cg]); vis(a).forEach(p => { h += linha(p, PD_META[cg], true); }); });
+    const tot = (rot, arr) => { const t = pdSoma(ids(arr), M, n); let tds = '';
+      for (let d = 1; d <= n; d++){ let v = 0, s = 0; arr.forEach(p => { const c = (M[p.id] || {})[d]; if (c){ v += c[0]; s += c[1]; } }); tds += '<td class="c'+(lanc[d] ? '' : ' z')+(new Date(PD.ano, PD.mes, d).getDay() === 0 ? ' dom' : '')+'">'+(lanc[d] ? v+' / '+s : '·')+'</td>'; }
+      return '<tr class="tot"><td class="nm">'+rot+'</td>'+tds+'<td class="rt r1">'+t.v+'</td><td class="rt r2">'+t.s+'</td><td class="rt r3">'+pf0(pdPct(t.v, t.s))+'</td><td class="rt r4"></td></tr>'; };
+    h += tot('Total divulgadores', div)+tot('Total promotores e teles', ou);
+    h += '<tr class="tot"><td class="nm">Meta do divulgador no dia</td>';
+    for (let d = 1; d <= n; d++){ const m = pdMetaDia(pes, M, d); h += '<td class="c'+(m == null ? ' z' : '')+(new Date(PD.ano, PD.mes, d).getDay() === 0 ? ' dom' : '')+'">'+(m == null ? '·' : pf0(m))+'</td>'; }
+    h += '<td class="rt r1"></td><td class="rt r2"></td><td class="rt r3"></td><td class="rt r4">'+pf0(mdiv)+'</td></tr></tbody></table>';
+
+    $('#area').innerHTML = '<div class="pd-card" style="padding:16px 18px"><div class="pd-bar"><div><h2 style="margin:0">Planilha do mês</h2><p class="sub" style="margin:2px 0 0">Visitas / vendas de início de cada pessoa, dia a dia.</p></div>'
+      + '<div class="grp">'+pdSelClin()+'<div class="pd-mes"><button type="button" id="pd-ant" aria-label="Mês anterior">‹</button><b>'+new Date(PD.ano, PD.mes, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })+'</b><button type="button" id="pd-prox" aria-label="Próximo mês">›</button></div></div></div>'
+      + placar+aviso+'<div class="pd-card"><div class="pd-scroll">'+h+'</div><div class="pd-leg"><label class="chk" for="pd-ver-in" style="min-height:0;padding:6px 12px"><input type="checkbox" id="pd-ver-in"'+(PD.inativos ? ' checked' : '')+'><span>Mostrar inativos (I)</span></label><span>"·" = dia sem lançamento</span><span>Vermelho = diferente da corrida</span><span>Inativos continuam somando no %</span></div></div>';
+    const hojeD = hoje(); $('#pd-prox').disabled = PD.ano === Number(hojeD.slice(0, 4)) && PD.mes >= Number(hojeD.slice(5, 7)) - 1;
+    $('#pd-clin').addEventListener('change', e => { PD.clin = Number(e.target.value); planCarregar(); });
+    $('#pd-ant').addEventListener('click', () => { PD.mes--; if (PD.mes < 0){ PD.mes = 11; PD.ano--; } planCarregar(); });
+    $('#pd-prox').addEventListener('click', () => { PD.mes++; if (PD.mes > 11){ PD.mes = 0; PD.ano++; } planCarregar(); });
+    $('#pd-ver-in').addEventListener('change', e => { PD.inativos = e.target.checked; planDesenhar(); });
+  }
+
+  /* ----- lançamento diário ----- */
+  async function diaCarregar(){
+    pdMarcar(); $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const e0 = await pdBase(); if (e0){ pdErro(e0); return; }
+    if (!PD.clin){ pdVazio(); return; }
+    const dt = PD.data, tk = ++PD.tk;
+    const rs = await Promise.all([sb.rpc('equipe_clinica', { p_clinica: PD.clin, p_de: dt, p_ate: dt }),
+      sb.from('planilha_diaria').select('*').eq('clinica_id', PD.clin).eq('data_ref', dt),
+      sb.rpc('conferencia_corrida', { p_clinica: PD.clin, p_de: dt, p_ate: dt })]);
+    if (tk !== PD.tk) return;
+    const er = rs.map(r => r.error).find(Boolean); if (er){ pdErro(er); return; }
+    const ex = {}; rs[1].data.forEach(r => { ex[r.usuario_id] = [r.visitas, r.vendas]; });
+    PD.existe = rs[1].data.length > 0; PD.motivo = '';
+    PD.pessoas = rs[0].data.filter(p => p.ativo || ex[p.id]);
+    PD.r = {}; PD.pessoas.forEach(p => { PD.r[p.id] = ex[p.id] ? ex[p.id].slice() : [0, 0]; });
+    PD.corr = {}; (rs[2].data || []).forEach(c => { PD.corr[c.usuario_id] = [c.visitas_corrida, c.vendas_corrida]; });
+    diaDesenhar();
+  }
+
+  function pdLinha(p, comCorr){
+    const v = PD.r[p.id];
+    return '<div class="pd-row'+(comCorr ? '' : ' dv2')+'"><div style="min-width:0;font-weight:600">'+esc(p.nome)+(p.ativo ? '' : ' <span class="pd-tag">I</span>')+'</div>'
+      + '<input type="number" min="0" inputmode="numeric" id="pd-v-'+p.id+'" data-p="'+p.id+'" data-i="0" value="'+v[0]+'" aria-label="Visitas de '+esc(p.nome)+'">'
+      + '<input type="number" min="0" inputmode="numeric" id="pd-s-'+p.id+'" data-p="'+p.id+'" data-i="1" value="'+v[1]+'" aria-label="Vendas de '+esc(p.nome)+'">'
+      + (comCorr ? '<span id="pd-c-'+p.id+'"></span>' : '')+'</div>';
+  }
+
+  function diaDesenhar(){
+    const hj = hoje(), min = (() => { const d = new Date(); d.setDate(d.getDate() - 7); return d.toLocaleDateString('sv-SE'); })();
+    const div = PD.pessoas.filter(p => p.cargo === 'Divulgador'), ou = PD.pessoas.filter(p => p.cargo !== 'Divulgador');
+    const nomeDia = new Date(PD.data+'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+    const cab = comCorr => '<div class="pd-row h'+(comCorr ? '' : ' dv2')+'"><span>Pessoa</span><span>Visitas</span><span>Vendas</span>'+(comCorr ? '<span>Corrida</span>' : '')+'</div>';
+    $('#area').innerHTML = '<div class="pd-card" style="padding:16px 18px"><div class="pd-bar"><div><h2 style="margin:0">Lançamento diário</h2><p class="sub" style="margin:2px 0 0">'+esc(nomeDia)+(PD.existe ? ' · já lançado' : '')+'</p></div>'
+      + '<div class="grp">'+pdSelClin()+'<div class="pd-mes"><button type="button" id="pd-dant" aria-label="Dia anterior">‹</button><input type="date" id="pd-data" value="'+esc(PD.data)+'" max="'+hj+'"'+(eu.papel === 'gerente' ? ' min="'+min+'"' : '')+' style="min-height:34px;padding:4px 8px"><button type="button" id="pd-dprox" aria-label="Próximo dia">›</button></div></div></div>'
+      + (PD.pessoas.length ? '<div class="pd-lan" style="margin-top:14px"><div class="pd-card pd-box"><h2>Promotores e teles</h2>'+cab(true)
+        + PD_ORDEM.map(cg => { const a = ou.filter(p => p.cargo === cg); return a.length ? '<div class="pd-row g">'+PD_ROT[cg]+'</div>'+a.map(p => pdLinha(p, true)).join('') : ''; }).join('')+'</div>'
+        + '<div class="pd-card pd-box"><h2>Divulgadores</h2><p class="sub" style="margin:0 0 6px">Quem atendeu as visitas. A soma precisa ser igual à dos promotores e teles, em visitas e em vendas.</p>'+cab(false)+(div.map(p => pdLinha(p, false)).join('') || '<div class="empty">Nenhum divulgador cadastrado nesta clínica.</div>')+'</div></div>'
+        + '<div class="pd-conf" id="pd-conf"></div>'
+      : '<div class="card" style="margin-top:14px"><div class="empty">Nenhuma pessoa vinculada a esta clínica nesta data. O gestor cadastra em Pessoas.</div></div>');
+    $('#pd-clin').addEventListener('change', e => { PD.clin = Number(e.target.value); diaCarregar(); });
+    const ir = d => { const x = new Date(PD.data+'T12:00:00'); x.setDate(x.getDate() + d); const s = x.toLocaleDateString('sv-SE'); if (s > hj || (eu.papel === 'gerente' && s < min)) return; PD.data = s; diaCarregar(); };
+    $('#pd-dant').addEventListener('click', () => ir(-1)); $('#pd-dprox').addEventListener('click', () => ir(1));
+    $('#pd-data').addEventListener('change', e => { const s = e.target.value; if (s && s <= hj && !(eu.papel === 'gerente' && s < min)){ PD.data = s; diaCarregar(); } });
+    $$('input[data-p]').forEach(i => i.addEventListener('input', () => { PD.r[i.dataset.p][Number(i.dataset.i)] = Math.max(0, parseInt(i.value, 10) || 0); diaConf(); }));
+    if (PD.pessoas.length) diaConf();
+  }
+
+  function diaConf(){
+    const div = PD.pessoas.filter(p => p.cargo === 'Divulgador'), ou = PD.pessoas.filter(p => p.cargo !== 'Divulgador');
+    const S = a => a.reduce((t, p) => [t[0] + PD.r[p.id][0], t[1] + PD.r[p.id][1]], [0, 0]), a = S(ou), b = S(div);
+    ou.forEach(p => { const el = $('#pd-c-'+p.id), c = PD.corr[p.id] || [0, 0], r = PD.r[p.id], ok = c[0] === r[0] && c[1] === r[1];
+      if (el) el.innerHTML = ok ? (c[0] || c[1] ? '<span class="pl ok">Bate</span>' : '<span class="pl nd">—</span>') : '<span class="pl no" title="Lançado na corrida">'+c[0]+' vis. / '+c[1]+' ven.</span>'; });
+    const rua = ou.filter(p => p.cargo === 'Promotor' || p.cargo === 'Luminoso').reduce((t, p) => t + PD.r[p.id][0], 0), tele = a[0] - rua;
+    const meta = a[0] > 0 ? (rua * 30 + tele * 45) / a[0] : null;
+    const okV = a[0] === b[0], okS = a[1] === b[1], semDiv = !div.length && a[0] > 0;
+    const maior = PD.pessoas.some(p => PD.r[p.id][1] > PD.r[p.id][0]);
+    const falta = PD.existe && PD.motivo.trim().length < 3;
+    const pode = okV && okS && !maior && !semDiv && !falta;
+    const dif = (x, y) => (y - x > 0 ? '+' : '')+(y - x);
+    $('#pd-conf').innerHTML = '<div class="lin"><span>Promotores e teles: <b>'+a[0]+'</b> vis. / <b>'+a[1]+'</b> ven.</span><span>Divulgadores: <b>'+b[0]+'</b> vis. / <b>'+b[1]+'</b> ven.</span>'
+      + (okV && okS && !semDiv ? '<span class="pl ok">Totais conferem</span>' : '<span class="pl no">'+(!okV ? 'Visitas '+dif(a[0], b[0]) : '')+(!okV && !okS ? ' · ' : '')+(!okS ? 'Vendas '+dif(a[1], b[1]) : '')+(semDiv ? 'Falta divulgador' : '')+'</span>')
+      + (maior ? '<span class="pl no">Há mais vendas do que visitas</span>' : '')
+      + '<span>Meta do divulgador hoje: <b>'+pf1(meta)+'</b></span>'
+      + (PD.existe ? '<label class="field" for="pd-motivo" style="grid-template-columns:auto 1fr;align-items:center">Motivo da correção<input type="text" id="pd-motivo" maxlength="200" value="'+esc(PD.motivo)+'" placeholder="Ex.: digitei errado"></label>' : '')
+      + '</div><div class="line"><span class="err" id="pd-err" role="alert"></span><button class="btn" type="button" id="pd-salvar"'+(pode ? '' : ' disabled')+'>'+(PD.existe ? 'Salvar correção' : 'Salvar o dia')+'</button></div>';
+    const m = $('#pd-motivo'); if (m) m.addEventListener('input', () => { PD.motivo = m.value; const bt = $('#pd-salvar'); if (bt) bt.disabled = !(okV && okS && !maior && !semDiv && m.value.trim().length >= 3); });
+    $('#pd-salvar').addEventListener('click', diaSalvar);
+  }
+
+  async function diaSalvar(){
+    const bt = $('#pd-salvar'); bt.disabled = true; $('#pd-err').textContent = '';
+    const linhas = PD.pessoas.map(p => ({ usuario_id: p.id, visitas: PD.r[p.id][0], vendas: PD.r[p.id][1] }));
+    const { error } = await sb.rpc('salvar_planilha_dia', { p_clinica: PD.clin, p_data: PD.data, p_linhas: linhas, p_motivo: PD.existe ? PD.motivo.trim() : null });
+    if (error){ $('#pd-err').textContent = msgErro(error); bt.disabled = false; return; }
+    toast('Dia salvo.'); diaCarregar();
+  }
+
+
+  /* ---------- menu lateral e início (dashboard) ---------- */
+  const TITULOS = { inicio: 'Início', corrida: 'Corrida', diario: 'Lançamento diário', planilha: 'Planilha do mês', lancamentos: 'Lançamentos', relatorios: 'Relatórios',
+    clinicas: 'Clínicas', tipos: 'Tipos de lançamento', premios: 'Prêmios', pessoas: 'Pessoas', campanhas: 'Campanhas' };
+  const CADASTROS = ['clinicas', 'tipos', 'premios', 'pessoas', 'campanhas'];
+  const lerLS = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const gravarLS = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+  function lateral(aberto){
+    $('#v-app').classList.toggle('aberto', aberto); $('#side-toggle').setAttribute('aria-expanded', aberto);
+    $('#side-toggle .tx').textContent = aberto ? 'Recolher menu' : 'Abrir menu';
+    if (!aberto){ $('#g-cad').classList.remove('on'); $('#g-cad-btn').setAttribute('aria-expanded', 'false'); }
+    gravarLS('menu-aberto', aberto ? '1' : '0');
+  }
+  function grupoCad(abrir){ $('#g-cad').classList.toggle('on', abrir); $('#g-cad-btn').setAttribute('aria-expanded', abrir); }
+  $('#side-toggle').addEventListener('click', () => lateral(!$('#v-app').classList.contains('aberto')));
+  $('#g-cad-btn').addEventListener('click', () => {
+    if (!$('#v-app').classList.contains('aberto')){ lateral(true); grupoCad(true); }
+    else grupoCad(!$('#g-cad').classList.contains('on'));
+  });
+  $('#nav').addEventListener('click', e => { if (e.target.closest('button[data-r]') && window.innerWidth <= 1000 && $('#v-app').classList.contains('aberto')) lateral(false); });
+  function marcarMenu(){
+    $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
+    $('#titulo-tela').textContent = TITULOS[recurso] || '';
+    if (CADASTROS.includes(recurso) && $('#v-app').classList.contains('aberto')) grupoCad(true);
+    $('#g-cad-btn').setAttribute('aria-current', CADASTROS.includes(recurso) ? 'true' : 'false');
+  }
+
+  const DS = { ano: 0, mes: 0, tk: 0 };
+  async function buscarPlanilha(de, ate){
+    let tudo = [];
+    for (let i = 0; ; i += 1000){
+      const { data, error } = await sb.from('planilha_diaria').select('*').gte('data_ref', de).lte('data_ref', ate).order('data_ref').order('usuario_id').range(i, i + 999);
+      if (error) return { error };
+      tudo = tudo.concat(data);
+      if (data.length < 1000 || tudo.length >= 50000) break;
+    }
+    return { data: tudo };
+  }
+  const dsMedia = (t, d) => d > 0 ? t / d : null;
+  const dsNum = x => x == null ? '—' : x.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+
+  async function inicioCarregar(){
+    marcarMenu(); $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    if (!DS.ano){ const h = hoje(); DS.ano = Number(h.slice(0, 4)); DS.mes = Number(h.slice(5, 7)) - 1; }
+    const n = pdN(DS.ano, DS.mes), de = pdIso(DS.ano, DS.mes, 1), ate = pdIso(DS.ano, DS.mes, n), tk = ++DS.tk;
+    const rs = await Promise.all([sb.from('clinicas').select('*').order('nome'), sb.from('usuarios').select('id,cargo'), buscarPlanilha(de, ate)]);
+    if (tk !== DS.tk || recurso !== 'inicio') return;
+    const er = rs.map(r => r.error).find(Boolean); if (er){ pdErro(er); return; }
+    const cargo = {}; rs[1].data.forEach(u => { cargo[u.id] = u.cargo; });
+    const clin = rs[0].data.filter(c => c.ativa !== false), C = {}, dias = {};
+    clin.forEach(c => { C[c.id] = { c, v: 0, s: 0, d: {} }; });
+    rs[2].data.forEach(r => {
+      const cg = cargo[r.usuario_id]; if (!cg || cg === 'Divulgador') return;
+      const o = C[r.clinica_id]; if (!o) return; const d = Number(String(r.data_ref).slice(8));
+      o.v += r.visitas; o.s += r.vendas; (o.d[d] = o.d[d] || [0, 0]); o.d[d][0] += r.visitas; o.d[d][1] += r.vendas;
+      (dias[d] = dias[d] || [0, 0]); dias[d][0] += r.visitas; dias[d][1] += r.vendas;
+    });
+    const L = Object.values(C).map(o => { const dd = Object.keys(o.d).filter(k => o.d[k][0] > 0).length; return { c: o.c, v: o.v, s: o.s, dias: dd, mv: dsMedia(o.v, dd), ms: dsMedia(o.s, dd), pct: pdPct(o.v, o.s) }; });
+    const V = L.reduce((t, x) => t + x.v, 0), S = L.reduce((t, x) => t + x.s, 0), dr = Object.keys(dias).filter(k => dias[k][0] > 0).length;
+    const comDados = L.filter(x => x.pct != null), pmed = comDados.length ? comDados.reduce((t, x) => t + x.pct, 0) / comDados.length : null;
+    const maxV = Math.max(1, ...Object.values(dias).map(x => x[0])), SEM = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+    L.sort((a, b) => (b.pct == null ? -1 : b.pct) - (a.pct == null ? -1 : a.pct) || b.v - a.v);
+    const k = (rot, val, un, f, dest) => '<div class="ds-k'+(dest ? ' destaque' : '')+'"><div class="k">'+rot+'</div><div class="v">'+val+(un ? '<small>'+un+'</small>' : '')+'</div><div class="f">'+f+'</div></div>';
+    let graf = '';
+    for (let d = 1; d <= n; d++){ const x = dias[d] || [0, 0], dom = new Date(DS.ano, DS.mes, d).getDay() === 0;
+      graf += '<div class="ds-dia" title="Dia '+d+': '+x[0]+' visitas, '+x[1]+' vendas"><div class="cols"><i class="vi" style="height:'+(x[0] / maxV * 100)+'%"></i><i class="ve" style="height:'+(x[1] / maxV * 100)+'%"></i></div><span>'+(d === 1 || d % 5 === 0 ? d : '')+'</span></div>'; }
+    $('#area').innerHTML = '<div class="ds-sec">'
+      + '<div class="pd-bar"><p class="sub" style="margin:0">Todas as clínicas ativas, a partir da planilha diária. Divulgadores ficam de fora para não contar a mesma visita duas vezes.</p>'
+      + '<div class="pd-mes"><button type="button" id="ds-ant" aria-label="Mês anterior">‹</button><b>'+new Date(DS.ano, DS.mes, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })+'</b><button type="button" id="ds-prox" aria-label="Próximo mês">›</button></div></div>'
+      + '<div class="ds-kpis">'
+      + k('Visitas das clínicas', V.toLocaleString('pt-BR'), '', L.filter(x => x.v > 0).length+' de '+L.length+' clínicas com lançamento')
+      + k('Vendas de início', S.toLocaleString('pt-BR'), '', 'no mês')
+      + k('Média de visitas por dia', dsNum(dsMedia(V, dr)), '', dr+' dia'+(dr === 1 ? '' : 's')+' com lançamento')
+      + k('Média de vendas por dia', dsNum(dsMedia(S, dr)), '', dr+' dia'+(dr === 1 ? '' : 's')+' com lançamento')
+      + k('% de fechamento médio', pf1(pdPct(V, S)).replace('%', ''), '%', 'Média entre as clínicas: '+pf1(pmed), true)
+      + '</div>'
+      + '<div class="card"><h2>Visitas e vendas por dia</h2><div class="ds-grafico" role="img" aria-label="Gráfico de visitas e vendas por dia">'+graf+'</div><div class="ds-leg"><span><b style="background:color-mix(in srgb,var(--accent) 32%,var(--surface-2))"></b>Visitas</span><span><b style="background:var(--accent)"></b>Vendas de início</span></div></div>'
+      + '<div class="card"><h2>Por clínica</h2><div style="overflow-x:auto">'
+      + (L.length ? '<table class="tab"><thead><tr><th>Clínica</th><th class="n">Visitas</th><th class="n">Vendas</th><th class="n">Visitas/dia</th><th class="n">Vendas/dia</th><th class="n">% de fechamento</th><th class="n">Dias</th></tr></thead><tbody>'
+        + L.map(x => '<tr><td><b>'+esc(x.c.sigla)+'</b> · '+esc(x.c.nome)+'</td><td class="n">'+x.v+'</td><td class="n">'+x.s+'</td><td class="n">'+dsNum(x.mv)+'</td><td class="n">'+dsNum(x.ms)+'</td><td class="n"><span class="barra"><i style="width:'+Math.min(100, (x.pct || 0) / 60 * 100)+'%"></i></span> <b>'+pf1(x.pct)+'</b></td><td class="n">'+x.dias+'</td></tr>').join('')
+        + '<tr class="tot"><td>Todas as clínicas</td><td class="n">'+V+'</td><td class="n">'+S+'</td><td class="n">'+dsNum(dsMedia(V, dr))+'</td><td class="n">'+dsNum(dsMedia(S, dr))+'</td><td class="n"><b>'+pf1(pdPct(V, S))+'</b></td><td class="n">'+dr+'</td></tr></tbody></table>'
+        : '<div class="empty">Nenhuma clínica ativa. Cadastre em Cadastros › Clínicas.</div>')
+      + '</div></div></div>';
+    const h = hoje(); $('#ds-prox').disabled = DS.ano === Number(h.slice(0, 4)) && DS.mes >= Number(h.slice(5, 7)) - 1;
+    $('#ds-ant').addEventListener('click', () => { DS.mes--; if (DS.mes < 0){ DS.mes = 11; DS.ano--; } inicioCarregar(); });
+    $('#ds-prox').addEventListener('click', () => { DS.mes++; if (DS.mes > 11){ DS.mes = 0; DS.ano++; } inicioCarregar(); });
+  }
+
   /* ---------- entrar, sair, senha ---------- */
+  let modoVisao = 'gestor';
+  function aplicarModo(recarregar){
+    const ger = modoVisao === 'gerente';
+    $('#eyebrow').textContent = ger ? 'Painel da gerência' : 'Painel do gestor';
+    $$('#modo button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === modoVisao));
+    $$('#nav button[data-r]').forEach(b => { b.hidden = ger && !['diario', 'planilha'].includes(b.dataset.r); });
+    $$('#nav .sep').forEach(x => { x.hidden = ger; }); $('#g-cad-btn').hidden = ger; if (ger) grupoCad(false);
+    if (ger && !['diario', 'planilha'].includes(recurso)) recurso = 'diario';
+    if (!ger && ['diario', 'planilha'].includes(recurso) && recarregar) recurso = 'inicio';
+    PD.clinicas = []; PD.ano = 0;
+    if (recarregar) carregar();
+  }
+  $('#modo').addEventListener('click', e => { const b = e.target.closest('button[data-m]'); if (!b || b.dataset.m === modoVisao) return; modoVisao = b.dataset.m; aplicarModo(true); });
+
   async function aposLogin(){
     const { data: sess } = await sb.auth.getSession();
     if (!sess.session){ view('login'); return; }
@@ -888,8 +1456,12 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
       await sb.auth.signOut(); view('login');
       $('#l-err').textContent = 'Seu login existe, mas ainda não foi cadastrado no sistema. Fale com o gestor.'; return;
     }
-    if (data.papel !== 'gestor'){ location.replace('app/'); return; }
-    eu = data; $('#quem').textContent = data.nome; view('app'); carregar();
+    if (data.papel !== 'gestor' && data.papel !== 'gerente'){ location.replace('app/'); return; }
+    eu = data; $('#quem').textContent = data.nome;
+    $('#modo').hidden = data.papel !== 'gestor'; modoVisao = data.papel === 'gerente' ? 'gerente' : 'gestor';
+    aplicarModo(false);
+    lateral(lerLS('menu-aberto') === '1' && window.innerWidth > 1000); if (data.papel === 'gestor' && !recurso) recurso = 'inicio';
+    view('app'); carregar();
   }
 
   $('#f-login').addEventListener('submit', async e => {
