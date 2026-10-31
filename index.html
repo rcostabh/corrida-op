@@ -1418,9 +1418,20 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const polis = g => !g ? [] : g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
   const mgMunicipios = () => cacheado('mg-mun-v1', async () => (await ibgeJson('v1/localidades/estados/31/municipios')).map(m => {
     const r = (m['regiao-imediata'] || {})['regiao-intermediaria'] || {}; return { id: m.id, nome: m.nome, rid: r.id || null, rnome: r.nome || '' }; }));
-  const mgContorno = () => cacheado('mg-geo-v1', async () => {
-    const j = await ibgeJson('v3/malhas/estados/31?intrarregiao=intermediaria&qualidade=minima&formato=application/vnd.geo+json');
-    return (j.features || []).map(f => ({ key: String((f.properties || {}).codarea || ''), polys: polis(f.geometry).map(p => p.map(r => r.map(c => [arred(c[0]), arred(c[1])]))) }));
+  const compactar = fs => fs.map(f => ({ key: f.key, polys: f.polys.map(p => p.map(r => r.map(c => [arred(c[0]), arred(c[1])]))) }));
+  async function malha(url){ const j = await ibgeJson(url); return (j.features || []).map(f => ({ key: String((f.properties || {}).codarea || ''), polys: polis(f.geometry) })); }
+  /* Tenta o contorno pronto das regiões intermediárias; se o IBGE não entregar, monta as regiões juntando as cidades. */
+  const mgContorno = () => cacheado('mg-geo-v2', async () => {
+    const muns = await mgMunicipios(), rids = new Set(muns.map(m => String(m.rid)));
+    const tentativas = ['v4/malhas/estados/31?intrarregiao=regiao-intermediaria&qualidade=minima&formato=application/vnd.geo+json', 'v3/malhas/estados/31?intrarregiao=intermediaria&qualidade=minima&formato=application/vnd.geo+json'];
+    for (const u of tentativas){
+      try { const f = await malha(u); if (f.length >= 2 && f.every(x => rids.has(x.key))) return compactar(f); } catch (e) { /* tenta a próxima */ }
+    }
+    const cid = await malha('v3/malhas/estados/31?intrarregiao=municipio&qualidade=minima&formato=application/vnd.geo+json');
+    const porId = {}; muns.forEach(m => { porId[String(m.id)] = m; porId[String(m.id).slice(0, 6)] = m; });
+    const reg = {}; cid.forEach(c => { const m = porId[c.key] || porId[c.key.slice(0, 6)]; if (!m || !m.rid) return; (reg[m.rid] = reg[m.rid] || { key: String(m.rid), polys: [] }).polys.push(...c.polys); });
+    const lista = Object.values(reg); if (lista.length < 2) throw new Error('contorno indisponível');
+    return compactar(lista);
   });
   function centroideRing(r){ let a = 0, x = 0, y = 0; for (let i = 0, j = r.length - 1; i < r.length; j = i++){ const f = r[j][0] * r[i][1] - r[i][0] * r[j][1]; a += f; x += (r[j][0] + r[i][0]) * f; y += (r[j][1] + r[i][1]) * f; } a /= 2; return a ? [x / (6 * a), y / (6 * a)] : r[0]; }
   const mgCentro = id => cacheado('mg-cen-'+id, async () => {
@@ -1448,7 +1459,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
     if (!DS.ano){ const h = hoje(); DS.ano = Number(h.slice(0, 4)); DS.mes = Number(h.slice(5, 7)) - 1; }
     const n = pdN(DS.ano, DS.mes), de = pdIso(DS.ano, DS.mes, 1), ate = pdIso(DS.ano, DS.mes, n), tk = ++DS.tk;
-    const geoP = Promise.all([mgContorno(), mgMunicipios()]).catch(() => null);
+    DS.geoErro = '';
+    const geoP = Promise.all([mgContorno(), mgMunicipios()]).catch(e => { DS.geoErro = (e && e.message) || 'erro'; return null; });
     const rs = await Promise.all([sb.from('clinicas').select('*').order('nome'), sb.from('usuarios').select('id,cargo'), buscarPlanilha(de, ate), geoP]);
     if (tk !== DS.tk || recurso !== 'inicio') return;
     const er = rs.slice(0, 3).map(r => r.error).find(Boolean); if (er){ pdErro(er); return; }
@@ -1517,7 +1529,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     $('#ds-prox').addEventListener('click', () => { DS.mes++; if (DS.mes > 11){ DS.mes = 0; DS.ano++; } inicioCarregar(); });
     if (DS.proj) mapaDesenhar();
     const sem = DS.base.filter(o => o.x == null);
-    $('#ds-sem').innerHTML = sem.length && DS.proj ? 'Sem localização no mapa: '+sem.map(o => esc(o.c.sigla)).join(', ')+'. Informe a cidade em Cadastros › Clínicas.' : '';
+    $('#ds-sem').innerHTML = (DS.geoErro && DS.proj ? 'Não consegui carregar o contorno das regiões agora ('+esc(DS.geoErro)+'). Os pontos mostram onde ficam as clínicas. ' : '')
+      + (sem.length && DS.proj ? 'Sem localização no mapa: '+sem.map(o => esc(o.c.sigla)).join(', ')+'. Informe a cidade em Cadastros › Clínicas.' : '');
     inicioPaineis(); filtroBarra();
   }
 
