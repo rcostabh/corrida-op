@@ -80,6 +80,39 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
   background:color-mix(in srgb,var(--ink) 92%,transparent);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);color:var(--bg);padding:14px 18px;border-radius:16px;font-weight:500;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:20;box-shadow:var(--shadow)}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 @media (prefers-reduced-motion:reduce){.toast,.btn,.nav button,input,select{transition:none}.btn:active{transform:none}}
+.sec{border-top:1px solid var(--line);margin-top:22px;padding-top:20px;display:grid;gap:12px}
+.g2{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.picks{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+.rrow{display:grid;gap:8px 10px;grid-template-columns:minmax(170px,1.3fr) minmax(150px,1fr) 100px 100px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.rrow.off .r-modo,.rrow.off .r-passo,.rrow.off .r-pts{opacity:.45}
+@media (max-width:700px){.rrow{grid-template-columns:1fr 1fr}.rrow .chk,.rrow .r-modo{grid-column:1/-1}}
+.prow{display:grid;gap:8px;grid-template-columns:100px minmax(0,1fr) 150px auto;align-items:center}
+@media (max-width:700px){.prow{grid-template-columns:1fr 1fr}.prow .p-premio{grid-column:1/-1}}
+.grp{display:grid;gap:8px}
+.grp h3{margin:0;font:650 14px var(--font-display);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.chip.ok{color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,transparent)}
+.full{grid-column:1/-1}
+.seg{display:inline-flex;background:var(--surface-2);border-radius:999px;padding:3px}
+.seg button{border:0;background:transparent;color:var(--muted);font:600 13px var(--font-body);padding:7px 16px;border-radius:999px;min-height:34px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.pista{position:relative;border-radius:18px;overflow:hidden;background:#2a2d33;padding:6px}
+.pgrid{display:grid;gap:3px}
+.casa{aspect-ratio:1.25;border-radius:8px;background:#3a3e46;color:#aeb4bf;font:600 11px var(--font-body);display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;padding:4px 6px;min-width:0;overflow:hidden}
+.casa small{font-size:9px;line-height:1.1;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:inherit}
+.casa.ouro{background:linear-gradient(135deg,#ffd35c,#e8a400);color:#3a2a00}
+.casa.prata{background:linear-gradient(135deg,#e4e6ea,#aeb4bd);color:#1f2933}
+.casa.largada{background:repeating-conic-gradient(#fff 0 25%,#111 0 50%) 0 0/16px 16px;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000}
+.carros{position:absolute;inset:6px;pointer-events:none}
+.carro{position:absolute;display:grid;place-items:center;transition:left .9s cubic-bezier(.5,0,.2,1),top .9s cubic-bezier(.5,0,.2,1)}
+.carro .in{transform:translateX(var(--dx,0px));display:grid;justify-items:center;gap:1px}
+.carro .tag{font:700 10px var(--font-body);color:#fff;background:rgba(0,0,0,.7);padding:1px 5px;border-radius:6px;white-space:nowrap}
+@media (prefers-reduced-motion:reduce){.carro{transition:none}}
+.rk{display:grid;grid-template-columns:34px 14px minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+.rk:first-child{border-top:0}
+.rk .pos{font:700 18px var(--font-display);text-align:center}
+.rk .pts{font:700 18px var(--font-display);text-align:right}
+.rk .meta{margin:0}
+#area:fullscreen{background:var(--bg);padding:24px;overflow:auto;align-content:start}
 </style>
 </head>
 <body>
@@ -118,11 +151,12 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
       <div class="line"><span class="who" id="quem"></span><button class="btn ghost sm" type="button" id="sair">Sair</button></div>
     </header>
     <nav class="nav" id="nav" aria-label="Seções" style="margin-top:14px">
+      <button type="button" data-r="corrida">Corrida</button>
       <button type="button" data-r="clinicas">Clínicas</button>
       <button type="button" data-r="tipos">Tipos de lançamento</button>
       <button type="button" data-r="premios">Prêmios</button>
       <button type="button" data-r="pessoas">Pessoas</button>
-      <button type="button" disabled title="Em construção">Campanhas</button>
+      <button type="button" data-r="campanhas">Campanhas</button>
     </nav>
     <section class="two" id="area" style="margin-top:18px"></section>
   </div>
@@ -151,7 +185,7 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
 
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   let eu = null;           // linha da tabela usuarios
-  let recurso = 'clinicas';
+  let recurso = 'corrida';
   let editId = null;
   let lista = [];
   let mostrarInativos = false, confirmaExcluir = false;
@@ -235,7 +269,10 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
   }
 
   async function carregar(){
+    $('#area').style.gridTemplateColumns = '';
     if (recurso === 'pessoas') return pessoasCarregar();
+    if (recurso === 'campanhas') return campanhasCarregar();
+    if (recurso === 'corrida') return corridaCarregar();
     const R = RECURSOS[recurso];
     $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
     const { data, error } = await sb.from(R.tabela).select('*').order(R.ordem);
@@ -279,7 +316,7 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
 
   $('#nav').addEventListener('click', e => {
     const b = e.target.closest('button[data-r]'); if (!b) return;
-    recurso = b.dataset.r; editId = null; confirmaExcluir = false; carregar();
+    recurso = b.dataset.r; editId = null; confirmaExcluir = false; ed = null; carregar();
   });
 
 
@@ -387,6 +424,319 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
     if (err2){ $('#p-err').textContent = msgErro(err2); return; }
     toast('Pessoa atualizada.'); editId = null; pessoasCarregar();
   }
+
+
+  /* ---------- campanhas ---------- */
+  let C = { camps: [], cc: [], cp: [], rg: [], cs: [], tipos: [], premios: [], promos: [] };
+  let ed = null;
+  const hoje = () => new Date().toLocaleDateString('sv-SE');
+  const dBR = d => d ? d.split('-').reverse().join('/') : '';
+  const statusCamp = c => { const h = hoje(); return h < c.inicio ? ['Agendada',''] : h > c.fim ? ['Encerrada','off'] : ['Ativa','ok']; };
+  const MODOS = { ocorrencia: 'Cada lançamento', quantidade: 'A cada N unidades', valor: 'A cada N reais' };
+
+  async function campanhasCarregar(){
+    $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
+    $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const rs = await Promise.all([
+      sb.from('campanhas').select('*').order('inicio', { ascending: false }),
+      sb.from('tipos_lancamento').select('*').order('nome'),
+      sb.from('premios').select('*').order('nome'),
+      sb.from('usuarios').select('*').order('nome'),
+      sb.from('vinculos_clinica').select('*'),
+      sb.from('clinicas').select('*').order('nome'),
+      sb.from('campanha_clinicas').select('*'),
+      sb.from('campanha_participantes').select('*'),
+      sb.from('regras_pontuacao').select('*'),
+      sb.from('casas_premio').select('*')]);
+    const er = rs.map(r => r.error).find(Boolean);
+    if (er){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
+    C.camps = rs[0].data.slice().sort((a, b) => a.inicio < b.inicio ? 1 : -1);
+    C.tipos = rs[1].data; C.premios = rs[2].data;
+    C.promos = rs[3].data.filter(u => u.papel === 'promotor' && u.ativo);
+    vincs = rs[4].data.filter(v => !v.fim); clin = rs[5].data;
+    C.cc = rs[6].data; C.cp = rs[7].data; C.rg = rs[8].data; C.cs = rs[9].data;
+    if (ed) editorDesenhar(); else campanhasLista();
+  }
+
+  function campanhasLista(){
+    $('#area').innerHTML = '<div class="card"><div class="top"><div><h2>Campanhas</h2><p class="sub" style="margin:0">Uma pessoa ou clínica pode estar em várias campanhas ao mesmo tempo.</p></div><button class="btn" type="button" id="nova-camp">Nova campanha</button></div>'
+      + '<ul class="items" style="margin-top:12px">'+(C.camps.map(c => {
+          const st = statusCamp(c), nc = C.cc.filter(x => x.campanha_id === c.id).length, np = C.cp.filter(x => x.campanha_id === c.id).length;
+          return '<li class="item"><div><div class="line"><b>'+esc(c.nome)+'</b><span class="chip '+st[1]+'">'+st[0]+'</span></div><div class="meta">'+dBR(c.inicio)+' a '+dBR(c.fim)+' · '+c.casas+' casas · '+nc+' clínica'+(nc===1?'':'s')+' · '+np+' promotor'+(np===1?'':'es')+(c.voltas_max===1?' · sem segunda volta':'')+'</div></div><div><button type="button" class="btn ghost sm" data-ec="'+c.id+'">Editar</button></div></li>'; }).join('') || '<li class="empty">Nenhuma campanha ainda. Cadastre antes as clínicas, os tipos de lançamento, os prêmios e as pessoas.</li>')+'</ul></div>';
+    $('#nova-camp').addEventListener('click', () => { ed = modeloCamp(null); editorDesenhar(); });
+    $$('[data-ec]').forEach(b => b.addEventListener('click', () => { ed = modeloCamp(C.camps.find(c => c.id === Number(b.dataset.ec))); editorDesenhar(); }));
+  }
+
+  function modeloCamp(c){
+    const id = c ? c.id : null;
+    return { id, nome: c ? c.nome : '', inicio: c ? c.inicio : hoje(), fim: c ? c.fim : '', casas: c ? c.casas : 30,
+      voltas: c ? c.voltas_max !== 1 : true, limite: c && c.voltas_max > 1 ? c.voltas_max : '', confirma: false,
+      clinicas: new Set(C.cc.filter(x => x.campanha_id === id).map(x => x.clinica_id)),
+      promotores: new Set(C.cp.filter(x => x.campanha_id === id).map(x => x.usuario_id)),
+      regras: Object.fromEntries(C.rg.filter(r => r.campanha_id === id).map(r => [r.tipo_id, { modo: r.modo, passo: Number(r.passo), pontos: r.pontos }])),
+      premios: C.cs.filter(x => x.campanha_id === id).map(x => ({ casa: x.casa, premio_id: x.premio_id, para: x.para })) };
+  }
+
+  function lerEditor(){
+    if (!$('#e-nome')) return;
+    ed.nome = $('#e-nome').value.trim(); ed.inicio = $('#e-inicio').value; ed.fim = $('#e-fim').value;
+    ed.casas = $('#e-casas').value; ed.voltas = $('#e-voltas').checked; ed.limite = $('#e-limite').value;
+    ed.clinicas = new Set($$('.e-cl:checked').map(x => Number(x.dataset.id)));
+    ed.promotores = new Set($$('.e-pr:checked').map(x => Number(x.dataset.id)));
+    ed.regras = {};
+    $$('.rrow[data-tipo]').forEach(r => {
+      if (!$('.r-on', r).checked) return;
+      ed.regras[r.dataset.tipo] = { modo: $('.r-modo', r).value, passo: $('.r-passo', r).value, pontos: $('.r-pts', r).value };
+    });
+    ed.premios = $$('.prow').map(r => ({ casa: $('.p-casa', r).value, premio_id: Number($('.p-premio', r).value) || null, para: $('.p-para', r).value }));
+  }
+
+  function editorDesenhar(){
+    const cinfo = ed.id ? C.camps.find(c => c.id === ed.id) : null;
+    const grupos = [];
+    clin.filter(c => c.ativa || ed.clinicas.has(c.id)).forEach(c => grupos.push({ c, ps: C.promos.filter(p => (clinicaDe(p) || {}).id === c.id) }));
+    const sem = C.promos.filter(p => !clinicaDe(p)); if (sem.length) grupos.push({ c: null, ps: sem });
+    const tiposVis = C.tipos.filter(t => t.ativo || ed.regras[t.id]);
+    $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
+    $('#area').innerHTML = '<div class="card"><div class="top"><div><h2>'+(ed.id ? 'Editar campanha' : 'Nova campanha')+'</h2><p class="sub" style="margin:0">Preencha as cinco partes e salve no fim da página.</p></div><button class="btn ghost sm" type="button" id="e-voltar">Voltar para a lista</button></div>'
+      + '<form id="f-camp" novalidate>'
+      + '<div class="sec" style="border:0;margin-top:14px;padding-top:0"><h2>1. Dados da corrida</h2><div class="g2">'
+      + '<label class="field full" for="e-nome">Nome da campanha<input id="e-nome" type="text" autocomplete="off" value="'+esc(ed.nome)+'"></label>'
+      + '<label class="field" for="e-inicio">Início<input id="e-inicio" type="date" value="'+esc(ed.inicio)+'"></label>'
+      + '<label class="field" for="e-fim">Fim<input id="e-fim" type="date" value="'+esc(ed.fim)+'"></label>'
+      + '<label class="field" for="e-casas">Casas da pista (5 a 120)<input id="e-casas" type="number" inputmode="numeric" min="5" max="120" value="'+esc(ed.casas)+'"></label></div>'
+      + '<label class="chk" for="e-voltas"><input id="e-voltas" type="checkbox"'+(ed.voltas?' checked':'')+'><span>Permitir segunda volta (quem completa a pista recomeça e pode ganhar os prêmios de novo)</span></label>'
+      + '<label class="field" for="e-limite">Máximo de voltas (deixe vazio para sem limite)<input id="e-limite" type="number" inputmode="numeric" min="2" value="'+esc(ed.limite)+'"></label></div>'
+      + '<div class="sec"><h2>2. Clínicas que participam</h2><div class="picks">'+(clin.filter(c => c.ativa || ed.clinicas.has(c.id)).map(c => '<label class="chk"><input class="e-cl" type="checkbox" data-id="'+c.id+'"'+(ed.clinicas.has(c.id)?' checked':'')+'><span><span class="sigla">'+esc(c.sigla)+'</span> '+esc(c.nome)+'</span></label>').join('') || '<div class="empty">Nenhuma clínica ativa cadastrada.</div>')+'</div></div>'
+      + '<div class="sec"><h2>3. Promotores que participam</h2><p class="sub" style="margin:0">Agrupados pela clínica em que atuam hoje.</p>'
+      + (grupos.map((g, i) => '<div class="grp"><h3>'+(g.c ? '<span class="sigla">'+esc(g.c.sigla)+'</span>'+esc(g.c.nome) : 'Sem clínica')+'<button type="button" class="btn ghost sm" data-grp="'+i+'">Marcar todos</button></h3><div class="picks">'+(g.ps.map(p => '<label class="chk"><input class="e-pr" data-g="'+i+'" type="checkbox" data-id="'+p.id+'"'+(ed.promotores.has(p.id)?' checked':'')+'><span>'+esc(p.nome)+' <span class="meta">'+esc(p.cargo||'')+'</span></span></label>').join('') || '<div class="meta">Nenhum promotor ativo nesta clínica.</div>')+'</div></div>').join('') || '<div class="empty">Nenhum promotor ativo cadastrado.</div>')+'</div>'
+      + '<div class="sec"><div class="top"><div><h2>4. Pontuação</h2><p class="sub" style="margin:0">Marque o que esta campanha aceita. 1 ponto = 1 casa. O que não estiver marcado não pode ser lançado nela.</p></div><button class="btn ghost sm" type="button" id="e-padrao">Usar pontuação padrão</button></div>'
+      + tiposVis.map(t => { const r = ed.regras[t.id]; const m = r ? r.modo : 'ocorrencia';
+          return '<div class="rrow'+(r?'':' off')+'" data-tipo="'+t.id+'"><label class="chk"><input class="r-on" type="checkbox"'+(r?' checked':'')+'><span>'+esc(t.nome)+'</span></label>'
+          + '<select class="r-modo" aria-label="Como pontua">'+Object.keys(MODOS).filter(k => k !== 'valor' || t.usa_valor).map(k => '<option value="'+k+'"'+(k===m?' selected':'')+'>'+MODOS[k]+'</option>').join('')+'</select>'
+          + '<input class="r-passo" type="number" min="0.01" step="0.01" inputmode="decimal" aria-label="N" placeholder="N"'+(m==='ocorrencia'?' disabled':'')+' value="'+(r && m !== 'ocorrencia' ? esc(r.passo) : '')+'">'
+          + '<input class="r-pts" type="number" min="0" step="1" inputmode="numeric" aria-label="Pontos" placeholder="pontos" value="'+(r ? esc(r.pontos) : '')+'"></div>'; }).join('')
+      + '</div>'
+      + '<div class="sec"><div class="top"><div><h2>5. Prêmios nas casas</h2><p class="sub" style="margin:0">Ouro: só o primeiro que passar leva. Prata: todos que passarem levam.</p></div><button class="btn ghost sm" type="button" id="e-addp">Adicionar casa premiada</button></div>'
+      + (ed.premios.map((p, i) => '<div class="prow"><input class="p-casa" type="number" min="1" inputmode="numeric" aria-label="Número da casa" placeholder="Casa" value="'+esc(p.casa)+'"><select class="p-premio" aria-label="Prêmio"><option value="">Prêmio...</option>'+C.premios.filter(x => x.ativo || x.id === p.premio_id).map(x => '<option value="'+x.id+'"'+(x.id===p.premio_id?' selected':'')+'>'+esc(x.nome)+' ('+x.tipo+')</option>').join('')+'</select><select class="p-para" aria-label="Quem ganha"><option value="promotor"'+(p.para==='promotor'?' selected':'')+'>Promotor</option><option value="clinica"'+(p.para==='clinica'?' selected':'')+'>Clínica</option></select><button type="button" class="btn ghost sm" data-delp="'+i+'">Remover</button></div>').join('') || '<div class="empty">Nenhuma casa premiada ainda.</div>')+'</div>'
+      + '<div class="err" id="e-err" role="alert" style="margin-top:14px"></div>'
+      + '<div class="btns" style="margin-top:6px"><button class="btn" type="submit" id="e-btn">Salvar campanha</button>'
+      + (ed.id ? '<button class="btn ghost" type="button" id="e-del">'+(ed.confirma?'Confirmar exclusão':'Excluir campanha')+'</button>' : '')+'</div></form></div>';
+    $('#e-voltar').addEventListener('click', () => { ed = null; campanhasLista(); });
+    $('#f-camp').addEventListener('submit', campanhaSalvar);
+    $('#e-addp').addEventListener('click', () => { lerEditor(); ed.premios.push({ casa: '', premio_id: null, para: 'promotor' }); editorDesenhar(); });
+    $$('[data-delp]').forEach(b => b.addEventListener('click', () => { lerEditor(); ed.premios.splice(Number(b.dataset.delp), 1); editorDesenhar(); }));
+    $$('[data-grp]').forEach(b => b.addEventListener('click', () => { $$('.e-pr[data-g="'+b.dataset.grp+'"]').forEach(x => { x.checked = true; }); }));
+    $('#e-padrao').addEventListener('click', () => {
+      lerEditor();
+      const pad = [['visita','quantidade',5,1],['venda de início','ocorrencia',1,1],['venda da nuv','ocorrencia',1,1],['venda nuv + início','ocorrencia',1,3]];
+      pad.forEach(p => { const t = C.tipos.find(x => x.ativo && x.nome.toLowerCase().includes(p[0])); if (t) ed.regras[t.id] = { modo: p[1], passo: p[2], pontos: p[3] }; });
+      editorDesenhar();
+    });
+    $$('.rrow[data-tipo]').forEach(r => {
+      const sync = () => {
+        const on = $('.r-on', r).checked, m = $('.r-modo', r).value;
+        r.classList.toggle('off', !on);
+        $('.r-passo', r).disabled = m === 'ocorrencia';
+        $('.r-passo', r).placeholder = m === 'valor' ? 'R$' : 'N';
+        if (m === 'ocorrencia') $('.r-passo', r).value = '';
+      };
+      $('.r-on', r).addEventListener('change', sync); $('.r-modo', r).addEventListener('change', sync);
+    });
+    const del = $('#e-del'); if (del) del.addEventListener('click', campanhaExcluir);
+  }
+
+  async function syncConj(tabela, col, campId, atuais, novos){
+    const add = [...novos].filter(x => !atuais.has(x)), rem = [...atuais].filter(x => !novos.has(x));
+    if (add.length){ const { error } = await sb.from(tabela).insert(add.map(x => ({ campanha_id: campId, [col]: x }))); if (error) return error; }
+    if (rem.length){ const { error } = await sb.from(tabela).delete().eq('campanha_id', campId).in(col, rem); if (error) return error; }
+    return null;
+  }
+
+  async function campanhaSalvar(e){
+    e.preventDefault(); lerEditor();
+    const falha = m => { $('#e-err').textContent = m; return null; };
+    const casas = Number(ed.casas);
+    if (!ed.nome) return falha('Informe o nome da campanha.');
+    if (!ed.inicio || !ed.fim) return falha('Informe as datas de início e fim.');
+    if (ed.fim < ed.inicio) return falha('A data final não pode ser antes da inicial.');
+    if (!Number.isInteger(casas) || casas < 5 || casas > 120) return falha('O número de casas deve ficar entre 5 e 120.');
+    if (ed.voltas && ed.limite !== '' && (!Number.isInteger(Number(ed.limite)) || Number(ed.limite) < 2)) return falha('O máximo de voltas deve ser 2 ou mais, ou fique vazio.');
+    if (!ed.clinicas.size) return falha('Escolha pelo menos uma clínica.');
+    const regras = [];
+    for (const [tid, r] of Object.entries(ed.regras)){
+      const t = C.tipos.find(x => x.id === Number(tid)), pts = Number(r.pontos), passo = r.modo === 'ocorrencia' ? 1 : Number(r.passo);
+      if (r.pontos === '' || !Number.isInteger(pts) || pts < 0) return falha('Informe os pontos de "'+t.nome+'" (número inteiro).');
+      if (!(passo > 0)) return falha('Informe o N de "'+t.nome+'" (maior que zero).');
+      regras.push({ tipo_id: Number(tid), modo: r.modo, passo, pontos: pts });
+    }
+    if (!regras.length) return falha('Marque pelo menos um tipo de lançamento na pontuação.');
+    const vistos = new Set(), casasP = [];
+    for (const p of ed.premios){
+      const n = Number(p.casa);
+      if (!Number.isInteger(n) || n < 1 || n > casas) return falha('Cada casa premiada precisa ser um número de 1 a '+casas+'.');
+      if (!p.premio_id) return falha('Escolha o prêmio da casa '+n+'.');
+      const k = n+'|'+p.para; if (vistos.has(k)) return falha('A casa '+n+' já tem prêmio para '+(p.para==='clinica'?'clínica':'promotor')+'.');
+      vistos.add(k); casasP.push({ casa: n, premio_id: p.premio_id, para: p.para });
+    }
+    const btn = $('#e-btn'); btn.disabled = true; $('#e-err').textContent = '';
+    const fim = (m) => { btn.disabled = false; $('#e-err').textContent = m; return null; };
+    const dados = { nome: ed.nome, inicio: ed.inicio, fim: ed.fim, casas, voltas_max: ed.voltas ? (ed.limite === '' ? null : Number(ed.limite)) : 1, premios_repetem: true };
+    let id = ed.id;
+    if (id){ const { error } = await sb.from('campanhas').update(dados).eq('id', id); if (error) return fim(msgErro(error)); }
+    else { const { data, error } = await sb.from('campanhas').insert(dados).select('id').single(); if (error) return fim(msgErro(error)); id = data.id; ed.id = id; }
+    let er = await syncConj('campanha_clinicas', 'clinica_id', id, new Set(C.cc.filter(x => x.campanha_id === id).map(x => x.clinica_id)), ed.clinicas);
+    if (!er) er = await syncConj('campanha_participantes', 'usuario_id', id, new Set(C.cp.filter(x => x.campanha_id === id).map(x => x.usuario_id)), ed.promotores);
+    if (!er){
+      const at = C.rg.filter(r => r.campanha_id === id), novos = [], rem = [];
+      for (const r of regras){
+        const ex = at.find(x => x.tipo_id === r.tipo_id);
+        if (!ex) novos.push(Object.assign({ campanha_id: id }, r));
+        else if (ex.modo !== r.modo || Number(ex.passo) !== r.passo || ex.pontos !== r.pontos){ const u = await sb.from('regras_pontuacao').update({ modo: r.modo, passo: r.passo, pontos: r.pontos }).eq('id', ex.id); if (u.error){ er = u.error; break; } }
+      }
+      at.forEach(x => { if (!regras.some(r => r.tipo_id === x.tipo_id)) rem.push(x.id); });
+      if (!er && novos.length){ const i = await sb.from('regras_pontuacao').insert(novos); er = i.error; }
+      if (!er && rem.length){ const d = await sb.from('regras_pontuacao').delete().in('id', rem); er = d.error; }
+    }
+    if (!er){
+      const at = C.cs.filter(x => x.campanha_id === id), novos = [], rem = [];
+      for (const c of casasP){
+        const ex = at.find(x => x.casa === c.casa && x.para === c.para);
+        if (!ex) novos.push(Object.assign({ campanha_id: id }, c));
+        else if (ex.premio_id !== c.premio_id){ const u = await sb.from('casas_premio').update({ premio_id: c.premio_id }).eq('id', ex.id); if (u.error){ er = u.error; break; } }
+      }
+      at.forEach(x => { if (!casasP.some(c => c.casa === x.casa && c.para === x.para)) rem.push(x); });
+      if (!er && novos.length){ const i = await sb.from('casas_premio').insert(novos); er = i.error; }
+      for (const x of rem){ if (er) break; const d = await sb.from('casas_premio').delete().eq('id', x.id); if (d.error) er = d.error.code === '23503' ? { message: 'A casa '+x.casa+' já tem ganhador e não pode ser removida.' } : d.error; }
+    }
+    if (er){ await campanhasCarregarSilencioso(); return fim('Salvo só em parte: '+msgErro(er)); }
+    await sb.rpc('recalcular', { p_camp: id });
+    toast('Campanha salva.'); ed = null; campanhasCarregar();
+  }
+
+  async function campanhasCarregarSilencioso(){
+    const rs = await Promise.all([sb.from('campanhas').select('*'), sb.from('campanha_clinicas').select('*'), sb.from('campanha_participantes').select('*'), sb.from('regras_pontuacao').select('*'), sb.from('casas_premio').select('*')]);
+    if (rs.some(r => r.error)) return;
+    C.camps = rs[0].data; C.cc = rs[1].data; C.cp = rs[2].data; C.rg = rs[3].data; C.cs = rs[4].data;
+  }
+
+  async function campanhaExcluir(){
+    if (!ed.confirma){ lerEditor(); ed.confirma = true; editorDesenhar(); $('#e-err').textContent = 'Toque em "Confirmar exclusão" para apagar de vez.'; return; }
+    const { error } = await sb.from('campanhas').delete().eq('id', ed.id);
+    ed.confirma = false;
+    if (error){ editorDesenhar(); $('#e-err').textContent = error.code === '23503' ? 'Esta campanha já tem lançamentos ou ganhadores e não pode ser excluída.' : msgErro(error); return; }
+    toast('Campanha excluída.'); ed = null; campanhasCarregar();
+  }
+
+
+  /* ---------- corrida (acompanhamento ao vivo) ---------- */
+  const K = { camps: [], sel: null, modo: 'promotor', tk: 0, key: '', cars: {}, cols: 10, timer: null };
+  const PALETA = ['#e10600','#ff8700','#00a6ff','#34c759','#af52de','#ffd60a','#ff375f','#5ac8fa','#a2845e','#8e8e93'];
+  const iniciais = n => { const p = String(n||'?').trim().split(/\s+/); return ((p[0]||'?')[0] + (p.length > 1 ? p[p.length-1][0] : (p[0]||'')[1] || '')).toUpperCase(); };
+
+  async function corridaCarregar(){
+    $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
+    $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const { data, error } = await sb.from('campanhas').select('*');
+    if (error){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(error))+'</div></div>'; return; }
+    K.camps = data.slice().sort((a, b) => a.inicio < b.inicio ? 1 : -1);
+    if (!K.camps.some(c => c.id === K.sel)){ const a = K.camps.find(c => statusCamp(c)[0] === 'Ativa'); K.sel = (a || K.camps[0] || {}).id || null; }
+    if (!K.sel){ $('#area').innerHTML = '<div class="card"><h2>Corrida</h2><div class="empty">Nenhuma campanha ainda. Crie uma em "Campanhas".</div></div>'; return; }
+    K.key = '';
+    $('#area').innerHTML =
+      '<div class="card"><div class="top"><div class="line"><select id="k-camp" aria-label="Campanha" style="width:auto;min-width:220px">'+K.camps.map(c => '<option value="'+c.id+'"'+(c.id===K.sel?' selected':'')+'>'+esc(c.nome)+' ('+statusCamp(c)[0]+')</option>').join('')+'</select>'
+      + '<div class="seg" role="group" aria-label="Tipo de corrida"><button type="button" data-modo="promotor" aria-pressed="'+(K.modo==='promotor')+'">Promotores</button><button type="button" data-modo="clinica" aria-pressed="'+(K.modo==='clinica')+'">Clínicas</button></div></div>'
+      + '<div class="line"><span class="meta" id="k-hora" style="margin:0"></span><button class="btn ghost sm" type="button" id="k-tela">Tela cheia</button></div></div></div>'
+      + '<div class="card"><div class="pista" id="k-pista"></div></div>'
+      + '<div class="two"><div class="card"><h2>Classificação</h2><div id="k-rank"></div></div><div class="card"><h2>Prêmios</h2><div id="k-prem"></div></div></div>';
+    $('#k-camp').addEventListener('change', e => { K.sel = Number(e.target.value); K.key = ''; corridaAtualizar(); });
+    $$('[data-modo]').forEach(b => b.addEventListener('click', () => { K.modo = b.dataset.modo; K.key = ''; $$('[data-modo]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); corridaAtualizar(); }));
+    $('#k-tela').addEventListener('click', () => { const a = $('#area'); if (document.fullscreenElement) document.exitFullscreen(); else if (a.requestFullscreen) a.requestFullscreen(); });
+    $('#k-prem').addEventListener('click', async e => {
+      const b = e.target.closest('[data-ent]'); if (!b) return;
+      b.disabled = true;
+      const { error: er } = await sb.from('ganhadores').update({ entregue_em: new Date().toISOString(), entregue_por: eu.id }).eq('id', Number(b.dataset.ent));
+      if (er){ b.disabled = false; toast(msgErro(er)); return; }
+      toast('Prêmio marcado como entregue.'); corridaAtualizar();
+    });
+    await corridaAtualizar();
+  }
+
+  async function corridaAtualizar(){
+    const c = K.camps.find(x => x.id === K.sel); if (!c || !$('#k-pista')) return;
+    const tk = ++K.tk, modo = K.modo, view = modo === 'promotor' ? 'ranking_promotores' : 'ranking_clinicas', idCol = modo === 'promotor' ? 'promotor_id' : 'clinica_id';
+    const rs = await Promise.all([
+      sb.from(view).select('*').eq('campanha_id', c.id).order('ordem'),
+      sb.from('casas_premio').select('*').eq('campanha_id', c.id).eq('para', modo),
+      sb.from('premios').select('*'), sb.from('usuarios').select('*'), sb.from('clinicas').select('*'), sb.from('vinculos_clinica').select('*')]);
+    const er = rs.map(r => r.error).find(Boolean);
+    if (tk !== K.tk || !$('#k-pista')) return;
+    if (er){ $('#k-rank').innerHTML = '<div class="err">'+esc(msgErro(er))+'</div>'; return; }
+    const rank = rs[0].data, casasP = rs[1].data, premios = rs[2].data, usu = rs[3].data, cls = rs[4].data;
+    const vcs = rs[5].data.filter(v => !v.fim);
+    let gan = [];
+    if (casasP.length){ const g = await sb.from('ganhadores').select('*').in('casa_premio_id', casasP.map(x => x.id)); if (tk !== K.tk) return; if (!g.error) gan = g.data; }
+
+    const ents = {};
+    rank.forEach((r, i) => {
+      const id = r[idCol];
+      if (modo === 'promotor'){ const u = usu.find(x => x.id === id) || {}; const v = vcs.find(x => x.usuario_id === id); const cl = v && cls.find(x => x.id === v.clinica_id);
+        ents[id] = { nome: u.nome || '#'+id, tag: iniciais(u.nome), sub: (cl ? cl.sigla : '') + (u.cargo ? ' · '+u.cargo : ''), cor: PALETA[i % PALETA.length] }; }
+      else { const cl = cls.find(x => x.id === id) || {}; ents[id] = { nome: cl.nome || '#'+id, tag: cl.sigla || '?', sub: cl.sigla || '', cor: cl.cor || PALETA[i % PALETA.length] }; }
+    });
+
+    const N = c.casas, cols = Math.max(4, Math.min(10, Math.floor(($('#k-pista').clientWidth || 800) / 78))), rows = Math.ceil(N / cols);
+    const key = [c.id, modo, N, cols, casasP.map(x => x.casa+':'+x.premio_id).join(',')].join('|');
+    const pos = i => { const r = Math.floor(i / cols); let col = i % cols; if (r % 2) col = cols - 1 - col; return { r, col }; };
+    if (key !== K.key){
+      K.key = key; K.cars = {};
+      const pm = {}; casasP.forEach(x => { const pr = premios.find(p => p.id === x.premio_id); if (pr) pm[x.casa % N] = pr; });
+      let cells = '';
+      for (let r = 0; r < rows; r++) for (let k = 0; k < cols; k++){
+        const col = r % 2 ? cols - 1 - k : k, i = r * cols + col;
+        if (i >= N){ cells += '<div></div>'; continue; }
+        const pr = pm[i];
+        cells += '<div class="casa'+(i===0?' largada':'')+(pr?' '+pr.tipo:'')+'"'+(pr?' title="'+esc(pr.nome)+'"':'')+'><span>'+(i===0?'Largada':i)+'</span>'+(pr?'<small>'+esc(pr.nome)+'</small>':'')+'</div>';
+      }
+      $('#k-pista').innerHTML = '<div class="pgrid" style="grid-template-columns:repeat('+cols+',minmax(0,1fr))">'+cells+'</div><div class="carros" id="k-carros"></div>';
+    }
+    // carros
+    const grupos = {}; rank.forEach(r => { const i = (r.casa_na_volta || 0) % N; (grupos[i] = grupos[i] || []).push(r[idCol]); });
+    const camada = $('#k-carros'), vivos = new Set();
+    Object.keys(grupos).forEach(ci => grupos[ci].forEach((id, j, arr) => {
+      const e = ents[id], p = pos(Number(ci)); vivos.add(id);
+      let el = K.cars[id];
+      if (!el){ el = document.createElement('div'); el.className = 'carro'; camada.appendChild(el); K.cars[id] = el;
+        el.innerHTML = '<div class="in"><span class="tag"></span><svg viewBox="0 0 40 20" width="42" height="21" aria-hidden="true"><rect x="4" y="6" width="26" height="8" rx="4" fill="'+esc(e.cor)+'"/><rect x="28" y="8" width="10" height="4" rx="2" fill="'+esc(e.cor)+'"/><rect x="1" y="3" width="4" height="14" rx="1.5" fill="#111"/><rect x="26" y="2" width="5" height="16" rx="2" fill="#111"/><circle cx="17" cy="10" r="3" fill="#fff" opacity=".85"/></svg></div>'; }
+      $('.tag', el).textContent = e.tag; el.title = e.nome;
+      el.style.width = (100 / cols)+'%'; el.style.height = (100 / rows)+'%';
+      el.style.left = (p.col * 100 / cols)+'%'; el.style.top = (p.r * 100 / rows)+'%';
+      el.style.setProperty('--dx', ((j - (arr.length - 1) / 2) * 26)+'px');
+    }));
+    Object.keys(K.cars).forEach(id => { if (!vivos.has(Number(id))){ K.cars[id].remove(); delete K.cars[id]; } });
+
+    // classificação
+    $('#k-rank').innerHTML = rank.map(r => { const e = ents[r[idCol]]; const fim = c.voltas_max && r.pontos >= c.voltas_max * N;
+      return '<div class="rk"><span class="pos">'+r.posicao+'º</span><span class="dot" style="background:'+esc(e.cor)+'"></span><div><b>'+esc(e.nome)+'</b><p class="meta">'+esc(e.sub)+' · volta '+r.volta+', casa '+r.casa_na_volta+(fim?' · terminou':'')+'</p></div><span class="pts">'+r.pontos+' <span class="meta">pts</span></span></div>'; }).join('')
+      || '<div class="empty">Ninguém participa desta campanha ainda.</div>';
+
+    // prêmios
+    $('#k-prem').innerHTML = casasP.slice().sort((a, b) => a.casa - b.casa).map(x => {
+      const pr = premios.find(p => p.id === x.premio_id) || { nome: '?', tipo: 'prata' };
+      const gs = gan.filter(g => g.casa_premio_id === x.id).sort((a, b) => a.volta - b.volta);
+      return '<div class="item" style="grid-template-columns:minmax(0,1fr)"><div class="line"><span class="badge '+esc(pr.tipo)+'">'+esc(pr.tipo)+'</span><b>Casa '+x.casa+'</b><span>'+esc(pr.nome)+'</span></div>'
+        + (gs.length ? gs.map(g => { const e = ents[g.alvo_id] || { nome: '#'+g.alvo_id };
+            return '<div class="line"><span>'+esc(e.nome)+(g.volta > 1 ? ' <span class="meta">(volta '+g.volta+')</span>' : '')+'</span>'
+              + (g.pendente_revisao ? '<span class="chip off">Revisar</span>' : '')
+              + (g.entregue_em ? '<span class="chip ok">Entregue</span>' : '<button type="button" class="btn ghost sm" data-ent="'+g.id+'">Marcar entregue</button>')+'</div>'; }).join('')
+          : '<div class="meta">Ninguém passou ainda.</div>')+'</div>'; }).join('')
+      || '<div class="empty">Esta campanha não tem casas premiadas para '+(modo==='promotor'?'promotores':'clínicas')+'.</div>';
+    $('#k-hora').textContent = 'Atualizado às '+new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+
+  setInterval(() => { if (recurso === 'corrida' && !$('#v-app').hidden && !document.hidden && $('#k-pista')) corridaAtualizar(); }, 15000);
 
   /* ---------- entrar, sair, senha ---------- */
   async function aposLogin(){
