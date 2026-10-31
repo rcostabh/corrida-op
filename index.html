@@ -97,18 +97,31 @@ input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:
 .seg{display:inline-flex;background:var(--surface-2);border-radius:999px;padding:3px}
 .seg button{border:0;background:transparent;color:var(--muted);font:600 13px var(--font-body);padding:7px 16px;border-radius:999px;min-height:34px;cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
-.pista{position:relative;border-radius:18px;overflow:hidden;background:#2a2d33;padding:6px}
-.pgrid{display:grid;gap:3px}
-.casa{aspect-ratio:1.25;border-radius:8px;background:#3a3e46;color:#aeb4bf;font:600 11px var(--font-body);display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;padding:4px 6px;min-width:0;overflow:hidden}
-.casa small{font-size:9px;line-height:1.1;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:inherit}
-.casa.ouro{background:linear-gradient(135deg,#ffd35c,#e8a400);color:#3a2a00}
-.casa.prata{background:linear-gradient(135deg,#e4e6ea,#aeb4bd);color:#1f2933}
-.casa.largada{background:repeating-conic-gradient(#fff 0 25%,#111 0 50%) 0 0/16px 16px;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000}
-.carros{position:absolute;inset:6px;pointer-events:none}
-.carro{position:absolute;display:grid;place-items:center;transition:left .9s cubic-bezier(.5,0,.2,1),top .9s cubic-bezier(.5,0,.2,1)}
-.carro .in{transform:translateX(var(--dx,0px));display:grid;justify-items:center;gap:1px}
-.carro .tag{font:700 10px var(--font-body);color:#fff;background:rgba(0,0,0,.7);padding:1px 5px;border-radius:6px;white-space:nowrap}
-@media (prefers-reduced-motion:reduce){.carro{transition:none}}
+.mapa{position:relative;border-radius:22px;overflow:hidden;background:linear-gradient(180deg,#7fd0ff 0%,#b9ecff 22%,#c9f2b8 55%,#8fdc74 100%);box-shadow:var(--shadow)}
+.mapa .nuvem{position:absolute;width:90px;height:30px;border-radius:30px;background:#fff;opacity:.85;filter:blur(.4px)}
+.mapa .nuvem::before,.mapa .nuvem::after{content:"";position:absolute;background:#fff;border-radius:50%}
+.mapa .nuvem::before{width:38px;height:38px;left:14px;top:-18px}.mapa .nuvem::after{width:30px;height:30px;left:46px;top:-12px}
+.mapa svg.estrada{position:absolute;left:0;top:0;pointer-events:none}
+.t{position:absolute;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;display:grid;place-items:center;color:#fff;font:800 17px var(--font-display);text-shadow:0 1px 2px rgba(0,0,0,.35);
+  background:radial-gradient(circle at 34% 26%,rgba(255,255,255,.85) 0 11%,rgba(255,255,255,0) 12%),radial-gradient(circle at 50% 38%,var(--c),color-mix(in srgb,var(--c) 68%,#000));
+  box-shadow:0 5px 0 rgba(0,0,0,.22),inset 0 -5px 8px rgba(0,0,0,.18),inset 0 3px 4px rgba(255,255,255,.35)}
+.t.ini{background:radial-gradient(circle at 34% 26%,rgba(255,255,255,.85) 0 11%,rgba(255,255,255,0) 12%),radial-gradient(circle at 50% 38%,#4bdc7a,#1f9d4c);font-size:13px}
+.t.fim{width:58px;height:58px;margin:-29px 0 0 -29px;background:repeating-conic-gradient(#fff 0 25%,#1b1b1f 0 50%) 0 0/16px 16px;border:4px solid #fff;box-shadow:0 5px 0 rgba(0,0,0,.25)}
+.t.bau{width:60px;height:60px;margin:-30px 0 0 -30px;box-shadow:0 6px 0 rgba(0,0,0,.25),0 0 0 4px rgba(255,255,255,.75);transition:transform .25s}
+.t.bau.ouro{--c:#ffc400}.t.bau.prata{--c:#b8c2cc}
+.t.bau svg{width:36px;height:36px;margin-top:-2px}
+.t.bau .tampa{transform-box:fill-box;transform-origin:0% 100%;transition:transform .35s}
+.t.bau.aberto .tampa{transform:rotate(-62deg)}
+.t.bau.novo{animation:balanca .5s}
+@keyframes balanca{20%{transform:rotate(-10deg) scale(1.12)}50%{transform:rotate(8deg) scale(1.16)}80%{transform:rotate(-4deg) scale(1.08)}}
+.rot{position:absolute;transform:translate(-50%,0);font:700 10px var(--font-body);background:#fff;color:#3a2a00;border-radius:999px;padding:1px 8px;white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis;box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.tk{position:absolute;left:0;top:0;z-index:5;will-change:transform;pointer-events:none}
+.tk .disc{position:absolute;left:-19px;top:-56px;width:38px;height:38px;border-radius:50%;object-fit:cover;display:grid;place-items:center;color:#fff;font:800 13px var(--font-display);border:3px solid var(--rc,#fff);background:var(--rc,#888);box-shadow:0 3px 0 rgba(0,0,0,.25)}
+.tk .sombra{position:absolute;left:-18px;top:-6px;width:36px;height:12px;border-radius:50%;background:rgba(0,0,0,.22);filter:blur(1px)}
+.tk.pulo .disc{animation:esmaga .22s}
+@keyframes esmaga{0%{transform:scale(1.18,.82)}60%{transform:scale(.94,1.08)}100%{transform:scale(1,1)}}
+.po{position:absolute;width:9px;height:9px;border-radius:50%;background:#fff;opacity:.9;pointer-events:none;z-index:4}
+@media (prefers-reduced-motion:reduce){.t.bau.novo,.tk.pulo .disc{animation:none}}
 .rk{display:grid;grid-template-columns:34px 14px minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
 .rk:first-child{border-top:0}
 .rk .pos{font:700 18px var(--font-display);text-align:center}
@@ -469,12 +482,12 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 
   async function carregar(){
     $('#area').style.gridTemplateColumns = '';
+    marcarMenu();
     if (recurso === 'pessoas') return pessoasCarregar();
     if (recurso === 'campanhas') return campanhasCarregar();
     if (recurso === 'corrida') return corridaCarregar();
     if (recurso === 'relatorios') return relCarregar();
     if (recurso === 'externo') return externoCarregar();
-    marcarMenu();
     if (recurso === 'inicio') return inicioCarregar();
     if (recurso === 'planilha') return planCarregar();
     if (recurso === 'diario') return diaCarregar();
@@ -884,7 +897,55 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 
 
   /* ---------- corrida (acompanhamento ao vivo) ---------- */
-  const K = { camps: [], sel: null, modo: 'promotor', tk: 0, key: '', cars: {}, cols: 10, timer: null };
+  const K = { camps: [], sel: null, modo: 'promotor', tk: 0, key: '', tokens: {}, prev: null, geo: null, N: 0, ganVistos: null, busy: false };
+  const CORES_CASA = ['#ff5a5f','#ffa23a','#ffd23f','#3ddc84','#3aa0ff','#b86bff'];
+  const tileDe = (p, N) => p <= 0 ? 0 : (p % N === 0 ? N : p % N);
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const reduzMov = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
+  const bauSvg = tipo => { const c = tipo === 'ouro' ? ['#ffd34d','#e0a200','#8a5a00'] : ['#dfe5ec','#aab5c1','#5d6975'];
+    return '<svg viewBox="0 0 40 40" aria-hidden="true"><rect x="5" y="19" width="30" height="16" rx="3" fill="'+c[1]+'" stroke="'+c[2]+'" stroke-width="2"/><path class="tampa" d="M5 19V15a8 8 0 018-8h14a8 8 0 018 8v4z" fill="'+c[0]+'" stroke="'+c[2]+'" stroke-width="2"/><rect x="17" y="17" width="6" height="8" rx="1.5" fill="'+c[2]+'"/><circle cx="20" cy="21" r="1.4" fill="'+c[0]+'"/></svg>'; };
+  /* trilha em S, começando embaixo — a mesma do aplicativo, com mais colunas porque a tela é larga */
+  function kGeom(N, W){
+    const cols = Math.max(4, Math.min(8, Math.round(W / 150))), pad = 56, dx = (W - 2 * pad) / (cols - 1), dy = 92, rows = Math.ceil((N + 1) / cols), H = pad * 2 + (rows - 1) * dy + 36;
+    const pt = i => { const r = Math.floor(i / cols); let c = i % cols; if (r % 2) c = cols - 1 - c; return { x: pad + c * dx, y: H - pad - r * dy }; };
+    return { cols, rows, H, W, pt };
+  }
+  function kToken(id, e){
+    const el = document.createElement('div'); el.className = 'tk'; el.dataset.id = id;
+    el.innerHTML = '<span class="sombra"></span>'+(e.foto_url ? '<img class="disc" style="--rc:'+esc(e.cor)+'" src="'+esc(e.foto_url)+'" alt="'+esc(e.nome)+'">' : '<span class="disc" style="--rc:'+esc(e.cor)+'" title="'+esc(e.nome)+'">'+esc(e.tag)+'</span>');
+    return el;
+  }
+  const kColocar = (t, ponto, off) => { t.xy = { x: ponto.x + (off || 0), y: ponto.y }; t.el.style.transform = 'translate('+t.xy.x+'px,'+t.xy.y+'px)'; };
+  function kReempilhar(){
+    const grupos = {};
+    Object.values(K.tokens).forEach(t => { (grupos[t.tile] = grupos[t.tile] || []).push(t); });
+    Object.keys(grupos).forEach(ti => grupos[ti].forEach((t, j, arr) => kColocar(t, K.geo.pt(Number(ti)), (j - (arr.length - 1) / 2) * 26)));
+  }
+  function kPoeira(t){
+    const mapa = $('#k-pista'); if (reduzMov() || !mapa || !t.xy) return;
+    for (let i = 0; i < 4; i++){
+      const d = document.createElement('span'); d.className = 'po'; d.style.left = (t.xy.x - 4)+'px'; d.style.top = (t.xy.y - 4)+'px'; mapa.appendChild(d);
+      const sg = i < 2 ? -1 : 1;
+      d.animate([{ transform: 'translate(0,0) scale(1)', opacity: .9 }, { transform: 'translate('+(sg*(10+Math.random()*14))+'px,'+(-6-Math.random()*10)+'px) scale(.2)', opacity: 0 }], { duration: 520, easing: 'ease-out' }).onfinish = () => d.remove();
+    }
+  }
+  async function kPular(t, ponto, dur){
+    const de = t.xy, para = { x: ponto.x, y: ponto.y };
+    t.el.classList.remove('pulo');
+    if (!reduzMov()){
+      const an = t.el.animate([{ transform: 'translate('+de.x+'px,'+de.y+'px)' }, { transform: 'translate('+((de.x+para.x)/2)+'px,'+(((de.y+para.y)/2)-30)+'px)', offset: .5 }, { transform: 'translate('+para.x+'px,'+para.y+'px)' }], { duration: dur, easing: 'ease-in-out', fill: 'forwards' });
+      try { await an.finished; } catch (e) {}
+      t.xy = para; t.el.style.transform = 'translate('+para.x+'px,'+para.y+'px)'; an.cancel();
+    } else kColocar(t, para, 0);
+    void t.el.offsetWidth; t.el.classList.add('pulo'); kPoeira(t);
+  }
+  async function kAndar(t, p0, p1){
+    const N = K.N;
+    if (p1 < p0 || reduzMov()){ t.tile = tileDe(p1, N); kColocar(t, K.geo.pt(t.tile), 0); return; }
+    const ini = Math.max(p0, p1 - 12);
+    t.tile = tileDe(ini, N); kColocar(t, K.geo.pt(t.tile), 0);
+    for (let q = ini + 1; q <= p1; q++){ t.tile = tileDe(q, N); await kPular(t, K.geo.pt(t.tile), 300); }
+  }
   const PALETA = ['#e10600','#ff8700','#00a6ff','#34c759','#af52de','#ffd60a','#ff375f','#5ac8fa','#a2845e','#8e8e93'];
   const iniciais = n => { const p = String(n||'?').trim().split(/\s+/); return ((p[0]||'?')[0] + (p.length > 1 ? p[p.length-1][0] : (p[0]||'')[1] || '')).toUpperCase(); };
 
@@ -897,15 +958,15 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     K.camps = data.slice().sort((a, b) => a.inicio < b.inicio ? 1 : -1);
     if (!K.camps.some(c => c.id === K.sel)){ const a = K.camps.find(c => statusCamp(c)[0] === 'Ativa'); K.sel = (a || K.camps[0] || {}).id || null; }
     if (!K.sel){ $('#area').innerHTML = '<div class="card"><h2>Corrida</h2><div class="empty">Nenhuma campanha ainda. Crie uma em "Campanhas".</div></div>'; return; }
-    K.key = '';
+    K.key = ''; K.prev = null; K.ganVistos = null;
     $('#area').innerHTML =
       '<div class="card"><div class="top"><div class="line"><select id="k-camp" aria-label="Campanha" style="width:auto;min-width:220px">'+K.camps.map(c => '<option value="'+c.id+'"'+(c.id===K.sel?' selected':'')+'>'+esc(c.nome)+' ('+statusCamp(c)[0]+')</option>').join('')+'</select>'
       + '<div class="seg" role="group" aria-label="Tipo de corrida"><button type="button" data-modo="promotor" aria-pressed="'+(K.modo==='promotor')+'">Promotores</button><button type="button" data-modo="clinica" aria-pressed="'+(K.modo==='clinica')+'">Clínicas</button></div></div>'
       + '<div class="line"><span class="meta" id="k-hora" style="margin:0"></span><button class="btn ghost sm" type="button" id="k-tela">Tela cheia</button></div></div></div>'
-      + '<div class="card"><div class="pista" id="k-pista"></div></div>'
+      + '<div class="mapa" id="k-pista"></div>'
       + '<div class="two"><div class="card"><h2>Classificação</h2><div id="k-rank"></div></div><div class="card"><h2>Prêmios</h2><div id="k-prem"></div></div></div>';
-    $('#k-camp').addEventListener('change', e => { K.sel = Number(e.target.value); K.key = ''; corridaAtualizar(); });
-    $$('[data-modo]').forEach(b => b.addEventListener('click', () => { K.modo = b.dataset.modo; K.key = ''; $$('[data-modo]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); corridaAtualizar(); }));
+    $('#k-camp').addEventListener('change', e => { K.sel = Number(e.target.value); K.key = ''; K.prev = null; K.ganVistos = null; corridaAtualizar(); });
+    $$('[data-modo]').forEach(b => b.addEventListener('click', () => { K.modo = b.dataset.modo; K.key = ''; K.prev = null; K.ganVistos = null; $$('[data-modo]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); corridaAtualizar(); }));
     $('#k-tela').addEventListener('click', () => { const a = $('#area'); if (document.fullscreenElement) document.exitFullscreen(); else if (a.requestFullscreen) a.requestFullscreen(); });
     $('#k-prem').addEventListener('click', async e => {
       const b = e.target.closest('[data-ent]'); if (!b) return;
@@ -918,7 +979,12 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   }
 
   async function corridaAtualizar(){
-    const c = K.camps.find(x => x.id === K.sel); if (!c || !$('#k-pista')) return;
+    const c = K.camps.find(x => x.id === K.sel); if (!c || !$('#k-pista') || K.busy) return;
+    K.busy = true;
+    try { await corridaAtualizarInterno(c); } finally { K.busy = false; }
+  }
+
+  async function corridaAtualizarInterno(c){
     const tk = ++K.tk, modo = K.modo, view = modo === 'promotor' ? 'ranking_promotores' : 'ranking_clinicas', idCol = modo === 'promotor' ? 'promotor_id' : 'clinica_id';
     const rs = await Promise.all([
       sb.from(view).select('*').eq('campanha_id', c.id).order('ordem'),
@@ -936,39 +1002,46 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     rank.forEach((r, i) => {
       const id = r[idCol];
       if (modo === 'promotor'){ const u = usu.find(x => x.id === id) || {}; const v = vcs.find(x => x.usuario_id === id); const cl = v && cls.find(x => x.id === v.clinica_id);
-        ents[id] = { nome: u.nome || '#'+id, tag: iniciais(u.nome), sub: (cl ? cl.sigla : '') + (u.cargo ? ' · '+u.cargo : ''), cor: PALETA[i % PALETA.length] }; }
+        ents[id] = { nome: u.nome || '#'+id, tag: iniciais(u.nome), sub: (cl ? cl.sigla : '') + (u.cargo ? ' · '+u.cargo : ''), cor: PALETA[i % PALETA.length], foto_url: u.foto_url }; }
       else { const cl = cls.find(x => x.id === id) || {}; ents[id] = { nome: cl.nome || '#'+id, tag: cl.sigla || '?', sub: cl.sigla || '', cor: cl.cor || PALETA[i % PALETA.length] }; }
     });
 
-    const N = c.casas, cols = Math.max(4, Math.min(10, Math.floor(($('#k-pista').clientWidth || 800) / 78))), rows = Math.ceil(N / cols);
-    const key = [c.id, modo, N, cols, casasP.map(x => x.casa+':'+x.premio_id).join(',')].join('|');
-    const pos = i => { const r = Math.floor(i / cols); let col = i % cols; if (r % 2) col = cols - 1 - col; return { r, col }; };
+    const N = c.casas, W = Math.round($('#k-pista').clientWidth) || 900;
+    const key = [c.id, modo, N, W, casasP.map(x => x.casa+':'+x.premio_id).join(',')].join('|');
+    const ganIds = new Set(gan.map(x => x.casa_premio_id)), casasGanhas = new Set(casasP.filter(x => ganIds.has(x.id)).map(x => x.casa));
+    const novas = K.ganVistos ? casasP.filter(x => ganIds.has(x.id) && !K.ganVistos.has(x.id)).map(x => x.casa) : [];
+    K.ganVistos = new Set(gan.map(x => x.casa_premio_id));
+    const pontosAnt = K.prev || {};
     if (key !== K.key){
-      K.key = key; K.cars = {};
-      const pm = {}; casasP.forEach(x => { const pr = premios.find(p => p.id === x.premio_id); if (pr) pm[x.casa % N] = pr; });
-      let cells = '';
-      for (let r = 0; r < rows; r++) for (let k = 0; k < cols; k++){
-        const col = r % 2 ? cols - 1 - k : k, i = r * cols + col;
-        if (i >= N){ cells += '<div></div>'; continue; }
-        const pr = pm[i];
-        cells += '<div class="casa'+(i===0?' largada':'')+(pr?' '+pr.tipo:'')+'"'+(pr?' title="'+esc(pr.nome)+'"':'')+'><span>'+(i===0?'Largada':i)+'</span>'+(pr?'<small>'+esc(pr.nome)+'</small>':'')+'</div>';
+      K.key = key; K.tokens = {}; K.N = N;
+      const g = kGeom(N, W); K.geo = g;
+      const pm = {}; casasP.forEach(x => { const pr = premios.find(p => p.id === x.premio_id); if (pr) pm[x.casa] = pr; });
+      let pts = ''; for (let i = 0; i <= N; i++){ const q = g.pt(i); pts += (i ? 'L' : 'M')+q.x.toFixed(1)+' '+q.y.toFixed(1); }
+      let html = '<svg class="estrada" width="'+W+'" height="'+g.H+'" viewBox="0 0 '+W+' '+g.H+'" aria-hidden="true"><path d="'+pts+'" fill="none" stroke="#b88a4a" stroke-width="66" stroke-linecap="round" stroke-linejoin="round" opacity=".55"/><path d="'+pts+'" fill="none" stroke="#f4dba6" stroke-width="58" stroke-linecap="round" stroke-linejoin="round"/><path d="'+pts+'" fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="4" stroke-dasharray="3 12" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      for (let i = 0; i < Math.ceil(g.H / 300) * 2; i++) html += '<span class="nuvem" style="left:'+((i * 197) % Math.max(W - 90, 10))+'px;top:'+(30 + i * 190)+'px"></span>';
+      for (let i = 0; i <= N; i++){
+        const q = g.pt(i), pr = pm[i];
+        if (i === 0) html += '<div class="t ini" style="left:'+q.x+'px;top:'+q.y+'px">GO</div>';
+        else if (pr) html += '<div class="t bau '+esc(pr.tipo)+(casasGanhas.has(i) ? ' aberto' : '')+'" data-casa="'+i+'" title="'+esc(pr.nome)+'" style="left:'+q.x+'px;top:'+q.y+'px">'+bauSvg(pr.tipo)+'</div><span class="rot" style="left:'+q.x+'px;top:'+(q.y + 36)+'px">'+esc(pr.nome)+'</span>';
+        else if (i === N) html += '<div class="t fim" style="left:'+q.x+'px;top:'+q.y+'px"></div><span class="rot" style="left:'+q.x+'px;top:'+(q.y + 40)+'px">Chegada</span>';
+        else html += '<div class="t" style="left:'+q.x+'px;top:'+q.y+'px;--c:'+CORES_CASA[i % CORES_CASA.length]+'">'+i+'</div>';
       }
-      $('#k-pista').innerHTML = '<div class="pgrid" style="grid-template-columns:repeat('+cols+',minmax(0,1fr))">'+cells+'</div><div class="carros" id="k-carros"></div>';
+      $('#k-pista').style.height = g.H+'px'; $('#k-pista').innerHTML = html;
+      rank.forEach(r => { const id = r[idCol], t = { el: kToken(id, ents[id]), tile: tileDe(pontosAnt[id] != null ? pontosAnt[id] : r.pontos, N), xy: null }; K.tokens[id] = t; $('#k-pista').appendChild(t.el); });
+      kReempilhar();
+      if (!reduzMov() && Object.keys(pontosAnt).length) await sleep(350);
     }
-    // carros
-    const grupos = {}; rank.forEach(r => { const i = (r.casa_na_volta || 0) % N; (grupos[i] = grupos[i] || []).push(r[idCol]); });
-    const camada = $('#k-carros'), vivos = new Set();
-    Object.keys(grupos).forEach(ci => grupos[ci].forEach((id, j, arr) => {
-      const e = ents[id], p = pos(Number(ci)); vivos.add(id);
-      let el = K.cars[id];
-      if (!el){ el = document.createElement('div'); el.className = 'carro'; camada.appendChild(el); K.cars[id] = el;
-        el.innerHTML = '<div class="in"><span class="tag"></span><svg viewBox="0 0 40 20" width="42" height="21" aria-hidden="true"><rect x="4" y="6" width="26" height="8" rx="4" fill="'+esc(e.cor)+'"/><rect x="28" y="8" width="10" height="4" rx="2" fill="'+esc(e.cor)+'"/><rect x="1" y="3" width="4" height="14" rx="1.5" fill="#111"/><rect x="26" y="2" width="5" height="16" rx="2" fill="#111"/><circle cx="17" cy="10" r="3" fill="#fff" opacity=".85"/></svg></div>'; }
-      $('.tag', el).textContent = e.tag; el.title = e.nome;
-      el.style.width = (100 / cols)+'%'; el.style.height = (100 / rows)+'%';
-      el.style.left = (p.col * 100 / cols)+'%'; el.style.top = (p.r * 100 / rows)+'%';
-      el.style.setProperty('--dx', ((j - (arr.length - 1) / 2) * 26)+'px');
-    }));
-    Object.keys(K.cars).forEach(id => { if (!vivos.has(Number(id))){ K.cars[id].remove(); delete K.cars[id]; } });
+    // novos participantes e saídas
+    rank.forEach(r => { const id = r[idCol]; if (!K.tokens[id]){ const t = { el: kToken(id, ents[id]), tile: tileDe(r.pontos, N), xy: null }; K.tokens[id] = t; $('#k-pista').appendChild(t.el); kColocar(t, K.geo.pt(t.tile), 0); } });
+    const vivos = new Set(rank.map(r => String(r[idCol])));
+    Object.keys(K.tokens).forEach(id => { if (!vivos.has(String(id))){ K.tokens[id].el.remove(); delete K.tokens[id]; } });
+    // baús recém-abertos
+    novas.forEach(cs => { const bau = $('.t.bau[data-casa="'+cs+'"]'); if (bau){ bau.classList.add('aberto', 'novo'); } });
+    // movimentos
+    await Promise.all(rank.map(r => { const id = r[idCol], p0 = pontosAnt[id] != null ? pontosAnt[id] : r.pontos; return p0 !== r.pontos && K.tokens[id] ? kAndar(K.tokens[id], p0, r.pontos) : null; }));
+    rank.forEach(r => { const t = K.tokens[r[idCol]]; if (t) t.tile = tileDe(r.pontos, N); });
+    kReempilhar();
+    K.prev = {}; rank.forEach(r => { K.prev[r[idCol]] = r.pontos; });
 
     // classificação
     $('#k-rank').innerHTML = rank.map(r => { const e = ents[r[idCol]]; const fim = c.voltas_max && r.pontos >= c.voltas_max * N;
@@ -989,6 +1062,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     $('#k-hora').textContent = 'Atualizado às '+new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }
 
+  let kRz; window.addEventListener('resize', () => { clearTimeout(kRz); kRz = setTimeout(() => { if (recurso === 'corrida' && $('#k-pista') && Math.abs(($('#k-pista').clientWidth || 0) - (K.geo ? K.geo.W : 0)) > 40) corridaAtualizar(); }, 350); });
   setInterval(() => { if (recurso === 'corrida' && !$('#v-app').hidden && !document.hidden && $('#k-pista')) corridaAtualizar(); }, 15000);
 
 
