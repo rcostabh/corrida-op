@@ -87,7 +87,10 @@ Deno.serve(async (req) => {
     if (!nome) return json({ erro: "Informe o nome." }, 400);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ erro: "E-mail inválido." }, 400);
     if (!/^[0-9]{10,11}$/.test(telefone)) return json({ erro: "Telefone com DDD, 10 ou 11 números." }, 400);
-    if (papel === "promotor" && !["Promotor", "Tele BH", "Tele interno", "Divulgador", "Luminoso"].includes(cargo)) return json({ erro: "Escolha o cargo." }, 400);
+    if (papel === "promotor" && !["Promotor", "Tele BH", "Tele interno", "Divulgador", "Luminoso", "Promotor de teste"].includes(cargo)) return json({ erro: "Escolha o cargo." }, 400);
+    const hojeIso = new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10); // horário de Brasília
+    const inicio = String(b.inicio || hojeIso).slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(inicio) || isNaN(Date.parse(inicio)) || inicio > hojeIso) return json({ erro: "Data de início inválida (não pode ser futura)." }, 400);
     let cl: { id: number } | null = null;
     if (papel !== "assistente") {
       const { data } = await admin.from("clinicas").select("id").eq("id", b.clinica_id).maybeSingle();
@@ -114,7 +117,7 @@ Deno.serve(async (req) => {
     if (ne) { await admin.auth.admin.deleteUser(inv.user.id); return json({ erro: ne.message }, 400); }
 
     if (!cl) return json({ ok: true, id: novo.id });
-    const { error: ve } = await admin.from("vinculos_clinica").insert({ usuario_id: novo.id, clinica_id: cl.id });
+    const { error: ve } = await admin.from("vinculos_clinica").insert({ usuario_id: novo.id, clinica_id: cl.id, inicio });
     if (ve) {
       await admin.from("usuarios").delete().eq("id", novo.id);
       await admin.auth.admin.deleteUser(inv.user.id);
