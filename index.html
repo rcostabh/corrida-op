@@ -178,6 +178,33 @@ table.pd tr.tot td{font-weight:700}
 .pd-tag.a{background:var(--accent-soft);color:var(--accent)}
 .pd-leg{display:flex;flex-wrap:wrap;gap:6px 18px;color:var(--muted);font-size:12.5px;padding:12px 16px;align-items:center}
 .pd-div{padding:12px 16px}
+.vr-bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:end}
+.vr-bar .field{min-width:150px}
+.vr-q{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
+.vr-q button{border:0;background:var(--surface-2);color:var(--ink);font:600 13px var(--font-body);padding:7px 14px;border-radius:999px;cursor:pointer;min-height:34px}
+.vr-q button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
+.vr-pod{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:14px;align-items:end;margin:6px 0 4px}
+.vr-card{background:var(--surface);border-radius:22px;box-shadow:var(--shadow);padding:18px 14px 16px;text-align:center;display:grid;gap:6px;justify-items:center;border:1px solid color-mix(in srgb,var(--line) 60%,transparent);min-width:0}
+.vr-card.p1{padding-top:22px;padding-bottom:22px;background:linear-gradient(180deg,color-mix(in srgb,#ffd34d 24%,var(--surface)),var(--surface) 62%);border-color:color-mix(in srgb,#e0a200 45%,transparent)}
+.vr-card.p2{background:linear-gradient(180deg,color-mix(in srgb,#c9d1da 30%,var(--surface)),var(--surface) 62%)}
+.vr-card.p3{background:linear-gradient(180deg,color-mix(in srgb,#e1a56d 26%,var(--surface)),var(--surface) 62%)}
+.vr-ic{width:58px;height:58px}.vr-card.p1 .vr-ic{width:78px;height:78px;filter:drop-shadow(0 6px 8px rgba(160,110,0,.35))}
+.vr-av{width:56px;height:56px;border-radius:50%;object-fit:cover;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font:800 18px var(--font-display);border:3px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.16)}
+.vr-card.p1 .vr-av{width:68px;height:68px;font-size:22px}
+.vr-nm{font:700 16px var(--font-display);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vr-card.p1 .vr-nm{font-size:18px}
+.vr-sub{font-size:12.5px;color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vr-big{font:800 34px/1 var(--font-display);font-variant-numeric:tabular-nums}.vr-card.p1 .vr-big{font-size:42px}
+.vr-big small{font-size:13px;font-weight:600;color:var(--muted);margin-left:4px}
+.vr-mini{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;font-size:12.5px;color:var(--muted)}
+.vr-mini b{color:var(--ink)}
+.vr-row{display:grid;grid-template-columns:40px 36px minmax(0,1fr) 70px 70px 70px;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.vr-row.h{border-top:0;color:var(--muted);font-size:12px;font-weight:700;padding-top:0}
+.vr-row .n{text-align:right;font-weight:700}.vr-row.h span:nth-child(n+4){text-align:right}
+.vr-row .av2{width:34px;height:34px;border-radius:50%;object-fit:cover;display:grid;place-items:center;background:var(--surface-2);color:var(--muted);font:700 12px var(--font-display)}
+.vr-row .pos{font-weight:700;color:var(--muted)}
+@media (max-width:760px){.vr-pod{grid-template-columns:1fr}.vr-card.p1{order:-1}.vr-row{grid-template-columns:30px 32px minmax(0,1fr) 52px 52px 56px;gap:6px;font-size:13px}}
+
 .pd-exp{border:0;background:var(--surface-2);color:var(--ink);border-radius:6px;width:22px;height:22px;margin-right:6px;cursor:pointer;font-size:12px;line-height:1;padding:0}
 .pd-row.pd-agg{background:var(--surface-2);border-radius:10px;padding:7px 8px;border-top:0}
 table.pd tr.agg td.nm{font-weight:700}
@@ -343,7 +370,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
         </div>
         <button type="button" data-g="vend" id="g-vend-btn" aria-expanded="false" aria-controls="g-vend" title="Vendas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg><span class="tx">Vendas</span><svg class="seta" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
         <div class="grupo-lista" id="g-vend">
-          <button type="button" data-r="diario">Lançamento diário</button><button type="button" data-r="planilha">Planilha do mês</button>
+          <button type="button" data-r="diario">Lançamento diário</button><button type="button" data-r="planilha">Planilha do mês</button><button type="button" data-r="ranking">Ranking de vendas</button>
         </div>
         <button type="button" data-r="relatorios" title="Relatórios"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="tx">Relatórios</span></button>
         <button type="button" data-r="externo" title="Relatório NUV"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><path d="M7 12l3-3 2.5 2 4-4"/></svg><span class="tx">Relatório NUV</span></button>
@@ -490,6 +517,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     if (recurso === 'externo') return externoCarregar();
     if (recurso === 'inicio') return inicioCarregar();
     if (recurso === 'planilha') return planCarregar();
+    if (recurso === 'ranking') return rankCarregar();
     if (recurso === 'diario') return diaCarregar();
     if (recurso === 'lancamentos') return lancCarregar();
     const R = RECURSOS[recurso];
@@ -1554,13 +1582,103 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   }
 
 
+
+  /* ---------- ranking de vendas (vem da planilha diária) ---------- */
+  const RK = { de: '', ate: '', per: 'mes', clin: '', teste: false, tk: 0 };
+  const RK_CARGOS = ['Promotor', 'Tele BH', 'Tele interno'];
+  const rkIso = d => d.toLocaleDateString('sv-SE');
+  function rkPeriodo(k){
+    const h = new Date(hoje()+'T12:00:00'), d = new Date(h);
+    if (k === 'hoje') return [rkIso(h), rkIso(h)];
+    if (k === 'ontem'){ d.setDate(d.getDate() - 1); return [rkIso(d), rkIso(d)]; }
+    if (k === 'semana' || k === 'semana-ant'){ d.setDate(h.getDate() - ((h.getDay() + 6) % 7) - (k === 'semana-ant' ? 7 : 0)); const f = new Date(d); f.setDate(d.getDate() + 6); return [rkIso(d), k === 'semana' ? rkIso(h) : rkIso(f)]; }
+    if (k === 'mes-ant') return [rkIso(new Date(h.getFullYear(), h.getMonth() - 1, 1)), rkIso(new Date(h.getFullYear(), h.getMonth(), 0))];
+    return [rkIso(new Date(h.getFullYear(), h.getMonth(), 1)), rkIso(h)];
+  }
+  const RK_ROT = [['hoje', 'Hoje'], ['ontem', 'Ontem'], ['semana', 'Esta semana'], ['semana-ant', 'Semana passada'], ['mes', 'Este mês'], ['mes-ant', 'Mês passado']];
+  const rkIcone = n => {
+    if (n === 1) return '<svg class="vr-ic" viewBox="0 0 64 64" aria-label="Troféu de ouro" role="img"><defs><linearGradient id="vrg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe680"/><stop offset="1" stop-color="#e5a600"/></linearGradient></defs>'
+      + '<path d="M18 12H8c0 10 4 16 12 17M46 12h10c0 10-4 16-12 17" fill="none" stroke="#c88a00" stroke-width="3.2" stroke-linecap="round"/>'
+      + '<path d="M17 7h30v15c0 10-6 18-15 18S17 32 17 22z" fill="url(#vrg1)" stroke="#9a6a00" stroke-width="2" stroke-linejoin="round"/>'
+      + '<path d="M23 11v11c0 6 3 11 8 13" stroke="#fff" stroke-opacity=".65" stroke-width="3" fill="none" stroke-linecap="round"/>'
+      + '<path d="M32 13.5l2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.6-4.8 2.6.9-5.4-3.9-3.8 5.4-.8z" fill="#fff7cf" stroke="#c88a00" stroke-width="1"/>'
+      + '<rect x="28" y="40" width="8" height="8" fill="#e5a600" stroke="#9a6a00" stroke-width="2"/><path d="M19 57h26l-3.5-9h-19z" fill="url(#vrg1)" stroke="#9a6a00" stroke-width="2" stroke-linejoin="round"/></svg>';
+    const c = n === 2 ? ['#f7f9fb', '#aab4c0', '#6b7683', 'prata'] : ['#f0b27a', '#b36a2a', '#7a4417', 'bronze'];
+    return '<svg class="vr-ic" viewBox="0 0 64 64" aria-label="Medalha de '+c[3]+'" role="img"><defs><linearGradient id="vrm'+n+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+c[0]+'"/><stop offset="1" stop-color="'+c[1]+'"/></linearGradient></defs>'
+      + '<path d="M19 3h11l7 20H26z" fill="#d94b4b"/><path d="M45 3H34l-7 20h11z" fill="#3b82f6"/>'
+      + '<circle cx="32" cy="42" r="17" fill="url(#vrm'+n+')" stroke="'+c[2]+'" stroke-width="2.4"/><circle cx="32" cy="42" r="12.5" fill="none" stroke="'+c[2]+'" stroke-opacity=".45" stroke-width="1.6"/>'
+      + '<text x="32" y="48.5" text-anchor="middle" font-size="18" font-weight="800" font-family="-apple-system,Segoe UI,sans-serif" fill="'+c[2]+'">'+n+'</text></svg>';
+  };
+  const rkAvatar = (u, cls) => u.foto_url ? '<img class="'+cls+'" src="'+esc(u.foto_url)+'" alt="">' : '<span class="'+cls+'">'+esc(iniciais(u.nome))+'</span>';
+
+  async function rankCarregar(){
+    $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const e0 = await pdBase(); if (e0){ pdErro(e0); return; }
+    if (!RK.de){ const x = rkPeriodo('mes'); RK.de = x[0]; RK.ate = x[1]; RK.per = 'mes'; }
+    $('#area').innerHTML = '<div class="pd-card" style="padding:16px 18px"><div class="pd-bar"><div><h2 style="margin:0">Ranking de vendas</h2><p class="sub" style="margin:2px 0 0">Promotores, Tele BH e Tele interno. Ordem: vendas, depois % de fechamento, depois visitas.</p></div></div>'
+      + '<div class="vr-q" id="rk-q">'+RK_ROT.map(x => '<button type="button" data-per="'+x[0]+'" aria-pressed="'+(RK.per === x[0])+'">'+x[1]+'</button>').join('')+'</div>'
+      + '<div class="vr-bar" style="margin-top:12px"><label class="field" for="rk-de">De<input type="date" id="rk-de" value="'+esc(RK.de)+'" max="'+hoje()+'"></label>'
+      + '<label class="field" for="rk-ate">Até<input type="date" id="rk-ate" value="'+esc(RK.ate)+'" max="'+hoje()+'"></label>'
+      + '<label class="field" for="rk-clin">Clínica<select id="rk-clin"><option value="">Todas as clínicas</option>'+PD.clinicas.map(c => '<option value="'+c.id+'"'+(String(c.id) === String(RK.clin) ? ' selected' : '')+'>'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="chk" for="rk-teste" style="min-height:44px"><input type="checkbox" id="rk-teste"'+(RK.teste ? ' checked' : '')+'><span>Incluir promotores de teste</span></label></div></div>'
+      + '<div id="rk-res" style="margin-top:14px"></div>';
+    const set = (de, ate, per) => { RK.de = de; RK.ate = ate; RK.per = per; $('#rk-de').value = de; $('#rk-ate').value = ate; $$('#rk-q button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.per === per))); rankAtualizar(); };
+    $$('#rk-q button').forEach(b => b.addEventListener('click', () => { const x = rkPeriodo(b.dataset.per); set(x[0], x[1], b.dataset.per); }));
+    const dt = () => { RK.de = $('#rk-de').value; RK.ate = $('#rk-ate').value; RK.per = 'custom'; $$('#rk-q button').forEach(b => b.setAttribute('aria-pressed', 'false')); rankAtualizar(); };
+    $('#rk-de').addEventListener('change', dt); $('#rk-ate').addEventListener('change', dt);
+    $('#rk-clin').addEventListener('change', e => { RK.clin = e.target.value; rankAtualizar(); });
+    $('#rk-teste').addEventListener('change', e => { RK.teste = e.target.checked; rankAtualizar(); });
+    rankAtualizar();
+  }
+
+  async function rankAtualizar(){
+    const alvo = $('#rk-res'); if (!alvo) return;
+    if (!RK.de || !RK.ate || RK.de > RK.ate){ alvo.innerHTML = '<div class="card"><div class="err">A data inicial precisa ser igual ou anterior à data final.</div></div>'; return; }
+    const tk = ++RK.tk; alvo.innerHTML = '<div class="card"><p class="sub">Calculando...</p></div>';
+    let rows = [];
+    for (let de = 0; ; de += 1000){
+      let q = sb.from('planilha_diaria').select('*').gte('data_ref', RK.de).lte('data_ref', RK.ate);
+      if (RK.clin) q = q.eq('clinica_id', Number(RK.clin));
+      const r = await q.order('data_ref').order('usuario_id').order('clinica_id').range(de, de + 999);
+      if (tk !== RK.tk) return;
+      if (r.error){ alvo.innerHTML = '<div class="card"><div class="err">'+esc(msgErro(r.error))+'</div></div>'; return; }
+      rows = rows.concat(r.data || []);
+      if (!r.data || r.data.length < 1000) break;
+    }
+    const [us, cs] = await Promise.all([sb.from('usuarios').select('id,nome,cargo,foto_url,ativo'), sb.from('clinicas').select('id,sigla')]);
+    if (tk !== RK.tk) return;
+    if (us.error){ alvo.innerHTML = '<div class="card"><div class="err">'+esc(msgErro(us.error))+'</div></div>'; return; }
+    const U = {}; (us.data || []).forEach(u => { U[u.id] = u; });
+    const SG = {}; (cs.data || []).forEach(c => { SG[c.id] = c.sigla; });
+    const A = {};
+    rows.forEach(r => { const u = U[r.usuario_id]; if (!u || !(RK_CARGOS.includes(u.cargo) || (RK.teste && u.cargo === TESTE))) return;
+      const a = A[r.usuario_id] = A[r.usuario_id] || { u, v: 0, s: 0, cl: {} }; a.v += r.visitas; a.s += r.vendas; a.cl[r.clinica_id] = (a.cl[r.clinica_id] || 0) + r.visitas + r.vendas; });
+    const lista = Object.values(A).filter(a => a.v > 0 || a.s > 0).map(a => Object.assign(a, { pc: a.v > 0 ? 100 * a.s / a.v : -1 }))
+      .sort((x, y) => y.s - x.s || y.pc - x.pc || y.v - x.v || String(x.u.nome).localeCompare(String(y.u.nome), 'pt-BR'));
+    const sub = a => Object.keys(a.cl).sort((x, y) => a.cl[y] - a.cl[x]).map(id => SG[id] || '#'+id).join(', ') + (a.u.cargo ? ' · '+a.u.cargo : '');
+    const tv = lista.reduce((t, a) => t + a.v, 0), ts = lista.reduce((t, a) => t + a.s, 0);
+    const per = dBR(RK.de) === dBR(RK.ate) ? dBR(RK.de) : dBR(RK.de)+' a '+dBR(RK.ate);
+    if (!lista.length){ alvo.innerHTML = '<div class="card"><div class="empty">Sem lançamentos de vendas e visitas entre '+esc(per)+'.</div></div>'; return; }
+    const card = (a, n) => '<div class="vr-card p'+n+'" data-pos="'+n+'">'+rkIcone(n)+rkAvatar(a.u, 'vr-av')+'<div class="vr-nm" title="'+esc(a.u.nome)+'">'+esc(a.u.nome)+'</div><div class="vr-sub">'+esc(sub(a))+'</div>'
+      + '<div class="vr-big">'+a.s+'<small>vendas</small></div><div class="vr-mini"><span><b>'+(a.pc < 0 ? '—' : pf1(a.pc))+'</b> fechamento</span><span><b>'+a.v+'</b> visitas</span></div></div>';
+    const topo = lista.slice(0, 3), ordem = [topo[1], topo[0], topo[2]], pos = [2, 1, 3];
+    let h = '<div class="pd-card" style="padding:16px 18px"><p class="sub" style="margin:0 0 12px">'+esc(per)+' · '+lista.length+' pessoa'+(lista.length === 1 ? '' : 's')+' · '+ts+' vendas em '+tv+' visitas ('+(tv ? pf1(100 * ts / tv) : '—')+')</p>'
+      + '<div class="vr-pod" id="rk-pod">'+ordem.map((a, i) => a ? card(a, pos[i]) : '').join('')+'</div></div>';
+    if (lista.length > 3){
+      h += '<div class="pd-card" style="padding:16px 18px;margin-top:14px"><div class="vr-row h"><span>#</span><span></span><span>Pessoa</span><span>Vendas</span><span>Visitas</span><span>%</span></div>'
+        + lista.slice(3).map((a, i) => '<div class="vr-row" data-pos="'+(i + 4)+'"><span class="pos">'+(i + 4)+'º</span>'+rkAvatar(a.u, 'av2')+'<div style="min-width:0"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(a.u.nome)+'</b><span class="vr-sub">'+esc(sub(a))+'</span></div><span class="n">'+a.s+'</span><span class="n">'+a.v+'</span><span class="n">'+(a.pc < 0 ? '—' : pf1(a.pc))+'</span></div>').join('')+'</div>';
+    }
+    alvo.innerHTML = h;
+  }
+
   /* ---------- menu lateral e início (dashboard) ---------- */
-  const TITULOS = { inicio: 'Início', corrida: 'Corrida', diario: 'Lançamento diário', planilha: 'Planilha do mês', lancamentos: 'Lançamentos', relatorios: 'Relatórios', externo: 'Relatório NUV',
+  const TITULOS = { inicio: 'Início', corrida: 'Corrida', diario: 'Lançamento diário', planilha: 'Planilha do mês', ranking: 'Ranking de vendas', lancamentos: 'Lançamentos', relatorios: 'Relatórios', externo: 'Relatório NUV',
     clinicas: 'Clínicas', tipos: 'Tipos de lançamento', premios: 'Prêmios', pessoas: 'Pessoas', campanhas: 'Campanhas' };
   const CADASTROS = ['clinicas', 'tipos', 'premios', 'pessoas', 'campanhas'];
   const lerLS = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const gravarLS = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
-  const GRUPOS = { cad: CADASTROS, camp: ['corrida', 'lancamentos'], vend: ['diario', 'planilha'] };
+  const GRUPOS = { cad: CADASTROS, camp: ['corrida', 'lancamentos'], vend: ['diario', 'planilha', 'ranking'] };
   function lateral(aberto){
     $('#v-app').classList.toggle('aberto', aberto); $('#side-toggle').setAttribute('aria-expanded', aberto);
     $('#side-toggle .tx').textContent = aberto ? 'Recolher menu' : 'Abrir menu';
