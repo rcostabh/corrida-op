@@ -550,10 +550,10 @@ li:first-child>.ag-i{border-top:0}
     const ov = document.createElement('div'); ov.className = 'sheet'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
     ov.innerHTML = '<div class="sh-c"><div class="line" style="justify-content:space-between"><h2 style="margin:0">'+esc(g.paciente)+'</h2><button type="button" class="sndbtn" data-x aria-label="Fechar">×</button></div>'
       + '<p class="meta">'+esc(fmtTelDigitos(g.telefone))+' · <span class="sigla">'+esc(AGP.sig[g.clinica_id] || '')+'</span> · '+stChip(g)+'</p>'
-      + resultadoHtml(g)
       + (editavel ? (g.status === 'confirmado'
           ? '<button type="button" class="link" id="e-desconf" style="justify-self:start">Desfazer confirmação</button>'
           : '<button type="button" class="btn verde block" id="e-conf">Confirmado</button>') : '')
+      + resultadoHtml(g)
       + '<div class="form"><div class="g2"><label class="field" for="e-data">Data<input id="e-data" type="date" min="'+hoje()+'" value="'+esc(g.data_agendamento)+'"'+(editavel ? '' : ' disabled')+'></label>'
       + '<label class="field" for="e-hora">Horário<select id="e-hora"'+(editavel ? '' : ' disabled')+'>'+opHoras(hh(g.hora), g.data_agendamento)+'</select></label></div>'
       + (editavel ? '<button type="button" class="btn ghost" id="e-salvar">Salvar nova data e horário</button>' : '<p class="meta">'+(comResultado ? 'Agendamento com resultado: desfaça o resultado para remarcar.' : 'Agendamentos de dias passados não podem ser alterados nem excluídos.')+'</p>')
