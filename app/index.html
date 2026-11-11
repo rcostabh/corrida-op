@@ -406,8 +406,10 @@ li:first-child>.ag-i{border-top:0}
   }
   const fmtTelDigitos = v => { const d = String(v).replace(/\D/g, '').slice(0, 11); return d.length > 6 ? '('+d.slice(0,2)+') '+d.slice(2, d.length > 10 ? 7 : 6)+'-'+d.slice(d.length > 10 ? 7 : 6) : d.length > 2 ? '('+d.slice(0,2)+') '+d.slice(2) : d; };
   let printArq = null;
-  const horasDia = () => { const o = []; for (let h = 7; h <= 20; h++){ o.push(String(h).padStart(2,'0')+':00'); if (h < 20) o.push(String(h).padStart(2,'0')+':30'); } return o; };
-  const opHoras = sel => '<option value="">Escolha...</option>'+horasDia().map(h => '<option value="'+h+'"'+(h === sel ? ' selected' : '')+'>'+h+'</option>').join('');
+  // Horário de atendimento: seg–sex 09:00–18:00, sábado 08:00–13:00, domingo fechado
+  const horasDia = dia => { const w = dia ? new Date(dia+'T12:00:00').getDay() : 1; const [i, f] = w === 0 ? [0, -1] : w === 6 ? [8, 13] : [9, 18]; const o = []; for (let h = i; h <= f; h++){ o.push(String(h).padStart(2,'0')+':00'); if (h < f) o.push(String(h).padStart(2,'0')+':30'); } return o; };
+  const opHoras = (sel, dia) => { const l = horasDia(dia); if (dia && !l.length) return '<option value="">Sem atendimento aos domingos</option>'; return '<option value="">Escolha...</option>'+l.map(h => '<option value="'+h+'"'+(h === sel ? ' selected' : '')+'>'+h+'</option>').join(''); };
+  const ligaHoras = (inpData, selHora) => { if (!inpData || !selHora) return; inpData.addEventListener('change', () => { const ant = selHora.value; selHora.innerHTML = opHoras(horasDia(inpData.value).includes(ant) ? ant : '', inpData.value); }); };
   const hh = h => h ? String(h).slice(0, 5) : '';
   const AGP = { ano: 0, mes: 0, sel: '', itens: [], sig: {} };
 
@@ -426,11 +428,12 @@ li:first-child>.ag-i{border-top:0}
       + '<label class="field" for="a-nome">Nome do paciente<input id="a-nome" type="text" autocomplete="off" autocapitalize="words"></label>'
       + '<label class="field" for="a-tel">Telefone do paciente<input id="a-tel" type="tel" inputmode="numeric" autocomplete="off" placeholder="(31) 99999-9999"></label>'
       + '<div class="g2"><label class="field" for="a-data">Data<input id="a-data" type="date" min="'+hoje()+'" value="'+(AGP.sel && AGP.sel >= hoje() ? AGP.sel : hoje())+'"></label>'
-      + '<label class="field" for="a-hora">Horário<select id="a-hora">'+opHoras('')+'</select></label></div>'
+      + '<label class="field" for="a-hora">Horário<select id="a-hora">'+opHoras('', (AGP.sel && AGP.sel >= hoje() ? AGP.sel : hoje()))+'</select></label></div>'
       + '<div class="field">Print da conversa do WhatsApp<div class="btns" style="align-items:center"><label class="btn ghost sm" for="a-img" style="display:inline-grid;place-items:center">Escolher imagem</label><span class="meta" id="a-imgn">Nenhuma imagem</span></div>'
       + '<input id="a-img" type="file" accept="image/*" hidden><img id="a-prev" alt="" hidden style="max-width:100%;max-height:260px;border-radius:14px;object-fit:contain;justify-self:start"></div>'
       + '<div class="err" id="a-err" role="alert"></div><button class="btn block" type="submit" id="a-btn">Lançar agendamento</button></form></div>';
     $('#a-voltar').addEventListener('click', () => mostrar('agenda'));
+    ligaHoras($('#a-data'), $('#a-hora'));
     $('#a-tel').addEventListener('input', e => { e.target.value = fmtTelDigitos(e.target.value); });
     $('#a-img').addEventListener('change', e => {
       const f = e.target.files && e.target.files[0]; printArq = f || null;
@@ -512,7 +515,7 @@ li:first-child>.ag-i{border-top:0}
           ? '<button type="button" class="link" id="e-desconf" style="justify-self:start">Desfazer confirmação</button>'
           : '<button type="button" class="btn verde block" id="e-conf">Confirmado</button>') : '')
       + '<div class="form"><div class="g2"><label class="field" for="e-data">Data<input id="e-data" type="date" min="'+hoje()+'" value="'+esc(g.data_agendamento)+'"'+(editavel ? '' : ' disabled')+'></label>'
-      + '<label class="field" for="e-hora">Horário<select id="e-hora"'+(editavel ? '' : ' disabled')+'>'+opHoras(hh(g.hora))+'</select></label></div>'
+      + '<label class="field" for="e-hora">Horário<select id="e-hora"'+(editavel ? '' : ' disabled')+'>'+opHoras(hh(g.hora), g.data_agendamento)+'</select></label></div>'
       + (editavel ? '<button type="button" class="btn ghost" id="e-salvar">Salvar nova data e horário</button>' : '<p class="meta">Agendamentos de dias passados não podem ser alterados nem excluídos.</p>')
       + '<div class="field">Conversas ('+urls.filter(Boolean).length+')</div>'
       + urls.filter(Boolean).map(u => '<img class="cv" src="'+esc(u)+'" alt="Print da conversa">').join('')
@@ -531,11 +534,12 @@ li:first-child>.ag-i{border-top:0}
     };
     if (conf) conf.addEventListener('click', () => { conf.disabled = true; marca(true); });
     if (desconf) desconf.addEventListener('click', () => marca(false));
+    ligaHoras($('#e-data', ov), $('#e-hora', ov));
     const salvar = $('#e-salvar', ov);
     if (salvar) salvar.addEventListener('click', async () => {
       const d = $('#e-data', ov).value, h = $('#e-hora', ov).value;
       if (!d || d < hoje()) return erro('A data do agendamento não pode ser anterior a hoje.');
-      if (!h) return erro('Escolha o horário.');
+      if (!h) return erro(horasDia(d).length ? 'Escolha o horário.' : 'Não há atendimento aos domingos.');
       salvar.disabled = true; const r = await sb.rpc('alterar_agendamento', { p_id: id, p_data: d, p_hora: h }); salvar.disabled = false;
       if (r.error) return erro(msgErro(r.error));
       toast('Agendamento alterado.'); AGP.sel = d; AGP.ano = Number(d.slice(0, 4)); AGP.mes = Number(d.slice(5, 7)) - 1; refaz();
@@ -608,7 +612,7 @@ li:first-child>.ag-i{border-top:0}
     GA.diaItens = r.data;
     const cols = GA.clinicas.filter(c => GA.clin ? String(c.id) === String(GA.clin) : (c.ativa || r.data.some(g => g.clinica_id === c.id)));
     const slotDe = g => { const h = hh(g.hora); return h.slice(0, 2)+':'+(Number(h.slice(3)) >= 30 ? '30' : '00'); };
-    const horas = []; for (let h = 8; h <= 19; h++){ horas.push(String(h).padStart(2, '0')+':00'); horas.push(String(h).padStart(2, '0')+':30'); }
+    const horas = horasDia(GA.dia); if (!horas.length && !r.data.length) horas.push('09:00');
     r.data.forEach(g => { if (g.hora && !horas.includes(slotDe(g))) horas.push(slotDe(g)); }); horas.sort();
     const semHora = r.data.filter(g => !g.hora), nomeT = Object.fromEntries(GA.teles.map(t => [t.id, t.nome.split(' ')[0]]));
     const card = g => '<button type="button" class="gg-c'+(g.status === 'confirmado' ? ' ok' : '')+'" data-g="'+g.id+'" style="--c:'+esc((GA.clinicas.find(c => c.id === g.clinica_id) || {}).cor || '#5b9bff')+'"><b>'+(g.status === 'confirmado' ? '✓ ' : '')+(hh(g.hora) ? hh(g.hora)+' ' : '')+esc(g.paciente)+'</b><small>'+esc(nomeT[g.tele_id] || 'Tele')+'</small></button>';

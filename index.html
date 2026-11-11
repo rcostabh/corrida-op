@@ -544,6 +544,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.6.1', '2026-11-11', 'Grade da agenda segue o horário de atendimento: seg–sex 09:00–18:00 e sábado 08:00–13:00.'],
     ['1.6.0', '2026-11-11', 'Agendamento com status agendado e confirmado (marcado pela tele no app). Mês atual seleciona o mês inteiro. Visitas e vendas da agenda contam só as teles.'],
     ['1.5.1', '2026-11-11', 'Convites e links de nova senha nunca saem com ponto no fim do endereço (causa do aviso "conexão não privada").'],
     ['1.5.0', '2026-11-11', 'Agenda das teles: visões de dia, semana e mês com transições animadas; recolher filtros e totais; tela cheia que esconde o menu lateral.'],
@@ -2094,8 +2095,10 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     agendaGrade(n > 0 ? 'next' : 'prev');
   }
   const agHorario = h => { const x = hhm(h); return x.slice(0, 2)+':'+(Number(x.slice(3)) >= 30 ? '30' : '00'); };
-  function agHoras(itens){
-    const horas = []; for (let h = 8; h <= 19; h++){ horas.push(String(h).padStart(2, '0')+':00'); horas.push(String(h).padStart(2, '0')+':30'); }
+  function agHoras(itens, dia){
+    // atendimento: seg–sex 09:00–18:00, sábado 08:00–13:00 (semana/mês: 08:00–18:00)
+    const w = dia ? new Date(dia+'T12:00:00').getDay() : -1, [i, f] = w === 0 ? [9, 18] : w === 6 ? [8, 13] : w < 0 ? [8, 18] : [9, 18];
+    const horas = []; for (let h = i; h <= f; h++){ horas.push(String(h).padStart(2, '0')+':00'); if (h < f) horas.push(String(h).padStart(2, '0')+':30'); }
     itens.forEach(g => { if (g.hora && !horas.includes(agHorario(g.hora))) horas.push(agHorario(g.hora)); });
     return horas.sort();
   }
@@ -2105,7 +2108,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const cols = AG.clinicas.filter(c => AG.clin ? String(c.id) === String(AG.clin) : (c.ativa || its.some(g => g.clinica_id === c.id))), nomeT = agNomeT();
     if (!cols.length) return '<div class="empty">Nenhuma clínica para mostrar.</div>';
     let n = 0; const card = g => '<button type="button" class="ag-c'+(g.status === 'confirmado' ? ' ok' : '')+'" data-g="'+g.id+'" style="--c:'+esc(agCor(g.clinica_id))+';--i:'+(n++)+'"><b>'+(g.status === 'confirmado' ? '✓ ' : '')+(hhm(g.hora) ? hhm(g.hora)+' · ' : '')+esc(g.paciente)+'</b><small>'+esc(nomeT[g.tele_id] || 'Tele')+(g.status === 'confirmado' ? ' · confirmado' : '')+'</small></button>';
-    const semHora = its.filter(g => !g.hora), linhas = (semHora.length ? [['Sem horário', semHora]] : []).concat(agHoras(its).map(h => [h, its.filter(g => g.hora && agHorario(g.hora) === h)]));
+    const semHora = its.filter(g => !g.hora), linhas = (semHora.length ? [['Sem horário', semHora]] : []).concat(agHoras(its, AG.dia).map(h => [h, its.filter(g => g.hora && agHorario(g.hora) === h)]));
     return '<div class="ag-gw"><div class="ag-g" style="grid-template-columns:64px repeat('+cols.length+', minmax(150px, 1fr))"><div class="ag-h"></div>'
       + cols.map(c => '<div class="ag-h" style="--c:'+esc(c.cor || '#5b9bff')+'"><b>'+esc(c.sigla)+'</b><small>'+esc(c.nome)+'</small></div>').join('')
       + linhas.map(([h, l]) => '<div class="ag-t">'+esc(h)+'</div>'+cols.map(c => '<div class="ag-x">'+l.filter(g => g.clinica_id === c.id).map(card).join('')+'</div>').join('')).join('')+'</div></div>';
