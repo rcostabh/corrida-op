@@ -57,6 +57,15 @@ input:focus,select:focus{outline:none;background:var(--surface);border-color:var
 .items{list-style:none;margin:0;padding:0}
 .item{padding:12px 0;border-top:1px solid var(--line);display:grid;gap:8px}
 .item:first-child{border-top:0}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tl{background:var(--surface-2);border-radius:18px;padding:14px;display:grid;gap:2px;min-width:0;align-content:start}
+.tl-r{font-weight:600;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.tl-v{font:800 28px/1.1 var(--font);color:var(--ink)}
+.tl-n{font-size:12px;color:var(--muted)}
+.fns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fn{border:0;background:var(--surface-2);color:var(--ink);border-radius:18px;padding:16px 10px;min-height:92px;display:grid;justify-items:center;align-content:center;gap:8px;font:600 14px var(--font);cursor:pointer;text-align:center}
+.fn:active{transform:scale(.97)}
+.fn svg{width:28px;height:28px;stroke:var(--accent);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .empty{padding:18px;background:var(--surface-2);border-radius:14px;color:var(--muted);text-align:center;list-style:none}
 .sigla{font:700 12px var(--font);background:var(--accent-soft);color:var(--accent);padding:3px 9px;border-radius:8px;letter-spacing:.04em}
 .badge{font-weight:600;font-size:11px;letter-spacing:.04em;text-transform:uppercase;padding:3px 10px;border-radius:999px;background:var(--surface-2);color:var(--muted)}
@@ -221,7 +230,7 @@ input:focus,select:focus{outline:none;background:var(--surface);border-color:var
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   const urlPainel = new URL('../', location.href).href;
 
-  let eu = null, authUid = null, minhasClin = [], aba = 'corrida', timer = null;
+  let eu = null, authUid = null, minhasClin = [], aba = 'inicio', timer = null;
   const view = id => { ['load','login','foto','app'].forEach(v => { $('#v-'+v).hidden = v !== id; }); $('#tabs').hidden = id !== 'app'; };
 
   /* ---------- entrada ---------- */
@@ -290,8 +299,129 @@ input:focus,select:focus{outline:none;background:var(--surface);border-color:var
   $('#o-gal').addEventListener('change', e => escolheuFoto(e.target, $('#o-err'), () => { toast('Foto salva.'); abrirApp(); }));
   $('#o-pular').addEventListener('click', () => { guarda.set('pulou-foto-'+eu.id, '1'); abrirApp(); });
 
+
+  /* ---------- início: números do mês e funções ---------- */
+  const ehTele = () => !!eu && eu.papel === 'promotor' && (eu.cargo === 'Tele BH' || eu.cargo === 'Tele interno');
+  const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const ymd = (a, m, d) => a+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+  function feriadosNacionais(a){
+    // Páscoa (algoritmo de Meeus) para a Sexta-feira Santa, que muda a cada ano
+    const g = a % 19, c = Math.floor(a / 100), h = (c - Math.floor(c / 4) - Math.floor((8 * c + 13) / 25) + 19 * g + 15) % 30,
+      i = h - Math.floor(h / 28) * (1 - Math.floor(29 / (h + 1)) * Math.floor((21 - g) / 11)),
+      j = (a + Math.floor(a / 4) + i + 2 - c + Math.floor(c / 4)) % 7, l = i - j,
+      mes = 3 + Math.floor((l + 40) / 44), dia = l + 28 - 31 * Math.floor(mes / 4);
+    const sexta = new Date(a, mes - 1, dia - 2);
+    const f = new Set([ymd(a,0,1), ymd(a,3,21), ymd(a,4,1), ymd(a,8,7), ymd(a,9,12), ymd(a,10,2), ymd(a,10,15), ymd(a,10,20), ymd(a,11,25),
+      ymd(sexta.getFullYear(), sexta.getMonth(), sexta.getDate())]);
+    return f;
+  }
+  // dias úteis = segunda a sábado, sem domingo e sem feriado nacional
+  function diasUteis(a, m, ate){
+    const fer = feriadosNacionais(a), n = new Date(a, m + 1, 0).getDate(); let total = 0, ate_hoje = 0;
+    for (let d = 1; d <= n; d++){
+      if (new Date(a, m, d).getDay() === 0 || fer.has(ymd(a, m, d))) continue;
+      total++; if (d <= ate) ate_hoje++;
+    }
+    return { total, decorridos: ate_hoje };
+  }
+  async function inicioCarregar(){
+    $('#main').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const agora = new Date(), a = agora.getFullYear(), m = agora.getMonth();
+    const r = await sb.rpc('resumo_mes', { p_ini: ymd(a, m, 1) });
+    if (aba !== 'inicio') return;
+    const du = diasUteis(a, m, agora.getDate()), linha = r.data && r.data[0] ? r.data[0] : { visitas: 0, vendas: 0 };
+    const vis = Number(linha.visitas) || 0, ven = Number(linha.vendas) || 0;
+    const aprov = vis > 0 ? Math.round(ven / vis * 100) : null;
+    const proj = x => du.decorridos > 0 ? Math.round(x / du.decorridos * du.total) : null;
+    const tile = (rot, val, nota) => '<div class="tl"><span class="tl-r">'+rot+'</span><b class="tl-v">'+val+'</b><span class="tl-n">'+(nota || '&nbsp;')+'</span></div>';
+    const erroR = r.error ? '<div class="err">'+esc(msgErro(r.error))+'</div>' : '';
+    const fn = (aba_, ico, tx) => '<button type="button" class="fn" data-ir="'+aba_+'">'+ICONES[ico]+'<span>'+tx+'</span></button>';
+    $('#main').innerHTML =
+      '<div class="card"><h2>'+MESES[m].charAt(0).toUpperCase()+MESES[m].slice(1)+' de '+a+'</h2><p class="sub">'+(eu.papel === 'gerente' ? 'Números das suas clínicas no mês.' : 'Seus números no mês.')+'</p>'+erroR
+      + '<div class="tiles">'
+      + tile('Visitas', vis, proj(vis) != null ? 'projeção '+proj(vis) : '')
+      + tile('Vendas', ven, proj(ven) != null ? 'projeção '+proj(ven) : '')
+      + tile('Aproveitamento', aprov != null ? aprov+'%' : '—', 'vendas ÷ visitas')
+      + tile('Dias úteis', du.decorridos+' de '+du.total, 'seg. a sáb., sem feriados')
+      + '</div></div>'
+      + '<div class="card"><h2>O que você quer fazer?</h2><div class="fns">'
+      + (ehTele() ? fn('agendar','lancar','Lançar agendamento') : '')
+      + (eu.papel === 'gerente' ? fn('lancar','lancar','Lançar') : '')
+      + fn('corrida','corrida','Corrida') + fn('avisos','avisos','Avisos') + fn('perfil','perfil','Perfil')
+      + '</div></div>';
+    $$('#main [data-ir]').forEach(b => b.addEventListener('click', () => mostrar(b.dataset.ir)));
+  }
+
+  /* ---------- lançar agendamento (só telemarketing) ---------- */
+  function reduzirPrint(file){
+    return new Promise((ok, fail) => {
+      const img = new Image(), u = URL.createObjectURL(file);
+      img.onload = () => {
+        const k = Math.min(1, 1600 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(u); c.toBlob(b => b ? ok(b) : fail(new Error('Não foi possível ler a imagem.')), 'image/jpeg', .82);
+      };
+      img.onerror = () => fail(new Error('Não foi possível abrir esta imagem.'));
+      img.src = u;
+    });
+  }
+  const fmtTelDigitos = v => { const d = String(v).replace(/\D/g, '').slice(0, 11); return d.length > 6 ? '('+d.slice(0,2)+') '+d.slice(2, d.length > 10 ? 7 : 6)+'-'+d.slice(d.length > 10 ? 7 : 6) : d.length > 2 ? '('+d.slice(0,2)+') '+d.slice(2) : d; };
+  let printArq = null;
+  async function agendarCarregar(){
+    if (!ehTele()){ mostrar('inicio'); return; }
+    $('#main').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const rs = await Promise.all([sb.from('clinicas').select('id,sigla,nome').order('nome'), sb.from('agendamentos').select('*').eq('tele_id', eu.id).order('criado_em', { ascending: false }).limit(15)]);
+    const er = rs.map(x => x.error).find(Boolean);
+    if (er){ $('#main').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
+    const clin = rs[0].data.filter(c => minhasClin.includes(c.id)).sort((x, y) => x.nome.localeCompare(y.nome, 'pt-BR'));
+    if (!clin.length){ $('#main').innerHTML = '<div class="card"><h2>Lançar agendamento</h2><div class="empty">Você ainda não está vinculada a uma clínica. Fale com o gestor.</div></div>'; return; }
+    const sig = Object.fromEntries(rs[0].data.map(c => [c.id, c.sigla]));
+    printArq = null;
+    $('#main').innerHTML =
+      '<button type="button" class="link" id="a-voltar" style="justify-self:start">← Início</button>'
+      + '<div class="card"><h2>Lançar agendamento</h2><form class="form" id="f-ag" novalidate>'
+      + '<label class="field" for="a-clin">Clínica<select id="a-clin">'+clin.map((c, i) => '<option value="'+c.id+'"'+(i === 0 ? ' selected' : '')+'>'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="field" for="a-nome">Nome do paciente<input id="a-nome" type="text" autocomplete="off" autocapitalize="words"></label>'
+      + '<label class="field" for="a-tel">Telefone do paciente<input id="a-tel" type="tel" inputmode="numeric" autocomplete="off" placeholder="(31) 99999-9999"></label>'
+      + '<label class="field" for="a-data">Data do agendamento<input id="a-data" type="date" min="'+hoje()+'" value="'+hoje()+'"></label>'
+      + '<div class="field">Print da conversa do WhatsApp<div class="btns" style="align-items:center"><label class="btn ghost sm" for="a-img" style="display:inline-grid;place-items:center">Escolher imagem</label><span class="meta" id="a-imgn">Nenhuma imagem</span></div>'
+      + '<input id="a-img" type="file" accept="image/*" hidden><img id="a-prev" alt="" hidden style="max-width:100%;max-height:260px;border-radius:14px;object-fit:contain;justify-self:start"></div>'
+      + '<div class="err" id="a-err" role="alert"></div><button class="btn block" type="submit" id="a-btn">Lançar agendamento</button></form></div>'
+      + '<div class="card"><h2>Meus últimos agendamentos</h2>'
+      + (rs[1].data.length ? '<ul class="items">'+rs[1].data.map(g => '<li class="item"><div class="line"><b>'+esc(g.paciente)+'</b><span class="sigla">'+esc(sig[g.clinica_id] || '')+'</span><span class="chip">'+dBR(g.data_agendamento)+'</span></div><p class="meta">'+esc(fmtTelDigitos(g.telefone))+'</p></li>').join('')+'</ul>' : '<div class="empty">Você ainda não lançou agendamentos.</div>')
+      + '</div>';
+    $('#a-voltar').addEventListener('click', () => mostrar('inicio'));
+    $('#a-tel').addEventListener('input', e => { e.target.value = fmtTelDigitos(e.target.value); });
+    $('#a-img').addEventListener('change', e => {
+      const f = e.target.files && e.target.files[0]; printArq = f || null;
+      $('#a-imgn').textContent = f ? f.name : 'Nenhuma imagem';
+      const pv = $('#a-prev'); if (f){ pv.src = URL.createObjectURL(f); pv.hidden = false; } else pv.hidden = true;
+    });
+    $('#f-ag').addEventListener('submit', agendarSalvar);
+  }
+  async function agendarSalvar(e){
+    e.preventDefault();
+    const clinica = Number($('#a-clin').value), nome = $('#a-nome').value.trim(), tel = $('#a-tel').value.replace(/\D/g, ''), data = $('#a-data').value;
+    const erro = !nome || nome.length < 2 ? 'Informe o nome do paciente.' : !/^[0-9]{10,11}$/.test(tel) ? 'Telefone com DDD, 10 ou 11 números.'
+      : !data || data < hoje() ? 'A data do agendamento não pode ser anterior a hoje.' : !printArq ? 'Anexe o print da conversa do WhatsApp.' : '';
+    if (erro){ $('#a-err').textContent = erro; return; }
+    const btn = $('#a-btn'); btn.disabled = true; $('#a-err').textContent = '';
+    let caminho = null;
+    try {
+      const blob = await reduzirPrint(printArq);
+      caminho = authUid+'/'+Date.now()+'.jpg';
+      const up = await sb.storage.from('prints').upload(caminho, blob, { contentType: 'image/jpeg', cacheControl: '3600' });
+      if (up.error) throw up.error;
+      const r = await sb.rpc('lancar_agendamento', { p_clinica: clinica, p_paciente: nome, p_telefone: tel, p_data: data, p_print: caminho });
+      if (r.error){ await sb.storage.from('prints').remove([caminho]); throw r.error; }
+    } catch (x){ btn.disabled = false; $('#a-err').textContent = msgErro(x); return; }
+    btn.disabled = false; toast('Agendamento lançado.'); agendarCarregar();
+  }
+
   /* ---------- casca do app ---------- */
   const ICONES = {
+    inicio: '<svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg>',
     corrida: '<svg viewBox="0 0 24 24"><path d="M5 21V4"/><path d="M5 4h13l-2.5 4L18 12H5"/></svg>',
     lancar: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
     avisos: '<svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 0112 0c0 6 2 7 2 7H4s2-1 2-7z"/><path d="M10 20a2 2 0 004 0"/></svg>',
@@ -302,18 +432,18 @@ input:focus,select:focus{outline:none;background:var(--surface);border-color:var
     $('#h-papel').textContent = eu.papel === 'gerente' ? 'Gerente' : (eu.cargo || 'Promotor');
     $('#h-nome').textContent = eu.nome.split(' ')[0];
     $('#h-av').innerHTML = avatar(eu);
-    view('app'); desenharAbas(); mostrar(aba === 'lancar' && eu.papel !== 'gerente' ? 'corrida' : aba); pushManter();
+    view('app'); desenharAbas(); mostrar(aba === 'lancar' && eu.papel !== 'gerente' ? 'inicio' : (aba === 'agendar' && !ehTele() ? 'inicio' : aba)); pushManter();
     contarAvisos();
     clearInterval(timer); timer = setInterval(() => { if (!document.hidden && $('#v-app').hidden === false){ if (aba === 'corrida') corridaAtualizar(); contarAvisos(); } }, 15000);
   }
   function desenharAbas(){
-    const abas = [['corrida','Corrida']].concat(eu.papel === 'gerente' ? [['lancar','Lançar']] : [], [['avisos','Avisos'],['perfil','Perfil']]);
-    $('#tabs').innerHTML = abas.map(a => '<button type="button" data-aba="'+a[0]+'" aria-current="'+(a[0]===aba?'page':'false')+'">'+ICONES[a[0]]+'<span>'+a[1]+'</span>'+(a[0]==='avisos'&&naoLidas?'<span class="n">'+naoLidas+'</span>':'')+'</button>').join('');
+    const abas = [['inicio','Início'],['corrida','Corrida']].concat(eu.papel === 'gerente' ? [['lancar','Lançar']] : [], [['avisos','Avisos'],['perfil','Perfil']]);
+    $('#tabs').innerHTML = abas.map(a => '<button type="button" data-aba="'+a[0]+'" aria-current="'+((a[0]===aba||(a[0]==='inicio'&&aba==='agendar'))?'page':'false')+'">'+ICONES[a[0]]+'<span>'+a[1]+'</span>'+(a[0]==='avisos'&&naoLidas?'<span class="n">'+naoLidas+'</span>':'')+'</button>').join('');
   }
   $('#tabs').addEventListener('click', e => { const b = e.target.closest('[data-aba]'); if (b) mostrar(b.dataset.aba); });
   function mostrar(a){
     aba = a; desenharAbas();
-    ({ corrida: corridaCarregar, lancar: lancCarregar, avisos: avisosCarregar, perfil: perfilCarregar })[a]();
+    ({ inicio: inicioCarregar, agendar: agendarCarregar, corrida: corridaCarregar, lancar: lancCarregar, avisos: avisosCarregar, perfil: perfilCarregar })[a]();
     window.scrollTo(0, 0);
   }
   async function contarAvisos(){
