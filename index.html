@@ -396,6 +396,17 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     </form>
   </div>
 
+  <!-- confirmar o link do e-mail (evita que o programa de e-mail gaste o link antes da pessoa) -->
+  <div id="v-confirmar" class="login" hidden>
+    <div><span class="eyebrow">Quase lá</span><h1 id="c-titulo">Vamos criar sua senha</h1></div>
+    <div class="card">
+      <p class="sub" style="margin:0">Toque no botão para continuar.</p>
+      <div class="err" id="c-err" role="alert"></div>
+      <button class="btn" type="button" id="c-ok">Continuar</button>
+      <button class="link" type="button" id="c-voltar" hidden>Ir para a tela de entrada</button>
+    </div>
+  </div>
+
   <!-- definir senha (convite ou recuperação) -->
   <div id="v-senha" class="login" hidden>
     <div><span class="eyebrow">Quase lá</span><h1>Crie sua senha</h1></div>
@@ -466,10 +477,16 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   /* Se o convite ou a recuperação de senha chegou pelo link do e-mail, o endereço traz "type=invite" ou "type=recovery". */
   const veioDeLink = /type=(invite|recovery)/.test(location.hash);
   let definindoSenha = veioDeLink;
+  /* Link novo do e-mail: traz "token_hash" e "type" no endereço e só vale depois que a pessoa toca no botão. */
+  const paramsLink = new URLSearchParams(location.search);
+  const linkToken = paramsLink.get('token_hash'), linkTipo = paramsLink.get('type');
+  let linkPendente = !!linkToken && (linkTipo === 'invite' || linkTipo === 'recovery');
+  const linkVencido = /error_code=otp_expired|error=access_denied/.test(location.hash);
 
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.4.2', '2026-11-11', 'Link do e-mail (convite e nova senha) passa a ter um botão de confirmação, para o programa de e-mail não gastar o link antes da pessoa. Mensagem clara quando o link vence.'],
     ['1.4.1', '2026-11-11', 'Agenda das teles: cartões de filtros e totais menores, para a grade aparecer melhor.'],
     ['1.4.0', '2026-11-11', 'Agenda das teles com grade por clínica e horário, totalizadores Agendamento → Visita → Venda por período, tele e clínica, e histórico de alterações.'],
     ['1.3.0', '2026-11-11', 'Nova tela Agenda das teles: todos os agendamentos lançados no app, por dia, telemarketing e clínica, com o print da conversa.'],
@@ -487,7 +504,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   let lista = [];
   let mostrarInativos = false, confirmaExcluir = false;
 
-  const view = id => { ['load','login','senha','app'].forEach(v => { $('#v-'+v).hidden = v !== id; }); document.body.classList.toggle('em-app', id === 'app'); };
+  const view = id => { ['load','login','confirmar','senha','app'].forEach(v => { $('#v-'+v).hidden = v !== id; }); document.body.classList.toggle('em-app', id === 'app'); };
   const msgErro = e => {
     if (!e) return '';
     if (e.code === '23505') return 'Já existe um cadastro com esse valor. Use outro nome ou sigla.';
@@ -2303,8 +2320,12 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   $('#modo').addEventListener('click', e => { const b = e.target.closest('button[data-m]'); if (!b || b.dataset.m === modoVisao) return; modoVisao = b.dataset.m; aplicarModo(true); });
 
   async function aposLogin(){
+    if (linkPendente){
+      $('#c-titulo').textContent = linkTipo === 'invite' ? 'Bem-vindo! Vamos criar sua senha' : 'Vamos criar uma nova senha';
+      view('confirmar'); return;
+    }
     const { data: sess } = await sb.auth.getSession();
-    if (!sess.session){ view('login'); return; }
+    if (!sess.session){ view('login'); if (linkVencido) $('#l-err').textContent = 'Este link já foi usado ou venceu. Toque em "Esqueci minha senha" para receber um novo.'; return; }
     if (definindoSenha){ view('senha'); return; }
     const { data, error } = await sb.from('usuarios').select('*').eq('auth_id', sess.session.user.id).maybeSingle();
     if (error || !data){
@@ -2322,6 +2343,18 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     lateral(lerLS('menu-aberto') === '1' && window.innerWidth > 1000); if (!recurso) recurso = 'inicio';
     view('app'); carregar();
   }
+
+  $('#c-ok').addEventListener('click', async () => {
+    const b = $('#c-ok'); b.disabled = true; $('#c-err').textContent = '';
+    const { error } = await sb.auth.verifyOtp({ token_hash: linkToken, type: linkTipo });
+    if (error){
+      b.disabled = false; $('#c-ok').hidden = true; $('#c-voltar').hidden = false;
+      $('#c-err').textContent = 'Este link já foi usado ou venceu. Na tela de entrada, toque em "Esqueci minha senha" para receber um novo.'; return;
+    }
+    linkPendente = false; definindoSenha = true; history.replaceState(null, '', location.pathname);
+    view('senha');
+  });
+  $('#c-voltar').addEventListener('click', () => { history.replaceState(null, '', location.pathname); location.reload(); });
 
   $('#f-login').addEventListener('submit', async e => {
     e.preventDefault();
