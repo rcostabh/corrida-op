@@ -67,7 +67,7 @@ input:focus,select:focus{outline:none;background:var(--surface);border-color:var
 .dia i.pt{background:var(--accent)}
 .dia i.pt.ok{background:#1f9d4c}
 .okc{color:#14753a;font-weight:700}
-.okc.fe{color:#0b6a2e}.nfc{color:#b3200f;font-weight:700}
+.okc.fe{color:#0b6a2e}.nfc{color:#b3200f;font-weight:700}.atc{color:#075e6b;font-weight:700}
 .rs{display:grid;gap:10px;border-top:1px solid var(--line);padding-top:12px}.rs .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}.rs .nfb{display:grid;gap:10px}.rs [hidden]{display:none}
 .btn.verde.fe{background:linear-gradient(180deg,#14a04d,#0b7f3a)}.btn.verm{background:linear-gradient(180deg,#e0473c,#c4271c);color:#fff}
 .btn.verde{background:linear-gradient(180deg,#2bb35e,#1f9d4c);color:#fff}
@@ -94,6 +94,7 @@ li:first-child>.ag-i{border-top:0}
 .gg-x{border-top:1px solid var(--line);border-left:1px solid var(--line);padding:3px;display:grid;gap:3px;align-content:start;min-height:40px}
 .gg-c{border:0;text-align:left;border-radius:8px;padding:5px 7px;display:grid;gap:0;background:color-mix(in srgb,var(--c) 18%,var(--surface));border-left:3px solid var(--c);color:var(--ink);font:500 12px var(--font);cursor:pointer}
 .gg-c.ok{background:color-mix(in srgb,#1f9d4c 16%,var(--surface));border-left-color:#1f9d4c}
+.gg-c.at{background:color-mix(in srgb,#0a7c8c 22%,var(--surface));border-left-color:#0a7c8c}
 .gg-c.fe{background:color-mix(in srgb,#0f8a3c 34%,var(--surface));border-left-color:#0f8a3c}.gg-c.nf{background:color-mix(in srgb,#d4271c 15%,var(--surface));border-left-color:#d4271c}
 .gg-c b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gg-c small{color:var(--muted);font-size:10.5px}
 .ag-lg{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px;font-size:13px}
@@ -415,7 +416,7 @@ li:first-child>.ag-i{border-top:0}
   const opHoras = (sel, dia) => { const l = horasDia(dia); if (dia && !l.length) return '<option value="">Sem atendimento aos domingos</option>'; return '<option value="">Escolha...</option>'+l.map(h => '<option value="'+h+'"'+(h === sel ? ' selected' : '')+'>'+h+'</option>').join(''); };
   const ligaHoras = (inpData, selHora) => { if (!inpData || !selHora) return; inpData.addEventListener('change', () => { const ant = selHora.value; selHora.innerHTML = opHoras(horasDia(inpData.value).includes(ant) ? ant : '', inpData.value); }); };
   const hh = h => h ? String(h).slice(0, 5) : '';
-  const stChip = g => g.status === 'confirmado' ? '<span class="okc">✓ Confirmado</span>' : g.status === 'fechado' ? '<span class="okc fe">★ Fechado</span>' : g.status === 'nao_fechou' ? '<span class="nfc">✕ Não fechou</span>' : 'Agendado';
+  const stChip = g => g.status === 'confirmado' ? '<span class="okc">✓ Confirmado</span>' : g.status === 'atendido' ? '<span class="atc">● Atendido</span>' : g.status === 'fechado' ? '<span class="okc fe">★ Fechado</span>' : g.status === 'nao_fechou' ? '<span class="nfc">✕ Não fechou</span>' : 'Agendado';
   // Lançamento retroativo: enquanto estiver liberado no banco (parâmetro), datas anteriores a hoje são aceitas
   let RETRO = false;
   async function retroCarregar(){ try { const r = await sb.rpc('agendamento_retroativo'); RETRO = !r.error && r.data === true; } catch (e) { RETRO = false; } }
@@ -425,14 +426,18 @@ li:first-child>.ag-i{border-top:0}
   async function motivosCarregar(){ if (MOTIVOS.length) return; const r = await sb.from('motivos_nao_fechou').select('id,nome,exige_obs').eq('ativo', true).order('ordem'); if (!r.error) MOTIVOS = r.data || []; }
   const motivoTxt = g => { const m = MOTIVOS.find(x => x.id === g.motivo_id); return (m ? m.nome : 'Motivo não informado')+(g.motivo_obs ? ' — '+g.motivo_obs : ''); };
   // resultado do atendimento (Fechado / Não fechou + motivo), a partir do dia do atendimento
+  const motNC = () => (MOTIVOS.find(x => x.nome === 'Paciente não compareceu') || {}).id;
   function resultadoHtml(g){
+    const des = txt => '<button type="button" class="link" data-rs-desfaz style="justify-self:start">'+txt+'</button>';
     if (g.status === 'fechado' || g.status === 'nao_fechou')
-      return (g.status === 'nao_fechou' ? '<p class="meta"><b>Motivo:</b> '+esc(motivoTxt(g))+'</p>' : '')+'<div class="rs"><button type="button" class="link" data-rs-desfaz style="justify-self:start">Desfazer resultado</button><div class="err" data-rs-err role="alert"></div></div>';
+      return (g.status === 'nao_fechou' ? '<p class="meta"><b>Motivo:</b> '+esc(motivoTxt(g))+'</p>' : '')+'<div class="rs">'+des('Desfazer resultado')+'<div class="err" data-rs-err role="alert"></div></div>';
     if (g.data_agendamento > hoje()) return '';
-    return '<div class="rs"><b>Resultado do atendimento</b><div class="btns"><button type="button" class="btn verde fe" data-rs-ok>Fechado</button><button type="button" class="btn verm" data-rs-nao>Não fechou</button></div>'
-      + '<div class="nfb" data-rs-nf hidden><label class="field">Motivo<select data-rs-mot><option value="">Escolha...</option>'+MOTIVOS.map(x => '<option value="'+x.id+'" data-o="'+(x.exige_obs ? 1 : 0)+'">'+esc(x.nome)+'</option>').join('')+'</select></label>'
-      + '<label class="field">Observação <small data-rs-oh>(opcional)</small><textarea data-rs-obs rows="2" maxlength="300"></textarea></label><button type="button" class="btn" data-rs-salvar>Salvar</button></div>'
-      + '<div class="err" data-rs-err role="alert"></div></div>';
+    if (g.status === 'atendido')
+      return '<div class="rs"><b>Atendido. E o contrato?</b><div class="btns"><button type="button" class="btn verde fe" data-rs-ok>Fechado</button><button type="button" class="btn verm" data-rs-nao>Não fechou</button></div>'
+        + '<div class="nfb" data-rs-nf hidden><label class="field">Motivo<select data-rs-mot><option value="">Escolha...</option>'+MOTIVOS.filter(x => x.nome !== 'Paciente não compareceu').map(x => '<option value="'+x.id+'" data-o="'+(x.exige_obs ? 1 : 0)+'">'+esc(x.nome)+'</option>').join('')+'</select></label>'
+        + '<label class="field">Observação <small data-rs-oh>(opcional)</small><textarea data-rs-obs rows="2" maxlength="300"></textarea></label><button type="button" class="btn" data-rs-salvar>Salvar</button></div>'
+        + des('Desfazer atendimento')+'<div class="err" data-rs-err role="alert"></div></div>';
+    return '<div class="rs"><b>Atendimento</b><div class="btns"><button type="button" class="btn verde fe" data-rs-ate>Atendido</button><button type="button" class="btn verm" data-rs-nc>Não compareceu</button></div><div class="err" data-rs-err role="alert"></div></div>';
   }
   function resultadoLiga(ov, g, depois){
     const erro = t => { const e = $('[data-rs-err]', ov); if (e) e.textContent = t || ''; };
@@ -440,14 +445,15 @@ li:first-child>.ag-i{border-top:0}
       erro(''); $$('button', ov).forEach(b => b.disabled = true);
       const r = await sb.rpc('definir_resultado', { p_id: g.id, p_resultado: res, p_motivo: mot || null, p_obs: obs || null });
       if (r.error){ $$('button', ov).forEach(b => b.disabled = false); return erro(msgErro(r.error)); }
-      toast(res === 'fechado' ? 'Marcado como fechado.' : res === 'nao_fechou' ? 'Marcado como não fechou.' : 'Resultado desfeito.'); ov.remove(); depois();
+      toast(res === 'atendido' ? 'Marcado como atendido.' : res === 'fechado' ? 'Marcado como fechado.' : res === 'nao_fechou' ? 'Marcado como não fechou.' : 'Desfeito.'); ov.remove(); depois();
     };
-    const ok = $('[data-rs-ok]', ov), nao = $('[data-rs-nao]', ov), des = $('[data-rs-desfaz]', ov), sel = $('[data-rs-mot]', ov), sv = $('[data-rs-salvar]', ov);
-    if (ok) ok.addEventListener('click', () => envia('fechado'));
-    if (des) des.addEventListener('click', () => envia('confirmado'));
-    if (nao) nao.addEventListener('click', () => { const b = $('[data-rs-nf]', ov); b.hidden = !b.hidden; });
+    const on = (q, fn) => { const e = $(q, ov); if (e) e.addEventListener('click', fn); };
+    const sel = $('[data-rs-mot]', ov);
+    on('[data-rs-ate]', () => envia('atendido')); on('[data-rs-ok]', () => envia('fechado')); on('[data-rs-desfaz]', () => envia('desfazer'));
+    on('[data-rs-nc]', () => { const id = motNC(); if (!id) return erro('Motivo "Paciente não compareceu" não encontrado.'); envia('nao_fechou', id); });
+    on('[data-rs-nao]', () => { const b = $('[data-rs-nf]', ov); b.hidden = !b.hidden; });
     if (sel) sel.addEventListener('change', () => { const o = sel.selectedOptions[0], h = $('[data-rs-oh]', ov); if (h) h.textContent = o && o.dataset.o === '1' ? '(obrigatória)' : '(opcional)'; });
-    if (sv) sv.addEventListener('click', () => {
+    on('[data-rs-salvar]', () => {
       const mot = Number(sel.value); if (!mot) return erro('Escolha o motivo.');
       const o = sel.selectedOptions[0], obs = $('[data-rs-obs]', ov).value.trim();
       if (o.dataset.o === '1' && !obs) return erro('Descreva o motivo na observação.');
@@ -455,7 +461,6 @@ li:first-child>.ag-i{border-top:0}
     });
   }
   const AGP = { ano: 0, mes: 0, sel: '', itens: [], sig: {} };
-
   async function agendarCarregar(){
     await retroCarregar();
     if (!ehTele()){ mostrar('inicio'); return; }
@@ -553,7 +558,7 @@ li:first-child>.ag-i{border-top:0}
     await motivosCarregar();
     const ps = await sb.from('agendamento_prints').select('*').eq('agendamento_id', id).order('criado_em');
     const urls = await Promise.all((ps.data || []).map(x => sb.storage.from('prints').createSignedUrl(x.path, 3600).then(r => r.data ? r.data.signedUrl : null)));
-    const comResultado = g.status === 'fechado' || g.status === 'nao_fechou', editavel = (RETRO || g.data_agendamento >= hoje()) && !comResultado;
+    const comResultado = ['atendido', 'fechado', 'nao_fechou'].includes(g.status), editavel = (RETRO || g.data_agendamento >= hoje()) && !comResultado;
     const ov = document.createElement('div'); ov.className = 'sheet'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
     ov.innerHTML = '<div class="sh-c"><div class="line" style="justify-content:space-between"><h2 style="margin:0">'+esc(g.paciente)+'</h2><button type="button" class="sndbtn" data-x aria-label="Fechar">×</button></div>'
       + '<p class="meta">'+esc(fmtTelDigitos(g.telefone))+' · <span class="sigla">'+esc(AGP.sig[g.clinica_id] || '')+'</span> · '+stChip(g)+'</p>'
@@ -663,7 +668,7 @@ li:first-child>.ag-i{border-top:0}
     const horas = horasDia(GA.dia); if (!horas.length && !r.data.length) horas.push('09:00');
     r.data.forEach(g => { if (g.hora && !horas.includes(slotDe(g))) horas.push(slotDe(g)); }); horas.sort();
     const semHora = r.data.filter(g => !g.hora), nomeT = Object.fromEntries(GA.teles.map(t => [t.id, t.nome.split(' ')[0]]));
-    const card = g => '<button type="button" class="gg-c'+(g.status === 'confirmado' ? ' ok' : g.status === 'fechado' ? ' fe' : g.status === 'nao_fechou' ? ' nf' : '')+'" data-g="'+g.id+'" style="--c:'+esc((GA.clinicas.find(c => c.id === g.clinica_id) || {}).cor || '#5b9bff')+'"><b>'+(g.status === 'confirmado' ? '✓ ' : g.status === 'fechado' ? '★ ' : g.status === 'nao_fechou' ? '✕ ' : '')+(hh(g.hora) ? hh(g.hora)+' ' : '')+esc(g.paciente)+'</b><small>'+esc(nomeT[g.tele_id] || 'Tele')+'</small></button>';
+    const card = g => '<button type="button" class="gg-c'+(g.status === 'confirmado' ? ' ok' : g.status === 'atendido' ? ' at' : g.status === 'fechado' ? ' fe' : g.status === 'nao_fechou' ? ' nf' : '')+'" data-g="'+g.id+'" style="--c:'+esc((GA.clinicas.find(c => c.id === g.clinica_id) || {}).cor || '#5b9bff')+'"><b>'+(g.status === 'confirmado' ? '✓ ' : g.status === 'atendido' ? '● ' : g.status === 'fechado' ? '★ ' : g.status === 'nao_fechou' ? '✕ ' : '')+(hh(g.hora) ? hh(g.hora)+' ' : '')+esc(g.paciente)+'</b><small>'+esc(nomeT[g.tele_id] || 'Tele')+'</small></button>';
     const linhas = (semHora.length ? [['Sem hora', semHora]] : []).concat(horas.map(h => [h, r.data.filter(g => g.hora && slotDe(g) === h)]));
     const somaDia = n => { const x = new Date(GA.dia+'T12:00:00'); x.setDate(x.getDate() + n); return x.toLocaleDateString('sv-SE'); };
     alvo.innerHTML = '<div class="cal-top"><button type="button" class="sndbtn" id="gd-ant" aria-label="Dia anterior">‹</button><div style="text-align:center"><b>'+dBR(GA.dia)+(GA.dia === hoje() ? ' · hoje' : '')+'</b><div class="meta">'+r.data.length+' agendamento(s)</div></div><button type="button" class="sndbtn" id="gd-prox" aria-label="Próximo dia">›</button></div>'
@@ -683,7 +688,7 @@ li:first-child>.ag-i{border-top:0}
     const nomeT = Object.fromEntries(GA.teles.map(t => [t.id, t.nome])), c = GA.clinicas.find(x => x.id === g.clinica_id) || {};
     const quando = t => new Date(t).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
     const dh = o => o ? dBR(o.data)+(o.hora ? ' às '+hh(o.hora) : '') : '';
-    const rot = l => l.acao === 'confirmar' ? (l.depois && l.depois.status === 'confirmado' ? 'Confirmado' : 'Confirmação desfeita') : l.acao === 'criar' ? 'Criado' : l.acao === 'alterar' ? 'Alterado de '+dh(l.antes)+' para '+dh(l.depois) : l.acao === 'conversa' ? 'Nova conversa incluída' : l.acao === 'resultado' ? (l.depois && l.depois.status === 'nao_fechou' ? 'Não fechou — '+(l.depois.motivo || '')+(l.depois.obs ? ' ('+l.depois.obs+')' : '') : l.depois && l.depois.status === 'fechado' ? 'Fechou o contrato' : 'Resultado desfeito') : 'Excluído';
+    const rot = l => l.acao === 'confirmar' ? (l.depois && l.depois.status === 'confirmado' ? 'Confirmado' : 'Confirmação desfeita') : l.acao === 'criar' ? 'Criado' : l.acao === 'alterar' ? 'Alterado de '+dh(l.antes)+' para '+dh(l.depois) : l.acao === 'conversa' ? 'Nova conversa incluída' : l.acao === 'resultado' ? (l.depois && l.depois.status === 'nao_fechou' ? 'Não fechou — '+(l.depois.motivo || '')+(l.depois.obs ? ' ('+l.depois.obs+')' : '') : l.depois && l.depois.status === 'fechado' ? 'Fechou o contrato' : l.depois && l.depois.status === 'atendido' ? (l.antes && (l.antes.status === 'fechado' || l.antes.status === 'nao_fechou') ? 'Resultado desfeito (voltou a atendido)' : 'Paciente atendido') : 'Resultado desfeito') : 'Excluído';
     const ov = document.createElement('div'); ov.className = 'sheet'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
     ov.innerHTML = '<div class="sh-c"><div class="line" style="justify-content:space-between"><h2 style="margin:0">'+esc(g.paciente)+'</h2><button type="button" class="sndbtn" data-x aria-label="Fechar">×</button></div>'
       + '<p class="meta">'+esc(fmtTelDigitos(g.telefone))+' · <span class="sigla">'+esc(c.sigla || '')+'</span> · '+dBR(g.data_agendamento)+(g.hora ? ' às '+hh(g.hora) : '')+'</p><p class="meta">Lançado por '+esc(nomeT[g.tele_id] || 'Tele')+' · '+stChip(g)+'</p>'
@@ -706,7 +711,7 @@ li:first-child>.ag-i{border-top:0}
   };
   let naoLidas = 0;
   function abrirApp(){
-    $('#h-papel').textContent = eu.papel === 'gerente' ? 'Gerente' : eu.papel === 'gestor' ? 'Gestor' : eu.papel === 'assistente' ? 'Assistente' : (eu.cargo || 'Promotor');
+    $('#h-papel').textContent = eu.papel === 'gerente' ? 'Gerência' : eu.papel === 'gestor' ? 'Gestão' : eu.papel === 'assistente' ? 'Gestão' : (eu.cargo || 'Vendas');
     $('#h-nome').textContent = eu.nome.split(' ')[0];
     $('#h-av').innerHTML = avatar(eu);
     view('app'); desenharAbas(); mostrar(ehGestao() ? (aba === 'perfil' ? 'perfil' : 'agenda') : aba === 'lancar' && eu.papel !== 'gerente' ? 'inicio' : ((aba === 'agendar' || aba === 'agenda') && !ehTele() ? 'inicio' : aba)); pushManter();
@@ -1186,7 +1191,7 @@ li:first-child>.ag-i{border-top:0}
     const minhas = (cl.data || []).filter(c => minhasClin.includes(c.id));
     $('#main').innerHTML =
       '<div class="card" style="text-align:center"><div id="p-av">'+avatar(eu, 'xl')+'</div><h2 style="margin-top:10px">'+esc(eu.nome)+'</h2>'
-      + '<p class="meta">'+esc(eu.email || '')+'</p><p class="meta">'+(eu.papel==='gerente'?'Gerente':eu.papel==='gestor'?'Gestor':eu.papel==='assistente'?'Assistente':esc(eu.cargo||'Promotor'))+(minhas.length?' · '+minhas.map(c => esc(c.sigla)).join(', '):'')+'</p>'
+      + '<p class="meta">'+esc(eu.email || '')+'</p><p class="meta">'+(eu.papel==='gerente'?'Gerência':eu.papel==='gestor'?'Gestão':eu.papel==='assistente'?'Gestão':esc(eu.cargo||'Vendas'))+(minhas.length?' · '+minhas.map(c => esc(c.sigla)).join(', '):'')+'</p>'
       + '<div class="err" id="p-ferr" role="alert"></div><div class="btns" style="justify-content:center"><label class="btn sm" style="line-height:24px">Tirar foto<input type="file" accept="image/*" capture="user" id="p-cam" hidden></label>'
       + '<label class="btn ghost sm" style="line-height:26px">Escolher da galeria<input type="file" accept="image/*" id="p-gal" hidden></label></div></div>'
       + '<div class="card"><h2>Meus dados</h2><form class="form" id="f-perfil" novalidate><label class="field" for="p-nome">Nome<input id="p-nome" type="text" autocomplete="name" value="'+esc(eu.nome)+'"></label>'

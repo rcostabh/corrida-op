@@ -224,9 +224,15 @@ table.pd tr.tot td{font-weight:700}
 .ag-c{transition:transform .15s,box-shadow .15s}
 .ag-c.ok{background:color-mix(in srgb,#1f9d4c 16%,var(--surface));border-left-color:#1f9d4c}
 .ag-c.ok b{color:#14753a}
+.ag-c.at{background:color-mix(in srgb,#0a7c8c 22%,var(--surface));border-left-color:#0a7c8c}.ag-c.at b{color:#075e6b}
+.ag-st.at{background:color-mix(in srgb,#0a7c8c 20%,transparent);color:#075e6b}
 .ag-c.fe{background:color-mix(in srgb,#0f8a3c 34%,var(--surface));border-left-color:#0f8a3c}.ag-c.fe b{color:#0b6a2e}
 .ag-c.nf{background:color-mix(in srgb,#d4271c 15%,var(--surface));border-left-color:#d4271c}.ag-c.nf b{color:#b3200f}
 .ag-st.fe{background:color-mix(in srgb,#0f8a3c 26%,transparent);color:#0b6a2e}.ag-st.nf{background:color-mix(in srgb,#d4271c 18%,transparent);color:#b3200f}
+.ag-cl{display:flex;flex-wrap:wrap;gap:6px 8px;margin:0 0 10px}
+.ag-cl span{display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border-radius:999px;padding:4px 11px 4px 9px;font:500 12px var(--font-body);color:var(--ink);border-left:4px solid var(--c)}
+.ag-cl b{font-weight:800}.ag-cl em{font-style:normal;color:var(--muted)}
+.ag-h .ag-ht{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:600 10.5px var(--font-body);color:var(--ink)}
 .ag-tab{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 8px}
 .ag-tab button{border:0;background:var(--surface-2);color:var(--ink);font:600 12px var(--font-body);padding:6px 14px;border-radius:999px;cursor:pointer;min-height:30px}
 .ag-tab button[aria-pressed=true]{background:var(--accent);color:var(--on-accent)}
@@ -523,7 +529,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     <main class="principal">
       <header class="topo">
         <h1 id="titulo-tela">Início</h1>
-        <div class="line"><div class="seg" role="group" aria-label="Entrar como" id="modo" hidden><button type="button" data-m="gestor" aria-pressed="true">Gestor</button><button type="button" data-m="gerente" aria-pressed="false">Gerente</button></div><span class="who" id="quem"></span></div>
+        <div class="line"><div class="seg" role="group" aria-label="Entrar como" id="modo" hidden><button type="button" data-m="gestor" aria-pressed="true">Gestão</button><button type="button" data-m="gerente" aria-pressed="false">Gerência</button></div><span class="who" id="quem"></span></div>
       </header>
       <section class="two" id="area"></section>
     </main>
@@ -562,6 +568,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.8.0', '2026-11-11', 'Agenda: status Atendido, totais por clínica (agendamentos, confirmados, atendidos e fechamentos) no dia, na semana e no mês. Nomes das funções: Vendas, Gerência e Gestão.'],
     ['1.7.0', '2026-11-11', 'Agenda das teles: grid menor; status Agendado, Confirmado, Fechado e Não fechou (com motivo guardado); filtro por status e totais por clínica, tele e motivo.'],
     ['1.6.1', '2026-11-11', 'Grade da agenda segue o horário de atendimento: seg–sex 09:00–18:00 e sábado 08:00–13:00.'],
     ['1.6.0', '2026-11-11', 'Agendamento com status agendado e confirmado (marcado pela tele no app). Mês atual seleciona o mês inteiro. Visitas e vendas da agenda contam só as teles.'],
@@ -782,7 +789,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       '<div class="card"><h2>'+(atual ? 'Editar pessoa' : 'Nova pessoa')+'</h2>'
       + '<p class="sub">'+(atual ? 'Se trocar o e-mail, a pessoa recebe um link no novo endereço para criar a senha. Para tirar alguém de uso, desmarque "Pessoa ativa".' : 'A pessoa recebe um e-mail para criar a própria senha e colocar a foto.')+'</p>'
       + '<form class="form" id="f-pes" novalidate>'
-      + '<label class="field" for="p-papel">Função<select id="p-papel"'+(atual?' disabled':'')+'><option value="promotor"'+(papelForm==='promotor'?' selected':'')+'>Promotor</option>'+(eu.papel === 'gerente' || modoVisao === 'gerente' ? '' : '<option value="gerente"'+(papelForm==='gerente'?' selected':'')+'>Gerente de clínica</option>')+(eu.papel === 'gestor' ? '<option value="assistente"'+(papelForm==='assistente'?' selected':'')+'>Assistente (suporte, vê tudo como o gestor)</option>' : '')+'</select></label>'
+      + '<label class="field" for="p-papel">Função<select id="p-papel"'+(atual?' disabled':'')+'><option value="promotor"'+(papelForm==='promotor'?' selected':'')+'>Vendas</option>'+(eu.papel === 'gerente' || modoVisao === 'gerente' ? '' : '<option value="gerente"'+(papelForm==='gerente'?' selected':'')+'>Gerência (da clínica)</option>')+(eu.papel === 'gestor' ? '<option value="assistente"'+(papelForm==='assistente'?' selected':'')+'>Gestão (vê tudo, como o gestor)</option>' : '')+'</select></label>'
       + '<label class="field" for="p-nome">Nome<input id="p-nome" type="text" autocomplete="off" value="'+esc(atual?atual.nome:'')+'"></label>'
       + '<label class="field" for="p-email">E-mail<input id="p-email" type="email" inputmode="email" autocomplete="off" value="'+esc(atual?(atual.email||''):'')+'"'+'></label>'
       + '<label class="field" for="p-tel">Telefone com DDD<input id="p-tel" type="tel" inputmode="numeric" autocomplete="off" placeholder="(31) 99999-9999" value="'+esc(atual?fmtTel(atual.telefone):'')+'"></label>'
@@ -797,7 +804,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + '</div></form></div>'
       + '<div class="card"><h2>Pessoas</h2><label class="chk" style="margin-bottom:10px"><input type="checkbox" id="mostra-inat"'+(mostrarInativos?' checked':'')+'><span>Mostrar inativos</span></label>'
       + '<p class="sub">'+vis.length+' cadastrada'+(vis.length===1?'':'s')+'. Pessoas com lançamentos não são apagadas, só inativadas.</p>'
-      + '<ul class="items">'+(vis.map(p => { const c = clinicaDe(p); return '<li class="item"><div><div class="line"><b>'+esc(p.nome)+'</b><span class="badge">'+(p.papel==='gerente'?'Gerente':p.papel==='assistente'?'Assistente':esc(p.cargo||'Promotor'))+'</span>'+(c?'<span class="sigla">'+esc(c.sigla)+'</span>':(p.papel==='assistente'?'':'<span class="chip off">Sem clínica</span>'))+(p.auth_id?'':'<span class="chip off">Sem convite</span>')+(p.ativo?'':'<span class="chip off">Inativa</span>')+'</div><div class="meta">'+esc(p.email||'sem e-mail')+(p.telefone?' · '+esc(fmtTel(p.telefone)):'')+'</div></div><div><button type="button" class="btn ghost sm" data-ped="'+p.id+'">Editar</button></div></li>'; }).join('') || '<li class="empty">Ninguém cadastrado ainda.</li>')+'</ul></div>';
+      + '<ul class="items">'+(vis.map(p => { const c = clinicaDe(p); return '<li class="item"><div><div class="line"><b>'+esc(p.nome)+'</b><span class="badge">'+(p.papel==='gerente'?'Gerência':p.papel==='assistente'?'Gestão':esc(p.cargo||'Vendas'))+'</span>'+(c?'<span class="sigla">'+esc(c.sigla)+'</span>':(p.papel==='assistente'?'':'<span class="chip off">Sem clínica</span>'))+(p.auth_id?'':'<span class="chip off">Sem convite</span>')+(p.ativo?'':'<span class="chip off">Inativa</span>')+'</div><div class="meta">'+esc(p.email||'sem e-mail')+(p.telefone?' · '+esc(fmtTel(p.telefone)):'')+'</div></div><div><button type="button" class="btn ghost sm" data-ped="'+p.id+'">Editar</button></div></li>'; }).join('') || '<li class="empty">Ninguém cadastrado ainda.</li>')+'</ul></div>';
     $('#f-pes').addEventListener('submit', pessoaSalvar);
     const sem = $('#p-sem'); if (sem) sem.addEventListener('click', () => pessoaSalvar(null, true));
     const cv = $('#p-conv'); if (cv) cv.addEventListener('click', async () => {
@@ -2013,9 +2020,15 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   /* ---------- agenda das teles: agendamentos lançados no app ---------- */
   const mesIni = () => hoje().slice(0, 8)+'01';
   const AG = { ini: mesIni(), fim: hoje(), dia: hoje(), vis: 'dia', tk: 0, tele: '', clin: '', st: '', agrup: 'clin', teles: [], clinicas: [], motivos: [], todos: [] };
-  const AG_ST = { agendado: 'Agendado', confirmado: 'Confirmado', fechado: 'Fechado', nao_fechou: 'Não fechou' };
-  const agStCls = st => st === 'confirmado' ? 'ok' : st === 'fechado' ? 'fe' : st === 'nao_fechou' ? 'nf' : '';
-  const agIco = st => st === 'confirmado' ? '✓ ' : st === 'fechado' ? '★ ' : st === 'nao_fechou' ? '✕ ' : '';
+  const AG_ST = { agendado: 'Agendado', confirmado: 'Confirmado', atendido: 'Atendido', fechado: 'Fechado', nao_fechou: 'Não fechou' };
+  const agStCls = st => st === 'confirmado' ? 'ok' : st === 'atendido' ? 'at' : st === 'fechado' ? 'fe' : st === 'nao_fechou' ? 'nf' : '';
+  const agIco = st => st === 'confirmado' ? '✓ ' : st === 'atendido' ? '● ' : st === 'fechado' ? '★ ' : st === 'nao_fechou' ? '✕ ' : '';
+  const agTotais = l => ({ n: l.length, conf: l.filter(g => g.status !== 'agendado').length, aten: l.filter(g => g.status === 'atendido' || g.status === 'fechado' || (g.status === 'nao_fechou' && (AG.motivos.find(x => x.id === g.motivo_id) || {}).nome !== 'Paciente não compareceu')).length, fech: l.filter(g => g.status === 'fechado').length });
+  const agTxtTot = t => t.n+' agendamento'+(t.n === 1 ? '' : 's')+', '+t.conf+' confirmado'+(t.conf === 1 ? '' : 's')+', '+t.aten+' atendido'+(t.aten === 1 ? '' : 's')+', '+t.fech+' fechamento'+(t.fech === 1 ? '' : 's');
+  function agFaixa(its){
+    const cs = AG.clinicas.filter(c => AG.clin ? String(c.id) === String(AG.clin) : (c.ativa || its.some(g => g.clinica_id === c.id)));
+    return '<div class="ag-cl">'+cs.map(c => '<span style="--c:'+esc(c.cor || '#5b9bff')+'"><b>'+esc(c.sigla)+'</b> <em>'+esc(agTxtTot(agTotais(its.filter(g => g.clinica_id === c.id))))+'</em></span>').join('')+'</div>';
+  }
   const agChip = st => '<span class="ag-st '+agStCls(st)+'">'+(AG_ST[st] || 'Agendado')+'</span>';
   const hhm = h => h ? String(h).slice(0, 5) : '';
   const nlin = (a, b) => b.length ? a+' de '+b : a;
@@ -2134,7 +2147,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     let n = 0; const card = g => '<button type="button" class="ag-c '+agStCls(g.status)+'" data-g="'+g.id+'" style="--c:'+esc(agCor(g.clinica_id))+';--i:'+(n++)+'"><b>'+agIco(g.status)+(hhm(g.hora) ? hhm(g.hora)+' · ' : '')+esc(g.paciente)+'</b><small>'+esc(nomeT[g.tele_id] || 'Tele')+(g.status !== 'agendado' ? ' · '+AG_ST[g.status].toLowerCase() : '')+'</small></button>';
     const semHora = its.filter(g => !g.hora), linhas = (semHora.length ? [['Sem horário', semHora]] : []).concat(agHoras(its, AG.dia).map(h => [h, its.filter(g => g.hora && agHorario(g.hora) === h)]));
     return '<div class="ag-gw"><div class="ag-g" style="grid-template-columns:52px repeat('+cols.length+', minmax(118px, 1fr))"><div class="ag-h"></div>'
-      + cols.map(c => '<div class="ag-h" style="--c:'+esc(c.cor || '#5b9bff')+'"><b>'+esc(c.sigla)+'</b><small>'+esc(c.nome)+'</small></div>').join('')
+      + cols.map(c => '<div class="ag-h" style="--c:'+esc(c.cor || '#5b9bff')+'"><b>'+esc(c.sigla)+'</b><small>'+esc(c.nome)+'</small><span class="ag-ht">'+esc(agTxtTot(agTotais(its.filter(g => g.clinica_id === c.id))))+'</span></div>').join('')
       + linhas.map(([h, l]) => '<div class="ag-t">'+esc(h)+'</div>'+cols.map(c => '<div class="ag-x">'+l.filter(g => g.clinica_id === c.id).map(card).join('')+'</div>').join('')).join('')+'</div></div>';
   }
   function agHtmlSemana(its){
@@ -2142,7 +2155,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const nomeT = agNomeT(), sig = Object.fromEntries(AG.clinicas.map(c => [c.id, c.sigla])); let n = 0;
     const card = g => '<button type="button" class="ag-c '+agStCls(g.status)+'" data-g="'+g.id+'" style="--c:'+esc(agCor(g.clinica_id))+';--i:'+(n++)+'"><b>'+agIco(g.status)+(hhm(g.hora) ? hhm(g.hora)+' · ' : '')+esc(g.paciente)+'</b><small>'+esc(sig[g.clinica_id] || '')+' · '+esc(nomeT[g.tele_id] || 'Tele')+'</small></button>';
     const semHora = its.filter(g => !g.hora), linhas = (semHora.length ? [['Sem horário', null]] : []).concat(agHoras(its).map(h => [h, h]));
-    return '<div class="ag-gw"><div class="ag-g" style="grid-template-columns:52px repeat(7, minmax(108px, 1fr))"><div class="ag-h"></div>'
+    return agFaixa(its)+'<div class="ag-gw"><div class="ag-g" style="grid-template-columns:52px repeat(7, minmax(108px, 1fr))"><div class="ag-h"></div>'
       + dias.map((d, i) => '<div class="ag-h ag-hd'+(d === hoje() ? ' hoje' : '')+'"><b>'+DSEM[i]+'</b><small>'+dBR(d).slice(0, 5)+'</small></div>').join('')
       + linhas.map(([rot, h]) => '<div class="ag-t">'+esc(rot)+'</div>'+dias.map(d => '<div class="ag-x'+(d === hoje() ? ' hoje' : '')+'">'+its.filter(g => g.data_agendamento === d && (h === null ? !g.hora : (g.hora && agHorario(g.hora) === h))).map(card).join('')+'</div>').join('')).join('')+'</div></div>';
   }
@@ -2156,7 +2169,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       cel += '<button type="button" class="ag-md'+(dia === hoje() ? ' hoje' : '')+(l.length ? ' tem' : '')+'" data-dia="'+dia+'" style="--i:'+d+'"><span class="ag-mn">'+d+'</span>'+(l.length ? '<span class="ag-mt">'+l.length+'</span>' : '')
         + '<span class="ag-mc">'+chips.slice(0, 3).map(id => '<i style="--c:'+esc(agCor(Number(id)))+'">'+esc(sig[id] || '')+' '+por[id]+'</i>').join('')+(chips.length > 3 ? '<i class="mais">+'+(chips.length - 3)+'</i>' : '')+'</span></button>';
     }
-    return '<div class="ag-mes"><div class="ag-mh">'+DSEM.map(x => '<span>'+x+'</span>').join('')+'</div><div class="ag-mg">'+cel+'</div></div>';
+    return agFaixa(its)+'<div class="ag-mes"><div class="ag-mh">'+DSEM.map(x => '<span>'+x+'</span>').join('')+'</div><div class="ag-mg">'+cel+'</div></div>';
   }
   async function agendaGrade(dir){
     const pal = $('#ag-palco'); if (!pal) return;
@@ -2197,7 +2210,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const nomeT = Object.fromEntries(AG.teles.map(t => [t.id, t.nome])), c = AG.clinicas.find(x => x.id === g.clinica_id) || {};
     const quando = t => new Date(t).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
     const dh = o => o ? dBR(o.data)+(o.hora ? ' às '+hhm(o.hora) : '') : '';
-    const rot = l => l.acao === 'confirmar' ? (l.depois && l.depois.status === 'confirmado' ? 'Confirmado pelo paciente' : 'Confirmação desfeita') : l.acao === 'criar' ? 'Agendamento criado' : l.acao === 'alterar' ? 'Alterado de '+dh(l.antes)+' para '+dh(l.depois) : l.acao === 'conversa' ? 'Nova conversa incluída' : l.acao === 'resultado' ? (l.depois && l.depois.status === 'nao_fechou' ? 'Não fechou — '+((l.depois.motivo || '')+(l.depois.obs ? ' ('+l.depois.obs+')' : '')) : l.depois && l.depois.status === 'fechado' ? 'Fechou o contrato' : 'Resultado desfeito') : 'Agendamento excluído';
+    const rot = l => l.acao === 'confirmar' ? (l.depois && l.depois.status === 'confirmado' ? 'Confirmado pelo paciente' : 'Confirmação desfeita') : l.acao === 'criar' ? 'Agendamento criado' : l.acao === 'alterar' ? 'Alterado de '+dh(l.antes)+' para '+dh(l.depois) : l.acao === 'conversa' ? 'Nova conversa incluída' : l.acao === 'resultado' ? (l.depois && l.depois.status === 'nao_fechou' ? 'Não fechou — '+((l.depois.motivo || '')+(l.depois.obs ? ' ('+l.depois.obs+')' : '')) : l.depois && l.depois.status === 'fechado' ? 'Fechou o contrato' : l.depois && l.depois.status === 'atendido' ? (l.antes && l.antes.status === 'atendido' ? 'Atendido' : l.antes && (l.antes.status === 'fechado' || l.antes.status === 'nao_fechou') ? 'Resultado desfeito (voltou a atendido)' : 'Paciente atendido') : 'Resultado desfeito') : 'Agendamento excluído';
     const m = document.createElement('div'); m.className = 'ag-modal'; m.setAttribute('role', 'dialog');
     m.innerHTML = '<div class="cx"><div class="line" style="justify-content:space-between"><b style="font-size:17px">'+esc(g.paciente)+'</b><button type="button" class="btn ghost" data-x>Fechar</button></div>'
       + '<p class="meta">'+esc(fmtTel(g.telefone))+' · '+esc(c.sigla || '')+' · '+dBR(g.data_agendamento)+(g.hora ? ' às '+hhm(g.hora) : '')+' · lançado por '+esc(nomeT[g.tele_id] || 'Tele')+' · '+agChip(g.status)+'</p>'
@@ -2210,15 +2223,15 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     agResultadoLiga(m, g);
   }
   const agMotivo = g => { const mo = AG.motivos.find(x => x.id === g.motivo_id); return (mo ? mo.nome : 'Motivo não informado')+(g.motivo_obs ? ' — '+g.motivo_obs : ''); };
+  const agMotNC = () => (AG.motivos.find(x => x.nome === 'Paciente não compareceu') || {}).id;
   function agResultadoHtml(g){
-    const liberado = g.data_agendamento <= hoje();
-    if (g.status === 'fechado' || g.status === 'nao_fechou')
-      return '<div class="ag-rs"><div class="btns"><button type="button" class="btn ghost" data-desfaz>Desfazer resultado</button></div><div class="err" data-err role="alert"></div></div>';
-    if (!liberado) return '<div class="ag-rs"><p class="meta">O resultado do atendimento poderá ser marcado a partir de '+dBR(g.data_agendamento)+'.</p></div>';
-    return '<div class="ag-rs"><b>Resultado do atendimento</b><div class="btns"><button type="button" class="btn" data-fechou>Fechado</button><button type="button" class="btn ghost" data-nao>Não fechou</button></div>'
-      + '<div class="form" data-nf hidden><label class="field">Motivo<select data-mot><option value="">Escolha...</option>'+AG.motivos.map(x => '<option value="'+x.id+'" data-o="'+(x.exige_obs ? 1 : 0)+'">'+esc(x.nome)+'</option>').join('')+'</select></label>'
-      + '<label class="field">Observação <small data-oh>(opcional)</small><textarea data-obs rows="2" maxlength="300"></textarea></label><button type="button" class="btn" data-salvar-nf>Salvar</button></div>'
-      + '<div class="err" data-err role="alert"></div></div>';
+    const des = '<button type="button" class="btn ghost" data-desfaz>Desfazer</button>';
+    if (g.status === 'fechado' || g.status === 'nao_fechou') return '<div class="ag-rs"><div class="btns">'+des+'</div><div class="err" data-err role="alert"></div></div>';
+    if (g.data_agendamento > hoje()) return '<div class="ag-rs"><p class="meta">O atendimento poderá ser marcado a partir de '+dBR(g.data_agendamento)+'.</p></div>';
+    const nf = '<div class="form" data-nf hidden><label class="field">Motivo<select data-mot><option value="">Escolha...</option>'+AG.motivos.filter(x => x.nome !== 'Paciente não compareceu').map(x => '<option value="'+x.id+'" data-o="'+(x.exige_obs ? 1 : 0)+'">'+esc(x.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="field">Observação <small data-oh>(opcional)</small><textarea data-obs rows="2" maxlength="300"></textarea></label><button type="button" class="btn" data-salvar-nf>Salvar</button></div>';
+    if (g.status === 'atendido') return '<div class="ag-rs"><b>Atendido. E o contrato?</b><div class="btns"><button type="button" class="btn" data-fechou>Fechado</button><button type="button" class="btn ghost" data-nao>Não fechou</button>'+des.replace('Desfazer', 'Desfazer atendimento')+'</div>'+nf+'<div class="err" data-err role="alert"></div></div>';
+    return '<div class="ag-rs"><b>Atendimento</b><div class="btns"><button type="button" class="btn" data-ate>Atendido</button><button type="button" class="btn ghost" data-nc>Não compareceu</button></div><div class="err" data-err role="alert"></div></div>';
   }
   function agResultadoLiga(m, g){
     const erro = t => { const e = m.querySelector('[data-err]'); if (e) e.textContent = t || ''; };
@@ -2228,11 +2241,12 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       if (r.error){ m.querySelectorAll('button').forEach(b => b.disabled = false); return erro(msgErro(r.error)); }
       m.remove(); agendaDados();
     };
-    const f = m.querySelector('[data-fechou]'); if (f) f.addEventListener('click', () => envia('fechado'));
-    const d = m.querySelector('[data-desfaz]'); if (d) d.addEventListener('click', () => envia('confirmado'));
-    const n = m.querySelector('[data-nao]'); if (n) n.addEventListener('click', () => { const bx = m.querySelector('[data-nf]'); bx.hidden = !bx.hidden; });
+    const on = (q, fn) => { const e = m.querySelector(q); if (e) e.addEventListener('click', fn); };
+    on('[data-ate]', () => envia('atendido')); on('[data-fechou]', () => envia('fechado')); on('[data-desfaz]', () => envia('desfazer'));
+    on('[data-nc]', () => { const id = agMotNC(); if (!id) return erro('Motivo "Paciente não compareceu" não encontrado.'); envia('nao_fechou', id); });
+    on('[data-nao]', () => { const bx = m.querySelector('[data-nf]'); bx.hidden = !bx.hidden; });
     const sel = m.querySelector('[data-mot]'); if (sel) sel.addEventListener('change', () => { const o = sel.selectedOptions[0]; const h = m.querySelector('[data-oh]'); if (h) h.textContent = o && o.dataset.o === '1' ? '(obrigatória)' : '(opcional)'; });
-    const sv = m.querySelector('[data-salvar-nf]'); if (sv) sv.addEventListener('click', () => {
+    on('[data-salvar-nf]', () => {
       const mot = Number(sel.value); if (!mot) return erro('Escolha o motivo.');
       const o = sel.selectedOptions[0], obs = m.querySelector('[data-obs]').value.trim();
       if (o.dataset.o === '1' && !obs) return erro('Descreva o motivo na observação.');
@@ -2242,7 +2256,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   /* ---- totalizadores por clínica / tele / motivos ---- */
   function agendaQuadro(){
     const alvo = $('#ag-quad'); if (!alvo) return;
-    const L = AG.itens, cols = [['agendado', 'Agendado'], ['confirmado', 'Confirmado'], ['fechado', 'Fechado'], ['nao_fechou', 'Não fechou']];
+    const L = AG.itens, cols = [['agendado', 'Agendado'], ['confirmado', 'Confirmado'], ['atendido', 'Atendido'], ['fechado', 'Fechado'], ['nao_fechou', 'Não fechou']];
     const pct = (a, b) => b > 0 ? Math.round(a / b * 100)+'%' : '—';
     const linha = (nome, l) => { const c = {}; cols.forEach(x => { c[x[0]] = l.filter(g => g.status === x[0]).length; }); return '<tr><td>'+esc(nome)+'</td><td>'+l.length+'</td>'+cols.map(x => '<td>'+c[x[0]]+'</td>').join('')+'<td>'+pct(c.fechado, c.fechado + c.nao_fechou)+'</td></tr>'; };
     let corpo = '';
