@@ -67,6 +67,9 @@ input:focus,select:focus{outline:none;background:var(--surface);border-color:var
 .dia i.pt{background:var(--accent)}
 .dia i.pt.ok{background:#1f9d4c}
 .okc{color:#14753a;font-weight:700}
+.okc.fe{color:#0b6a2e}.nfc{color:#b3200f;font-weight:700}
+.rs{display:grid;gap:10px;border-top:1px solid var(--line);padding-top:12px}.rs .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}.rs .nfb{display:grid;gap:10px}.rs [hidden]{display:none}
+.btn.verde.fe{background:linear-gradient(180deg,#14a04d,#0b7f3a)}.btn.verm{background:linear-gradient(180deg,#e0473c,#c4271c);color:#fff}
 .btn.verde{background:linear-gradient(180deg,#2bb35e,#1f9d4c);color:#fff}
 .dia.hj{box-shadow:inset 0 0 0 1.5px var(--accent)}
 .dia.sel{background:var(--accent);color:var(--on-accent)}
@@ -91,6 +94,7 @@ li:first-child>.ag-i{border-top:0}
 .gg-x{border-top:1px solid var(--line);border-left:1px solid var(--line);padding:3px;display:grid;gap:3px;align-content:start;min-height:40px}
 .gg-c{border:0;text-align:left;border-radius:8px;padding:5px 7px;display:grid;gap:0;background:color-mix(in srgb,var(--c) 18%,var(--surface));border-left:3px solid var(--c);color:var(--ink);font:500 12px var(--font);cursor:pointer}
 .gg-c.ok{background:color-mix(in srgb,#1f9d4c 16%,var(--surface));border-left-color:#1f9d4c}
+.gg-c.fe{background:color-mix(in srgb,#0f8a3c 34%,var(--surface));border-left-color:#0f8a3c}.gg-c.nf{background:color-mix(in srgb,#d4271c 15%,var(--surface));border-left-color:#d4271c}
 .gg-c b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gg-c small{color:var(--muted);font-size:10.5px}
 .ag-lg{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px;font-size:13px}
 .ag-lg span{color:var(--muted);font-weight:600;margin-right:4px}
@@ -411,6 +415,40 @@ li:first-child>.ag-i{border-top:0}
   const opHoras = (sel, dia) => { const l = horasDia(dia); if (dia && !l.length) return '<option value="">Sem atendimento aos domingos</option>'; return '<option value="">Escolha...</option>'+l.map(h => '<option value="'+h+'"'+(h === sel ? ' selected' : '')+'>'+h+'</option>').join(''); };
   const ligaHoras = (inpData, selHora) => { if (!inpData || !selHora) return; inpData.addEventListener('change', () => { const ant = selHora.value; selHora.innerHTML = opHoras(horasDia(inpData.value).includes(ant) ? ant : '', inpData.value); }); };
   const hh = h => h ? String(h).slice(0, 5) : '';
+  const stChip = g => g.status === 'confirmado' ? '<span class="okc">✓ Confirmado</span>' : g.status === 'fechado' ? '<span class="okc fe">★ Fechado</span>' : g.status === 'nao_fechou' ? '<span class="nfc">✕ Não fechou</span>' : 'Agendado';
+  let MOTIVOS = [];
+  async function motivosCarregar(){ if (MOTIVOS.length) return; const r = await sb.from('motivos_nao_fechou').select('id,nome,exige_obs').eq('ativo', true).order('ordem'); if (!r.error) MOTIVOS = r.data || []; }
+  const motivoTxt = g => { const m = MOTIVOS.find(x => x.id === g.motivo_id); return (m ? m.nome : 'Motivo não informado')+(g.motivo_obs ? ' — '+g.motivo_obs : ''); };
+  // resultado do atendimento (Fechado / Não fechou + motivo), a partir do dia do atendimento
+  function resultadoHtml(g){
+    if (g.status === 'fechado' || g.status === 'nao_fechou')
+      return (g.status === 'nao_fechou' ? '<p class="meta"><b>Motivo:</b> '+esc(motivoTxt(g))+'</p>' : '')+'<div class="rs"><button type="button" class="link" data-rs-desfaz style="justify-self:start">Desfazer resultado</button><div class="err" data-rs-err role="alert"></div></div>';
+    if (g.data_agendamento > hoje()) return '';
+    return '<div class="rs"><b>Resultado do atendimento</b><div class="btns"><button type="button" class="btn verde fe" data-rs-ok>Fechado</button><button type="button" class="btn verm" data-rs-nao>Não fechou</button></div>'
+      + '<div class="nfb" data-rs-nf hidden><label class="field">Motivo<select data-rs-mot><option value="">Escolha...</option>'+MOTIVOS.map(x => '<option value="'+x.id+'" data-o="'+(x.exige_obs ? 1 : 0)+'">'+esc(x.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="field">Observação <small data-rs-oh>(opcional)</small><textarea data-rs-obs rows="2" maxlength="300"></textarea></label><button type="button" class="btn" data-rs-salvar>Salvar</button></div>'
+      + '<div class="err" data-rs-err role="alert"></div></div>';
+  }
+  function resultadoLiga(ov, g, depois){
+    const erro = t => { const e = $('[data-rs-err]', ov); if (e) e.textContent = t || ''; };
+    const envia = async (res, mot, obs) => {
+      erro(''); $$('button', ov).forEach(b => b.disabled = true);
+      const r = await sb.rpc('definir_resultado', { p_id: g.id, p_resultado: res, p_motivo: mot || null, p_obs: obs || null });
+      if (r.error){ $$('button', ov).forEach(b => b.disabled = false); return erro(msgErro(r.error)); }
+      toast(res === 'fechado' ? 'Marcado como fechado.' : res === 'nao_fechou' ? 'Marcado como não fechou.' : 'Resultado desfeito.'); ov.remove(); depois();
+    };
+    const ok = $('[data-rs-ok]', ov), nao = $('[data-rs-nao]', ov), des = $('[data-rs-desfaz]', ov), sel = $('[data-rs-mot]', ov), sv = $('[data-rs-salvar]', ov);
+    if (ok) ok.addEventListener('click', () => envia('fechado'));
+    if (des) des.addEventListener('click', () => envia('confirmado'));
+    if (nao) nao.addEventListener('click', () => { const b = $('[data-rs-nf]', ov); b.hidden = !b.hidden; });
+    if (sel) sel.addEventListener('change', () => { const o = sel.selectedOptions[0], h = $('[data-rs-oh]', ov); if (h) h.textContent = o && o.dataset.o === '1' ? '(obrigatória)' : '(opcional)'; });
+    if (sv) sv.addEventListener('click', () => {
+      const mot = Number(sel.value); if (!mot) return erro('Escolha o motivo.');
+      const o = sel.selectedOptions[0], obs = $('[data-rs-obs]', ov).value.trim();
+      if (o.dataset.o === '1' && !obs) return erro('Descreva o motivo na observação.');
+      envia('nao_fechou', mot, obs);
+    });
+  }
   const AGP = { ano: 0, mes: 0, sel: '', itens: [], sig: {} };
 
   async function agendarCarregar(){
@@ -484,7 +522,7 @@ li:first-child>.ag-i{border-top:0}
     let cel = ''; for (let i = 0; i < vazios; i++) cel += '<span></span>';
     for (let d = 1; d <= n; d++){
       const k = ymd(a, m, d);
-      const todos = AGP.itens.filter(g => g.data_agendamento === k), tudoOk = todos.length > 0 && todos.every(g => g.status === 'confirmado');
+      const todos = AGP.itens.filter(g => g.data_agendamento === k), tudoOk = todos.length > 0 && todos.every(g => g.status !== 'agendado');
       cel += '<button type="button" class="dia'+(k === hoje() ? ' hj' : '')+(k === AGP.sel ? ' sel' : '')+'" data-d="'+k+'" aria-label="'+d+' de '+MESES[m]+(cont[k] ? ', '+cont[k]+' agendamento(s)' : '')+'"><b>'+d+'</b>'+(cont[k] ? '<i class="pt'+(tudoOk ? ' ok' : '')+'"></i>' : '<i></i>')+'</button>';
     }
     const dia = AGP.itens.filter(g => g.data_agendamento === AGP.sel).sort((x, y) => (x.hora || '99').localeCompare(y.hora || '99'));
@@ -494,7 +532,7 @@ li:first-child>.ag-i{border-top:0}
       + '<div class="cal">'+SEMANA.map(x => '<span class="sm">'+x+'</span>').join('')+cel+'</div></div>'
       + '<button type="button" class="btn block" id="g-novo">+ Novo agendamento</button>'
       + '<div class="card"><h2>'+dBR(AGP.sel)+(AGP.sel === hoje() ? ' · hoje' : '')+'</h2>'
-      + (dia.length ? '<ul class="items">'+dia.map(g => '<li><button type="button" class="ag-i" data-g="'+g.id+'"><span class="chip">'+(hh(g.hora) || 'sem horário')+'</span><span class="ag-n"><b>'+esc(g.paciente)+'</b><small>'+esc(fmtTelDigitos(g.telefone))+(g.status === 'confirmado' ? ' · <span class="okc">✓ Confirmado</span>' : '')+'</small></span><span class="sigla">'+esc(AGP.sig[g.clinica_id] || '')+'</span></button></li>').join('')+'</ul>' : '<div class="empty">Nenhum agendamento neste dia.</div>')
+      + (dia.length ? '<ul class="items">'+dia.map(g => '<li><button type="button" class="ag-i" data-g="'+g.id+'"><span class="chip">'+(hh(g.hora) || 'sem horário')+'</span><span class="ag-n"><b>'+esc(g.paciente)+'</b><small>'+esc(fmtTelDigitos(g.telefone))+(g.status !== 'agendado' ? ' · '+stChip(g) : '')+'</small></span><span class="sigla">'+esc(AGP.sig[g.clinica_id] || '')+'</span></button></li>').join('')+'</ul>' : '<div class="empty">Nenhum agendamento neste dia.</div>')
       + '</div>';
     $('#g-voltar').addEventListener('click', () => mostrar('inicio'));
     $('#g-novo').addEventListener('click', () => mostrar('agendar'));
@@ -505,18 +543,20 @@ li:first-child>.ag-i{border-top:0}
   }
   async function agendaAbrir(id){
     const g = AGP.itens.find(x => x.id === id); if (!g) return;
+    await motivosCarregar();
     const ps = await sb.from('agendamento_prints').select('*').eq('agendamento_id', id).order('criado_em');
     const urls = await Promise.all((ps.data || []).map(x => sb.storage.from('prints').createSignedUrl(x.path, 3600).then(r => r.data ? r.data.signedUrl : null)));
-    const editavel = g.data_agendamento >= hoje();
+    const comResultado = g.status === 'fechado' || g.status === 'nao_fechou', editavel = g.data_agendamento >= hoje() && !comResultado;
     const ov = document.createElement('div'); ov.className = 'sheet'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
     ov.innerHTML = '<div class="sh-c"><div class="line" style="justify-content:space-between"><h2 style="margin:0">'+esc(g.paciente)+'</h2><button type="button" class="sndbtn" data-x aria-label="Fechar">×</button></div>'
-      + '<p class="meta">'+esc(fmtTelDigitos(g.telefone))+' · <span class="sigla">'+esc(AGP.sig[g.clinica_id] || '')+'</span> · '+(g.status === 'confirmado' ? '<span class="okc">✓ Confirmado</span>' : 'Agendado')+'</p>'
+      + '<p class="meta">'+esc(fmtTelDigitos(g.telefone))+' · <span class="sigla">'+esc(AGP.sig[g.clinica_id] || '')+'</span> · '+stChip(g)+'</p>'
+      + resultadoHtml(g)
       + (editavel ? (g.status === 'confirmado'
           ? '<button type="button" class="link" id="e-desconf" style="justify-self:start">Desfazer confirmação</button>'
           : '<button type="button" class="btn verde block" id="e-conf">Confirmado</button>') : '')
       + '<div class="form"><div class="g2"><label class="field" for="e-data">Data<input id="e-data" type="date" min="'+hoje()+'" value="'+esc(g.data_agendamento)+'"'+(editavel ? '' : ' disabled')+'></label>'
       + '<label class="field" for="e-hora">Horário<select id="e-hora"'+(editavel ? '' : ' disabled')+'>'+opHoras(hh(g.hora), g.data_agendamento)+'</select></label></div>'
-      + (editavel ? '<button type="button" class="btn ghost" id="e-salvar">Salvar nova data e horário</button>' : '<p class="meta">Agendamentos de dias passados não podem ser alterados nem excluídos.</p>')
+      + (editavel ? '<button type="button" class="btn ghost" id="e-salvar">Salvar nova data e horário</button>' : '<p class="meta">'+(comResultado ? 'Agendamento com resultado: desfaça o resultado para remarcar.' : 'Agendamentos de dias passados não podem ser alterados nem excluídos.')+'</p>')
       + '<div class="field">Conversas ('+urls.filter(Boolean).length+')</div>'
       + urls.filter(Boolean).map(u => '<img class="cv" src="'+esc(u)+'" alt="Print da conversa">').join('')
       + '<div class="btns" style="align-items:center"><label class="btn ghost sm" for="e-img" style="display:inline-grid;place-items:center">+ Incluir nova conversa</label></div><input id="e-img" type="file" accept="image/*" hidden>'
@@ -534,6 +574,7 @@ li:first-child>.ag-i{border-top:0}
     };
     if (conf) conf.addEventListener('click', () => { conf.disabled = true; marca(true); });
     if (desconf) desconf.addEventListener('click', () => marca(false));
+    resultadoLiga(ov, g, () => agendaCarregar());
     ligaHoras($('#e-data', ov), $('#e-hora', ov));
     const salvar = $('#e-salvar', ov);
     if (salvar) salvar.addEventListener('click', async () => {
@@ -599,7 +640,7 @@ li:first-child>.ag-i{border-top:0}
     const nAg = r.data.length, vis = rp.data.reduce((t, x) => t + (x.visitas || 0), 0), ven = rp.data.reduce((t, x) => t + (x.vendas || 0), 0);
     const pct = (a, b) => b > 0 ? Math.round(a / b * 100)+'%' : '—';
     const tl = (rot, val, nota) => '<div class="tl"><span class="tl-r">'+rot+'</span><b class="tl-v">'+val+'</b><span class="tl-n">'+nota+'</span></div>';
-    $('#g-tot').innerHTML = '<div class="tiles gt">'+tl('Agendamentos', nAg, r.data.filter(g => g.status === 'confirmado').length+' confirmados')+tl('Visitas', vis, pct(vis, nAg)+' dos agend.')+tl('Vendas', ven, pct(ven, vis)+' das visitas')+tl('Agend. → venda', pct(ven, nAg), 'vendas ÷ agend.')+'</div>';
+    $('#g-tot').innerHTML = '<div class="tiles gt">'+tl('Agendamentos', nAg, r.data.filter(g => g.status !== 'agendado').length+' confirmados ou com resultado')+tl('Visitas', vis, pct(vis, nAg)+' dos agend.')+tl('Vendas', ven, pct(ven, vis)+' das visitas')+tl('Agend. → venda', pct(ven, nAg), 'vendas ÷ agend.')+'</div>';
     gGrade();
   }
   async function gGrade(){
@@ -615,7 +656,7 @@ li:first-child>.ag-i{border-top:0}
     const horas = horasDia(GA.dia); if (!horas.length && !r.data.length) horas.push('09:00');
     r.data.forEach(g => { if (g.hora && !horas.includes(slotDe(g))) horas.push(slotDe(g)); }); horas.sort();
     const semHora = r.data.filter(g => !g.hora), nomeT = Object.fromEntries(GA.teles.map(t => [t.id, t.nome.split(' ')[0]]));
-    const card = g => '<button type="button" class="gg-c'+(g.status === 'confirmado' ? ' ok' : '')+'" data-g="'+g.id+'" style="--c:'+esc((GA.clinicas.find(c => c.id === g.clinica_id) || {}).cor || '#5b9bff')+'"><b>'+(g.status === 'confirmado' ? '✓ ' : '')+(hh(g.hora) ? hh(g.hora)+' ' : '')+esc(g.paciente)+'</b><small>'+esc(nomeT[g.tele_id] || 'Tele')+'</small></button>';
+    const card = g => '<button type="button" class="gg-c'+(g.status === 'confirmado' ? ' ok' : g.status === 'fechado' ? ' fe' : g.status === 'nao_fechou' ? ' nf' : '')+'" data-g="'+g.id+'" style="--c:'+esc((GA.clinicas.find(c => c.id === g.clinica_id) || {}).cor || '#5b9bff')+'"><b>'+(g.status === 'confirmado' ? '✓ ' : g.status === 'fechado' ? '★ ' : g.status === 'nao_fechou' ? '✕ ' : '')+(hh(g.hora) ? hh(g.hora)+' ' : '')+esc(g.paciente)+'</b><small>'+esc(nomeT[g.tele_id] || 'Tele')+'</small></button>';
     const linhas = (semHora.length ? [['Sem hora', semHora]] : []).concat(horas.map(h => [h, r.data.filter(g => g.hora && slotDe(g) === h)]));
     const somaDia = n => { const x = new Date(GA.dia+'T12:00:00'); x.setDate(x.getDate() + n); return x.toLocaleDateString('sv-SE'); };
     alvo.innerHTML = '<div class="cal-top"><button type="button" class="sndbtn" id="gd-ant" aria-label="Dia anterior">‹</button><div style="text-align:center"><b>'+dBR(GA.dia)+(GA.dia === hoje() ? ' · hoje' : '')+'</b><div class="meta">'+r.data.length+' agendamento(s)</div></div><button type="button" class="sndbtn" id="gd-prox" aria-label="Próximo dia">›</button></div>'
@@ -629,19 +670,22 @@ li:first-child>.ag-i{border-top:0}
   }
   async function gDetalhe(id){
     const g = GA.diaItens.find(x => x.id === id); if (!g) return;
+    await motivosCarregar();
     const [ps, lg] = await Promise.all([sb.from('agendamento_prints').select('*').eq('agendamento_id', id).order('criado_em'), sb.from('agendamentos_log').select('*').eq('agendamento_id', id).order('quando')]);
     const urls = (await Promise.all((ps.data || []).map(x => sb.storage.from('prints').createSignedUrl(x.path, 600).then(r => r.data ? r.data.signedUrl : null)))).filter(Boolean);
     const nomeT = Object.fromEntries(GA.teles.map(t => [t.id, t.nome])), c = GA.clinicas.find(x => x.id === g.clinica_id) || {};
     const quando = t => new Date(t).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
     const dh = o => o ? dBR(o.data)+(o.hora ? ' às '+hh(o.hora) : '') : '';
-    const rot = l => l.acao === 'confirmar' ? (l.depois && l.depois.status === 'confirmado' ? 'Confirmado' : 'Confirmação desfeita') : l.acao === 'criar' ? 'Criado' : l.acao === 'alterar' ? 'Alterado de '+dh(l.antes)+' para '+dh(l.depois) : l.acao === 'conversa' ? 'Nova conversa incluída' : 'Excluído';
+    const rot = l => l.acao === 'confirmar' ? (l.depois && l.depois.status === 'confirmado' ? 'Confirmado' : 'Confirmação desfeita') : l.acao === 'criar' ? 'Criado' : l.acao === 'alterar' ? 'Alterado de '+dh(l.antes)+' para '+dh(l.depois) : l.acao === 'conversa' ? 'Nova conversa incluída' : l.acao === 'resultado' ? (l.depois && l.depois.status === 'nao_fechou' ? 'Não fechou — '+(l.depois.motivo || '')+(l.depois.obs ? ' ('+l.depois.obs+')' : '') : l.depois && l.depois.status === 'fechado' ? 'Fechou o contrato' : 'Resultado desfeito') : 'Excluído';
     const ov = document.createElement('div'); ov.className = 'sheet'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
     ov.innerHTML = '<div class="sh-c"><div class="line" style="justify-content:space-between"><h2 style="margin:0">'+esc(g.paciente)+'</h2><button type="button" class="sndbtn" data-x aria-label="Fechar">×</button></div>'
-      + '<p class="meta">'+esc(fmtTelDigitos(g.telefone))+' · <span class="sigla">'+esc(c.sigla || '')+'</span> · '+dBR(g.data_agendamento)+(g.hora ? ' às '+hh(g.hora) : '')+'</p><p class="meta">Lançado por '+esc(nomeT[g.tele_id] || 'Tele')+' · '+(g.status === 'confirmado' ? '<span class="okc">✓ Confirmado</span>' : 'Agendado')+'</p>'
+      + '<p class="meta">'+esc(fmtTelDigitos(g.telefone))+' · <span class="sigla">'+esc(c.sigla || '')+'</span> · '+dBR(g.data_agendamento)+(g.hora ? ' às '+hh(g.hora) : '')+'</p><p class="meta">Lançado por '+esc(nomeT[g.tele_id] || 'Tele')+' · '+stChip(g)+'</p>'
+      + resultadoHtml(g)
       + (urls.length ? urls.map(u => '<img class="cv" src="'+esc(u)+'" alt="Print da conversa">').join('') : '<div class="empty">Sem prints.</div>')
       + '<div><b>Histórico</b>'+((lg.data || []).length ? '<ul class="ag-lg">'+lg.data.map(l => '<li><span>'+quando(l.quando)+'</span> '+esc(rot(l))+'</li>').join('')+'</ul>' : '<p class="meta">Sem registros.</p>')+'</div></div>';
     ov.addEventListener('click', e => { if (e.target === ov || e.target.closest('[data-x]')) ov.remove(); });
     document.body.appendChild(ov);
+    resultadoLiga(ov, g, () => gGrade());
   }
 
   /* ---------- casca do app ---------- */

@@ -224,6 +224,23 @@ table.pd tr.tot td{font-weight:700}
 .ag-c{transition:transform .15s,box-shadow .15s}
 .ag-c.ok{background:color-mix(in srgb,#1f9d4c 16%,var(--surface));border-left-color:#1f9d4c}
 .ag-c.ok b{color:#14753a}
+.ag-c.fe{background:color-mix(in srgb,#0f8a3c 34%,var(--surface));border-left-color:#0f8a3c}.ag-c.fe b{color:#0b6a2e}
+.ag-c.nf{background:color-mix(in srgb,#d4271c 15%,var(--surface));border-left-color:#d4271c}.ag-c.nf b{color:#b3200f}
+.ag-st.fe{background:color-mix(in srgb,#0f8a3c 26%,transparent);color:#0b6a2e}.ag-st.nf{background:color-mix(in srgb,#d4271c 18%,transparent);color:#b3200f}
+.ag-tab{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 8px}
+.ag-tab button{border:0;background:var(--surface-2);color:var(--ink);font:600 12px var(--font-body);padding:6px 14px;border-radius:999px;cursor:pointer;min-height:30px}
+.ag-tab button[aria-pressed=true]{background:var(--accent);color:var(--on-accent)}
+.ag-tb{width:100%;border-collapse:collapse;font:500 12.5px var(--font-body)}
+.ag-tb th{font:700 10.5px var(--font-body);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.ag-tb td{text-align:right;padding:6px 8px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.ag-tb th:first-child,.ag-tb td:first-child{text-align:left;font-weight:600;white-space:nowrap}
+.ag-tb tfoot td{font-weight:800;border-top:2px solid var(--line)}
+.ag-tbw{overflow:auto;border:1px solid var(--line);border-radius:14px;padding:0 4px}
+.ag-mt2{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,2fr) auto;gap:10px;align-items:center;padding:5px 0;font:500 12.5px var(--font-body)}
+.ag-mt2 i{display:block;height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden}.ag-mt2 i u{display:block;height:100%;background:#d4271c;border-radius:999px}
+.ag-rs{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:10px}
+.ag-rs .btns{display:flex;flex-wrap:wrap;gap:8px}
+.ag-rs .form{display:grid;gap:8px}.ag-rs [hidden]{display:none}
 .ag-st{font-weight:700;font-size:11px;border-radius:999px;padding:2px 9px;background:var(--surface-2);color:var(--muted)}
 .ag-st.ok{background:color-mix(in srgb,#1f9d4c 16%,transparent);color:#14753a}
 .ag-c:hover{transform:translateY(-1px);box-shadow:0 4px 14px color-mix(in srgb,var(--c) 30%,transparent)}
@@ -232,7 +249,7 @@ table.pd tr.tot td{font-weight:700}
 .ag-mes{border:1px solid var(--line);border-radius:16px;overflow:hidden}
 .ag-mh,.ag-mg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
 .ag-mh span{padding:9px 8px;font:700 11.5px var(--font-body);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--surface-2);text-align:center}
-.ag-md,.ag-mv{min-height:104px;border-top:1px solid var(--line);border-left:1px solid var(--line)}
+.ag-md,.ag-mv{min-height:84px;border-top:1px solid var(--line);border-left:1px solid var(--line)}
 .ag-mg>:nth-child(7n+1){border-left:0}
 .ag-md{position:relative;border-right:0;border-bottom:0;background:var(--surface);color:var(--ink);cursor:pointer;text-align:left;padding:8px;display:grid;align-content:start;gap:6px;font:500 12px var(--font-body);transition:background .18s,transform .18s}
 .ag-md:hover{background:var(--surface-2);transform:scale(1.015);z-index:1;box-shadow:0 6px 22px rgba(0,0,0,.12)}
@@ -242,7 +259,7 @@ table.pd tr.tot td{font-weight:700}
 .ag-mc{display:grid;gap:3px}
 .ag-mc i{font-style:normal;font-weight:600;font-size:11px;border-radius:6px;padding:2px 6px;background:color-mix(in srgb,var(--c) 20%,var(--surface));border-left:3px solid var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ag-mc i.mais{--c:var(--muted);background:transparent;border-left:0;color:var(--muted)}
-@media (max-width:760px){.ag-nav{order:3;flex-basis:100%}.ag-md,.ag-mv{min-height:78px}.ag-mc i{font-size:10px}}
+@media (max-width:760px){.ag-nav{order:3;flex-basis:100%}.ag-md,.ag-mv{min-height:70px}.ag-mc i{font-size:10px}}
 @media (prefers-reduced-motion:reduce){.ag-palco.entrando,.ag-palco.entrando .ag-c,.ag-palco.entrando .ag-md{animation:none}.ag-palco.saindo,.ag-top,.ag-resumo,.topo,.side,.principal{transition:none}}
 .ag-sm{padding:12px 16px}
 .ag-sm h2{font-size:14px;margin:0 0 2px}
@@ -263,12 +280,13 @@ table.pd tr.tot td{font-weight:700}
 .ag-tl small{color:var(--muted);font-size:12.5px}
 .ag-gw{overflow:auto;border:1px solid var(--line);border-radius:16px;max-height:78vh}
 .ag-g{display:grid;min-width:max-content;width:100%}
-.ag-h{position:sticky;top:0;z-index:2;background:var(--surface);border-bottom:2px solid var(--c,var(--line));padding:10px 12px;display:grid;gap:1px}
-.ag-h small{color:var(--muted);font-size:12px;font-weight:500}
-.ag-t{padding:10px 8px;font:600 12px var(--font-body);color:var(--muted);border-top:1px solid var(--line);position:sticky;left:0;background:var(--surface);z-index:1}
-.ag-x{border-top:1px solid var(--line);border-left:1px solid var(--line);padding:4px;display:grid;gap:4px;align-content:start;min-height:44px}
-.ag-c{border:0;text-align:left;cursor:pointer;border-radius:10px;padding:6px 9px;display:grid;gap:1px;background:color-mix(in srgb,var(--c) 18%,var(--surface));border-left:4px solid var(--c);color:var(--ink);font:500 13px var(--font-body)}
-.ag-c small{color:var(--muted);font-size:11.5px}
+.ag-h{position:sticky;top:0;z-index:2;background:var(--surface);border-bottom:2px solid var(--c,var(--line));padding:5px 8px;display:grid;gap:0;line-height:1.2;font-size:12px}
+.ag-h small{color:var(--muted);font-size:10.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag-t{padding:5px 6px;font:600 10.5px var(--font-body);color:var(--muted);border-top:1px solid var(--line);position:sticky;left:0;background:var(--surface);z-index:1}
+.ag-x{border-top:1px solid var(--line);border-left:1px solid var(--line);padding:2px;display:grid;gap:2px;align-content:start;min-height:26px}
+.ag-c{border:0;text-align:left;cursor:pointer;border-radius:7px;padding:2px 6px;display:grid;gap:0;line-height:1.25;background:color-mix(in srgb,var(--c) 18%,var(--surface));border-left:3px solid var(--c);color:var(--ink);font:500 11.5px var(--font-body);min-width:0}
+.ag-c b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag-c small{color:var(--muted);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ag-log{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px;font-size:13px;text-align:left}
 .ag-log span{color:var(--muted);font-weight:600;margin-right:4px}
 .ag-r{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}
@@ -544,6 +562,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.7.0', '2026-11-11', 'Agenda das teles: grid menor; status Agendado, Confirmado, Fechado e Não fechou (com motivo guardado); filtro por status e totais por clínica, tele e motivo.'],
     ['1.6.1', '2026-11-11', 'Grade da agenda segue o horário de atendimento: seg–sex 09:00–18:00 e sábado 08:00–13:00.'],
     ['1.6.0', '2026-11-11', 'Agendamento com status agendado e confirmado (marcado pela tele no app). Mês atual seleciona o mês inteiro. Visitas e vendas da agenda contam só as teles.'],
     ['1.5.1', '2026-11-11', 'Convites e links de nova senha nunca saem com ponto no fim do endereço (causa do aviso "conexão não privada").'],
@@ -1993,22 +2012,27 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 
   /* ---------- agenda das teles: agendamentos lançados no app ---------- */
   const mesIni = () => hoje().slice(0, 8)+'01';
-  const AG = { ini: mesIni(), fim: hoje(), dia: hoje(), vis: 'dia', tk: 0, tele: '', clin: '', teles: [], clinicas: [] };
+  const AG = { ini: mesIni(), fim: hoje(), dia: hoje(), vis: 'dia', tk: 0, tele: '', clin: '', st: '', agrup: 'clin', teles: [], clinicas: [], motivos: [], todos: [] };
+  const AG_ST = { agendado: 'Agendado', confirmado: 'Confirmado', fechado: 'Fechado', nao_fechou: 'Não fechou' };
+  const agStCls = st => st === 'confirmado' ? 'ok' : st === 'fechado' ? 'fe' : st === 'nao_fechou' ? 'nf' : '';
+  const agIco = st => st === 'confirmado' ? '✓ ' : st === 'fechado' ? '★ ' : st === 'nao_fechou' ? '✕ ' : '';
+  const agChip = st => '<span class="ag-st '+agStCls(st)+'">'+(AG_ST[st] || 'Agendado')+'</span>';
   const hhm = h => h ? String(h).slice(0, 5) : '';
   const nlin = (a, b) => b.length ? a+' de '+b : a;
   async function agendaCarregar(){
     $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
     $('#area').innerHTML = '<div class="card full"><p class="sub">Carregando...</p></div>';
-    const rs = await Promise.all([sb.from('usuarios').select('id,nome,cargo').in('cargo', ['Tele BH', 'Tele interno']).order('nome'), sb.from('clinicas').select('id,sigla,nome,cor,ativa').order('nome')]);
-    const er = rs[0].error || rs[1].error;
+    const rs = await Promise.all([sb.from('usuarios').select('id,nome,cargo').in('cargo', ['Tele BH', 'Tele interno']).order('nome'), sb.from('clinicas').select('id,sigla,nome,cor,ativa').order('nome'), sb.from('motivos_nao_fechou').select('id,nome,exige_obs').eq('ativo', true).order('ordem')]);
+    const er = rs[0].error || rs[1].error || rs[2].error;
     if (er){ $('#area').innerHTML = '<div class="card full"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
-    AG.teles = rs[0].data; AG.clinicas = rs[1].data;
+    AG.teles = rs[0].data; AG.clinicas = rs[1].data; AG.motivos = rs[2].data;
     $('#area').innerHTML =
       '<div class="full ag-wrap"><div class="ag-top" id="ag-top"><div class="ag-top-in"><div class="ag-top-pad"><div class="card full ag-sm"><div class="vr-bar">'
       + '<label class="field" for="ag-ini">Data início<input id="ag-ini" type="date" value="'+esc(AG.ini)+'"></label>'
       + '<label class="field" for="ag-fim">Data fim<input id="ag-fim" type="date" value="'+esc(AG.fim)+'"></label>'
       + '<label class="field" for="ag-tele">Telemarketing<select id="ag-tele"><option value="">Todas</option>'+AG.teles.map(t => '<option value="'+t.id+'"'+(String(t.id) === String(AG.tele) ? ' selected' : '')+'>'+esc(t.nome)+'</option>').join('')+'</select></label>'
       + '<label class="field" for="ag-clin">Clínica<select id="ag-clin"><option value="">Todas</option>'+AG.clinicas.map(c => '<option value="'+c.id+'"'+(String(c.id) === String(AG.clin) ? ' selected' : '')+'>'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="field" for="ag-st">Status<select id="ag-st"><option value="">Todos</option>'+Object.keys(AG_ST).map(k => '<option value="'+k+'"'+(AG.st === k ? ' selected' : '')+'>'+AG_ST[k]+'</option>').join('')+'</select></label>'
       + '<button type="button" class="btn ghost" id="ag-mes">Mês atual</button></div></div>'
       + '<div class="full" id="ag-tot"></div></div></div></div>'
       + '<button type="button" class="ag-resumo" id="ag-resumo" aria-label="Mostrar filtros e totais"></button>'
@@ -2017,7 +2041,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + '<div class="ag-nav"><button type="button" class="ag-ib" id="gd-ant" aria-label="Anterior">‹</button><b class="ag-per" id="ag-per"></b><button type="button" class="ag-ib" id="gd-prox" aria-label="Próximo">›</button><button type="button" class="btn ghost" id="gd-hoje">Hoje</button></div>'
       + '<div class="ag-tools"><button type="button" class="ag-ib" id="ag-recolher" aria-label="Recolher filtros e totais" title="Recolher filtros e totais"><svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg></button>'
       + '<button type="button" class="ag-ib" id="ag-cheia" aria-label="Esconder o menu lateral" title="Tela cheia: esconde o menu lateral (Esc volta)"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button></div></div>'
-      + '<div class="ag-palco" id="ag-palco"></div></div></div><div class="full" id="ag-lista"></div>';
+      + '<div class="ag-palco" id="ag-palco"></div></div></div><div class="full" id="ag-quad"></div><div class="full" id="ag-lista"></div>';
     $('#v-app').classList.remove('sem-menu'); AG.fechado = false;
     $('#ag-recolher').addEventListener('click', () => agRecolher());
     $('#ag-resumo').addEventListener('click', () => agRecolher(false));
@@ -2025,8 +2049,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     $$('#ag-vis [data-v]').forEach(b => b.addEventListener('click', () => agVisao(b.dataset.v)));
     $('#gd-ant').addEventListener('click', () => agNavega(-1)); $('#gd-prox').addEventListener('click', () => agNavega(1));
     $('#gd-hoje').addEventListener('click', () => { const d = AG.dia === hoje() ? '' : (AG.dia < hoje() ? 'next' : 'prev'); AG.dia = hoje(); agendaGrade(d || 'fade'); });
-    const muda = () => { AG.ini = $('#ag-ini').value || mesIni(); AG.fim = $('#ag-fim').value || hoje(); AG.tele = $('#ag-tele').value; AG.clin = $('#ag-clin').value; agendaDados(); };
-    ['ag-ini', 'ag-fim', 'ag-tele', 'ag-clin'].forEach(id => $('#'+id).addEventListener('change', muda));
+    const muda = () => { AG.ini = $('#ag-ini').value || mesIni(); AG.fim = $('#ag-fim').value || hoje(); AG.tele = $('#ag-tele').value; AG.clin = $('#ag-clin').value; AG.st = $('#ag-st').value; agendaDados(); };
+    ['ag-ini', 'ag-fim', 'ag-tele', 'ag-clin', 'ag-st'].forEach(id => $('#'+id).addEventListener('change', muda));
     $('#ag-mes').addEventListener('click', () => { AG.ini = mesIni(); AG.fim = hoje().slice(0, 8)+String(new Date(Number(hoje().slice(0, 4)), Number(hoje().slice(5, 7)), 0).getDate()).padStart(2, '0'); $('#ag-ini').value = AG.ini; $('#ag-fim').value = AG.fim; agendaDados(); });
     agendaDados();
   }
@@ -2041,19 +2065,19 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     if (!$('#ag-tot')) return;
     const er = r.error || rp.error;
     if (er){ $('#ag-tot').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
-    AG.itens = r.data;
+    AG.todos = r.data; AG.itens = AG.st ? r.data.filter(g => g.status === AG.st) : r.data;
     const nAg = r.data.length, vis = rp.data.reduce((t, x) => t + (x.visitas || 0), 0), ven = rp.data.reduce((t, x) => t + (x.vendas || 0), 0);
     const pct = (a, b) => b > 0 ? Math.round(a / b * 100)+'%' : '—';
     const tile = (rot, val, nota) => '<div class="ag-tl"><span>'+rot+'</span><b>'+val+'</b><small>'+(nota || '&nbsp;')+'</small></div>';
     $('#ag-tot').innerHTML = '<div class="card ag-sm"><h2>'+dBR(AG.ini)+' a '+dBR(AG.fim)+'</h2><div class="ag-tls">'
-      + tile('Agendamentos', nAg, r.data.filter(g => g.status === 'confirmado').length+' confirmados')
+      + tile('Agendamentos', nAg, r.data.filter(g => g.status !== 'agendado').length+' confirmados ou com resultado')
       + tile('Visitas', vis, pct(vis, nAg)+' dos agendamentos')
       + tile('Vendas', ven, pct(ven, vis)+' das visitas')
       + tile('Agendamento → venda', pct(ven, nAg), 'vendas ÷ agendamentos')
       + '</div><p class="sub" style="margin:6px 0 0;font-size:11.5px">Visitas e vendas: só das teles, pela planilha diária, no mesmo período e filtros.</p></div>';
     $('#ag-resumo').innerHTML = '<span>'+dBR(AG.ini).slice(0, 5)+' – '+dBR(AG.fim).slice(0, 5)+'</span><span>'+esc(AG.tele ? (AG.teles.find(t => String(t.id) === String(AG.tele)) || {}).nome || '' : 'Todas as teles')+'</span><span>'+esc(AG.clin ? (AG.clinicas.find(c => String(c.id) === String(AG.clin)) || {}).sigla || '' : 'Todas as clínicas')+'</span><b>'+nAg+' agend.</b><b>'+vis+' visitas</b><b>'+ven+' vendas</b><em>Mostrar</em>';
     agendaGrade(AG.primeira ? 'fade' : null); AG.primeira = true;
-    agendaLista();
+    agendaQuadro(); agendaLista();
   }
   /* ---- visões da agenda: dia, semana e mês, com transições ---- */
   const ymdD = d => d.toLocaleDateString('sv-SE');
@@ -2107,18 +2131,18 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   function agHtmlDia(its){
     const cols = AG.clinicas.filter(c => AG.clin ? String(c.id) === String(AG.clin) : (c.ativa || its.some(g => g.clinica_id === c.id))), nomeT = agNomeT();
     if (!cols.length) return '<div class="empty">Nenhuma clínica para mostrar.</div>';
-    let n = 0; const card = g => '<button type="button" class="ag-c'+(g.status === 'confirmado' ? ' ok' : '')+'" data-g="'+g.id+'" style="--c:'+esc(agCor(g.clinica_id))+';--i:'+(n++)+'"><b>'+(g.status === 'confirmado' ? '✓ ' : '')+(hhm(g.hora) ? hhm(g.hora)+' · ' : '')+esc(g.paciente)+'</b><small>'+esc(nomeT[g.tele_id] || 'Tele')+(g.status === 'confirmado' ? ' · confirmado' : '')+'</small></button>';
+    let n = 0; const card = g => '<button type="button" class="ag-c '+agStCls(g.status)+'" data-g="'+g.id+'" style="--c:'+esc(agCor(g.clinica_id))+';--i:'+(n++)+'"><b>'+agIco(g.status)+(hhm(g.hora) ? hhm(g.hora)+' · ' : '')+esc(g.paciente)+'</b><small>'+esc(nomeT[g.tele_id] || 'Tele')+(g.status !== 'agendado' ? ' · '+AG_ST[g.status].toLowerCase() : '')+'</small></button>';
     const semHora = its.filter(g => !g.hora), linhas = (semHora.length ? [['Sem horário', semHora]] : []).concat(agHoras(its, AG.dia).map(h => [h, its.filter(g => g.hora && agHorario(g.hora) === h)]));
-    return '<div class="ag-gw"><div class="ag-g" style="grid-template-columns:64px repeat('+cols.length+', minmax(150px, 1fr))"><div class="ag-h"></div>'
+    return '<div class="ag-gw"><div class="ag-g" style="grid-template-columns:52px repeat('+cols.length+', minmax(118px, 1fr))"><div class="ag-h"></div>'
       + cols.map(c => '<div class="ag-h" style="--c:'+esc(c.cor || '#5b9bff')+'"><b>'+esc(c.sigla)+'</b><small>'+esc(c.nome)+'</small></div>').join('')
       + linhas.map(([h, l]) => '<div class="ag-t">'+esc(h)+'</div>'+cols.map(c => '<div class="ag-x">'+l.filter(g => g.clinica_id === c.id).map(card).join('')+'</div>').join('')).join('')+'</div></div>';
   }
   function agHtmlSemana(its){
     const ini = iniSemana(AG.dia), dias = []; for (let i = 0; i < 7; i++) dias.push(somaDias(ini, i));
     const nomeT = agNomeT(), sig = Object.fromEntries(AG.clinicas.map(c => [c.id, c.sigla])); let n = 0;
-    const card = g => '<button type="button" class="ag-c'+(g.status === 'confirmado' ? ' ok' : '')+'" data-g="'+g.id+'" style="--c:'+esc(agCor(g.clinica_id))+';--i:'+(n++)+'"><b>'+(g.status === 'confirmado' ? '✓ ' : '')+(hhm(g.hora) ? hhm(g.hora)+' · ' : '')+esc(g.paciente)+'</b><small>'+esc(sig[g.clinica_id] || '')+' · '+esc(nomeT[g.tele_id] || 'Tele')+'</small></button>';
+    const card = g => '<button type="button" class="ag-c '+agStCls(g.status)+'" data-g="'+g.id+'" style="--c:'+esc(agCor(g.clinica_id))+';--i:'+(n++)+'"><b>'+agIco(g.status)+(hhm(g.hora) ? hhm(g.hora)+' · ' : '')+esc(g.paciente)+'</b><small>'+esc(sig[g.clinica_id] || '')+' · '+esc(nomeT[g.tele_id] || 'Tele')+'</small></button>';
     const semHora = its.filter(g => !g.hora), linhas = (semHora.length ? [['Sem horário', null]] : []).concat(agHoras(its).map(h => [h, h]));
-    return '<div class="ag-gw"><div class="ag-g" style="grid-template-columns:64px repeat(7, minmax(132px, 1fr))"><div class="ag-h"></div>'
+    return '<div class="ag-gw"><div class="ag-g" style="grid-template-columns:52px repeat(7, minmax(108px, 1fr))"><div class="ag-h"></div>'
       + dias.map((d, i) => '<div class="ag-h ag-hd'+(d === hoje() ? ' hoje' : '')+'"><b>'+DSEM[i]+'</b><small>'+dBR(d).slice(0, 5)+'</small></div>').join('')
       + linhas.map(([rot, h]) => '<div class="ag-t">'+esc(rot)+'</div>'+dias.map(d => '<div class="ag-x'+(d === hoje() ? ' hoje' : '')+'">'+its.filter(g => g.data_agendamento === d && (h === null ? !g.hora : (g.hora && agHorario(g.hora) === h))).map(card).join('')+'</div>').join('')).join('')+'</div></div>';
   }
@@ -2142,6 +2166,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     let q = sb.from('agendamentos').select('*').is('excluido_em', null).gte('data_agendamento', i).lte('data_agendamento', f).order('hora').limit(3000);
     if (AG.tele) q = q.eq('tele_id', Number(AG.tele));
     if (AG.clin) q = q.eq('clinica_id', Number(AG.clin));
+    if (AG.st) q = q.eq('status', AG.st);
     const sai = !reduz() && pal.firstElementChild && dir;
     const saindo = sai ? new Promise(ok => { pal.dataset.dir = dir; pal.classList.add('saindo'); setTimeout(ok, 130); }) : Promise.resolve();
     const [r] = await Promise.all([q, saindo]);
@@ -2159,7 +2184,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const alvo = $('#ag-lista'); if (!alvo) return;
     const nomeT = Object.fromEntries(AG.teles.map(t => [t.id, t.nome])), sig = Object.fromEntries(AG.clinicas.map(c => [c.id, c.sigla]));
     alvo.innerHTML = '<div class="card"><h2>Agendamentos do período <span class="chip" style="vertical-align:middle">'+AG.itens.length+'</span></h2>'
-      + (AG.itens.length ? AG.itens.slice().reverse().slice(0, 300).map(g => '<div class="ag-r"><div><b>'+esc(g.paciente)+'</b> <span class="sigla">'+esc(sig[g.clinica_id] || '')+'</span> <span class="ag-st'+(g.status === 'confirmado' ? ' ok' : '')+'">'+(g.status === 'confirmado' ? 'Confirmado' : 'Agendado')+'</span><p class="meta">'+esc(fmtTel(g.telefone))+' · '+dBR(g.data_agendamento)+(g.hora ? ' às '+hhm(g.hora) : '')+' · lançado por '+esc(nomeT[g.tele_id] || 'Tele')+'</p></div>'
+      + (AG.itens.length ? AG.itens.slice().reverse().slice(0, 300).map(g => '<div class="ag-r"><div><b>'+esc(g.paciente)+'</b> <span class="sigla">'+esc(sig[g.clinica_id] || '')+'</span> '+agChip(g.status)+'<p class="meta">'+esc(fmtTel(g.telefone))+' · '+dBR(g.data_agendamento)+(g.hora ? ' às '+hhm(g.hora) : '')+' · lançado por '+esc(nomeT[g.tele_id] || 'Tele')+(g.status === 'nao_fechou' ? ' · motivo: '+esc(agMotivo(g)) : '')+'</p></div>'
           + '<button type="button" class="btn ghost" data-g="'+g.id+'">Abrir</button></div>').join('')
         : '<div class="empty">Nenhum agendamento neste filtro.</div>')
       + '</div>';
@@ -2172,14 +2197,66 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const nomeT = Object.fromEntries(AG.teles.map(t => [t.id, t.nome])), c = AG.clinicas.find(x => x.id === g.clinica_id) || {};
     const quando = t => new Date(t).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
     const dh = o => o ? dBR(o.data)+(o.hora ? ' às '+hhm(o.hora) : '') : '';
-    const rot = l => l.acao === 'confirmar' ? (l.depois && l.depois.status === 'confirmado' ? 'Confirmado pelo paciente' : 'Confirmação desfeita') : l.acao === 'criar' ? 'Agendamento criado' : l.acao === 'alterar' ? 'Alterado de '+dh(l.antes)+' para '+dh(l.depois) : l.acao === 'conversa' ? 'Nova conversa incluída' : 'Agendamento excluído';
+    const rot = l => l.acao === 'confirmar' ? (l.depois && l.depois.status === 'confirmado' ? 'Confirmado pelo paciente' : 'Confirmação desfeita') : l.acao === 'criar' ? 'Agendamento criado' : l.acao === 'alterar' ? 'Alterado de '+dh(l.antes)+' para '+dh(l.depois) : l.acao === 'conversa' ? 'Nova conversa incluída' : l.acao === 'resultado' ? (l.depois && l.depois.status === 'nao_fechou' ? 'Não fechou — '+((l.depois.motivo || '')+(l.depois.obs ? ' ('+l.depois.obs+')' : '')) : l.depois && l.depois.status === 'fechado' ? 'Fechou o contrato' : 'Resultado desfeito') : 'Agendamento excluído';
     const m = document.createElement('div'); m.className = 'ag-modal'; m.setAttribute('role', 'dialog');
     m.innerHTML = '<div class="cx"><div class="line" style="justify-content:space-between"><b style="font-size:17px">'+esc(g.paciente)+'</b><button type="button" class="btn ghost" data-x>Fechar</button></div>'
-      + '<p class="meta">'+esc(fmtTel(g.telefone))+' · '+esc(c.sigla || '')+' · '+dBR(g.data_agendamento)+(g.hora ? ' às '+hhm(g.hora) : '')+' · lançado por '+esc(nomeT[g.tele_id] || 'Tele')+' · <span class="ag-st'+(g.status === 'confirmado' ? ' ok' : '')+'">'+(g.status === 'confirmado' ? 'Confirmado' : 'Agendado')+'</span></p>'
+      + '<p class="meta">'+esc(fmtTel(g.telefone))+' · '+esc(c.sigla || '')+' · '+dBR(g.data_agendamento)+(g.hora ? ' às '+hhm(g.hora) : '')+' · lançado por '+esc(nomeT[g.tele_id] || 'Tele')+' · '+agChip(g.status)+'</p>'
+      + (g.status === 'nao_fechou' ? '<p class="meta"><b>Motivo:</b> '+esc(agMotivo(g))+'</p>' : '')
+      + agResultadoHtml(g)
       + (urls.filter(Boolean).length ? urls.filter(Boolean).map(u => '<img src="'+esc(u)+'" alt="Print da conversa">').join('') : '<div class="empty">Sem prints.</div>')
       + '<div><b>Histórico</b>'+((lg.data || []).length ? '<ul class="ag-log">'+lg.data.map(l => '<li><span>'+quando(l.quando)+'</span> '+esc(rot(l))+' <small>por '+esc(nomeT[l.usuario_id] || 'Tele')+'</small></li>').join('')+'</ul>' : '<p class="meta">Sem registros.</p>')+'</div></div>';
     m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-x]')) m.remove(); });
     document.body.appendChild(m);
+    agResultadoLiga(m, g);
+  }
+  const agMotivo = g => { const mo = AG.motivos.find(x => x.id === g.motivo_id); return (mo ? mo.nome : 'Motivo não informado')+(g.motivo_obs ? ' — '+g.motivo_obs : ''); };
+  function agResultadoHtml(g){
+    const liberado = g.data_agendamento <= hoje();
+    if (g.status === 'fechado' || g.status === 'nao_fechou')
+      return '<div class="ag-rs"><div class="btns"><button type="button" class="btn ghost" data-desfaz>Desfazer resultado</button></div><div class="err" data-err role="alert"></div></div>';
+    if (!liberado) return '<div class="ag-rs"><p class="meta">O resultado do atendimento poderá ser marcado a partir de '+dBR(g.data_agendamento)+'.</p></div>';
+    return '<div class="ag-rs"><b>Resultado do atendimento</b><div class="btns"><button type="button" class="btn" data-fechou>Fechado</button><button type="button" class="btn ghost" data-nao>Não fechou</button></div>'
+      + '<div class="form" data-nf hidden><label class="field">Motivo<select data-mot><option value="">Escolha...</option>'+AG.motivos.map(x => '<option value="'+x.id+'" data-o="'+(x.exige_obs ? 1 : 0)+'">'+esc(x.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="field">Observação <small data-oh>(opcional)</small><textarea data-obs rows="2" maxlength="300"></textarea></label><button type="button" class="btn" data-salvar-nf>Salvar</button></div>'
+      + '<div class="err" data-err role="alert"></div></div>';
+  }
+  function agResultadoLiga(m, g){
+    const erro = t => { const e = m.querySelector('[data-err]'); if (e) e.textContent = t || ''; };
+    const envia = async (res, mot, obs) => {
+      erro(''); m.querySelectorAll('button').forEach(b => b.disabled = true);
+      const r = await sb.rpc('definir_resultado', { p_id: g.id, p_resultado: res, p_motivo: mot || null, p_obs: obs || null });
+      if (r.error){ m.querySelectorAll('button').forEach(b => b.disabled = false); return erro(msgErro(r.error)); }
+      m.remove(); agendaDados();
+    };
+    const f = m.querySelector('[data-fechou]'); if (f) f.addEventListener('click', () => envia('fechado'));
+    const d = m.querySelector('[data-desfaz]'); if (d) d.addEventListener('click', () => envia('confirmado'));
+    const n = m.querySelector('[data-nao]'); if (n) n.addEventListener('click', () => { const bx = m.querySelector('[data-nf]'); bx.hidden = !bx.hidden; });
+    const sel = m.querySelector('[data-mot]'); if (sel) sel.addEventListener('change', () => { const o = sel.selectedOptions[0]; const h = m.querySelector('[data-oh]'); if (h) h.textContent = o && o.dataset.o === '1' ? '(obrigatória)' : '(opcional)'; });
+    const sv = m.querySelector('[data-salvar-nf]'); if (sv) sv.addEventListener('click', () => {
+      const mot = Number(sel.value); if (!mot) return erro('Escolha o motivo.');
+      const o = sel.selectedOptions[0], obs = m.querySelector('[data-obs]').value.trim();
+      if (o.dataset.o === '1' && !obs) return erro('Descreva o motivo na observação.');
+      envia('nao_fechou', mot, obs);
+    });
+  }
+  /* ---- totalizadores por clínica / tele / motivos ---- */
+  function agendaQuadro(){
+    const alvo = $('#ag-quad'); if (!alvo) return;
+    const L = AG.itens, cols = [['agendado', 'Agendado'], ['confirmado', 'Confirmado'], ['fechado', 'Fechado'], ['nao_fechou', 'Não fechou']];
+    const pct = (a, b) => b > 0 ? Math.round(a / b * 100)+'%' : '—';
+    const linha = (nome, l) => { const c = {}; cols.forEach(x => { c[x[0]] = l.filter(g => g.status === x[0]).length; }); return '<tr><td>'+esc(nome)+'</td><td>'+l.length+'</td>'+cols.map(x => '<td>'+c[x[0]]+'</td>').join('')+'<td>'+pct(c.fechado, c.fechado + c.nao_fechou)+'</td></tr>'; };
+    let corpo = '';
+    if (AG.agrup === 'mot'){
+      const nf = L.filter(g => g.status === 'nao_fechou'), por = {}; nf.forEach(g => { const k = g.motivo_id || 0; por[k] = (por[k] || 0) + 1; });
+      const ks = Object.keys(por).sort((a, b) => por[b] - por[a]), mx = Math.max(1, ...ks.map(k => por[k]));
+      corpo = ks.length ? ks.map(k => '<div class="ag-mt2"><span>'+esc((AG.motivos.find(x => String(x.id) === k) || { nome: 'Motivo não informado' }).nome)+'</span><i><u style="width:'+Math.round(por[k] / mx * 100)+'%"></u></i><b>'+por[k]+' · '+pct(por[k], nf.length)+'</b></div>').join('') : '<div class="empty">Nenhum "não fechou" neste filtro.</div>';
+    } else {
+      const grupos = AG.agrup === 'tele' ? AG.teles.map(t => [t.nome, L.filter(g => g.tele_id === t.id)]) : AG.clinicas.map(c => [c.sigla+' · '+c.nome, L.filter(g => g.clinica_id === c.id)]);
+      const lin = grupos.filter(x => x[1].length);
+      corpo = lin.length ? '<div class="ag-tbw"><table class="ag-tb"><thead><tr><th>'+(AG.agrup === 'tele' ? 'Tele' : 'Clínica')+'</th><th>Total</th>'+cols.map(x => '<th>'+x[1]+'</th>').join('')+'<th>% fechou</th></tr></thead><tbody>'+lin.map(x => linha(x[0], x[1])).join('')+'</tbody><tfoot>'+linha('Total', L).replace(/<td>Total<\/td>/, '<td>Total</td>')+'</tfoot></table></div>' : '<div class="empty">Sem agendamentos neste filtro.</div>';
+    }
+    alvo.innerHTML = '<div class="card ag-sm"><h2>Totais do período</h2><div class="ag-tab" role="group" aria-label="Agrupar por"><button type="button" data-a="clin" aria-pressed="'+(AG.agrup === 'clin')+'">Por clínica</button><button type="button" data-a="tele" aria-pressed="'+(AG.agrup === 'tele')+'">Por tele</button><button type="button" data-a="mot" aria-pressed="'+(AG.agrup === 'mot')+'">Motivos de não fechar</button></div>'+corpo+'</div>';
+    $$('#ag-quad [data-a]').forEach(b => b.addEventListener('click', () => { AG.agrup = b.dataset.a; agendaQuadro(); }));
   }
 
   const DS = { ano: 0, mes: 0, tk: 0, base: null, geo: null, proj: null, filtro: null, vb: null, full: null, anim: 0, nomes: {} };
