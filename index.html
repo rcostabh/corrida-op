@@ -573,6 +573,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.11.0', '2026-11-11', 'Luminoso e Indicação deixam de ser cargos de pessoa: agora são linhas fixas, em todas as clínicas, no Lançamento diário e na Planilha do mês (abaixo de promotores e teles), e entram nos totais.'],
     ['1.10.0', '2026-11-11', 'Agenda das teles: lupa com + e − para aumentar ou diminuir o zoom do grid (dia, semana e mês). O ajuste fica salvo neste aparelho.'],
     ['1.9.0', '2026-11-11', 'Pessoas: mais de um cargo por pessoa (ex.: Divulgador e Promotor, com uma linha para cada na planilha) e novo cargo Indicação. Gerência e Gestão veem só as linhas de promotor nos totais de vendas.'],
     ['1.8.0', '2026-11-11', 'Agenda: status Atendido, totais por clínica (agendamentos, confirmados, atendidos e fechamentos) no dia, na semana e no mês. Nomes das funções: Vendas, Gerência e Gestão.'],
@@ -753,7 +754,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 
   /* ---------- pessoas (gerentes e promotores) ---------- */
   let pessoas = [], vincs = [], clin = [], papelForm = 'promotor';
-  const CARGOS = ['Promotor','Tele BH','Tele interno','Divulgador','Luminoso','Promotor de teste','Indicação'];
+  const CARGOS = ['Promotor','Tele BH','Tele interno','Divulgador','Promotor de teste'];
   const soDigitos = v => String(v||'').replace(/\D/g,'');
   const fmtTel = v => { const d = soDigitos(v); return d.length === 11 ? '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7) : d.length === 10 ? '('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6) : d; };
   const clinicaDe = p => { const v = vincs.find(x => x.usuario_id === p.id); return v ? clin.find(c => c.id === v.clinica_id) : null; };
@@ -1556,6 +1557,9 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const TESTE = 'Promotor de teste';
   const PD_META = { 'Promotor': 30, 'Luminoso': 30, 'Tele BH': 45, 'Tele interno': 45, 'Promotor de teste': 30, 'Indicação': 30 };
   const PD_ORDEM = ['Promotor', 'Tele BH', 'Tele interno', 'Luminoso', 'Indicação'];
+  /* Luminoso e Indicação não são pessoas: são canais de visita que existem em todas as clínicas (tabela planilha_canal) */
+  const CANAIS = [['can_L', 'Luminoso'], ['can_I', 'Indicação']];
+  const pdCanais = rows => { const m = {}; (rows || []).forEach(x => { m[x.canal] = x; }); return CANAIS.map(c => ({ id: c[0], nome: c[1], cargo: c[1], canal: c[1], ativo: true, u: null, rc: '', _r: m[c[1]] })); };
   const PD_ROT = { 'Promotor': 'Promotores', 'Tele BH': 'Tele BH', 'Tele interno': 'Tele interno', 'Luminoso': 'Luminoso', 'Divulgador': 'Divulgadores', 'Indicação': 'Indicação' };
   /* uma pessoa com mais de um cargo aparece em uma linha por cargo: a principal (id numérico) e uma por cargo extra (id "N_cX") */
   const pdChave = (uid, cargo) => cargo ? uid+'_c'+CARGOS.indexOf(cargo) : uid;
@@ -1616,13 +1620,16 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const n = pdN(PD.ano, PD.mes), de = pdIso(PD.ano, PD.mes, 1), ate = pdIso(PD.ano, PD.mes, n), tk = ++PD.tk;
     const rs = await Promise.all([sb.rpc('equipe_clinica', { p_clinica: PD.clin, p_de: de, p_ate: ate }),
       sb.from('planilha_diaria').select('*').eq('clinica_id', PD.clin).gte('data_ref', de).lte('data_ref', ate).limit(5000),
-      sb.rpc('conferencia_corrida', { p_clinica: PD.clin, p_de: de, p_ate: ate }), pdExtras()]);
+      sb.rpc('conferencia_corrida', { p_clinica: PD.clin, p_de: de, p_ate: ate }), pdExtras(),
+      sb.from('planilha_canal').select('*').eq('clinica_id', PD.clin).gte('data_ref', de).lte('data_ref', ate).limit(1000)]);
     if (tk !== PD.tk) return;
-    const er = rs.slice(0, 3).map(r => r.error).find(Boolean); if (er){ pdErro(er); return; }
+    const er = [rs[0], rs[1], rs[2], rs[4]].map(r => r.error).find(Boolean); if (er){ pdErro(er); return; }
     const M = {}, lanc = {}, C = {};
     rs[1].data.forEach(r => { const d = Number(String(r.data_ref).slice(8)), k = pdChave(r.usuario_id, r.cargo); (M[k] = M[k] || {})[d] = [r.visitas, r.vendas]; lanc[d] = true; });
+    const cn = {}; CANAIS.forEach(c => { cn[c[1]] = c[0]; });
+    rs[4].data.forEach(r => { const d = Number(String(r.data_ref).slice(8)), k = cn[r.canal]; (M[k] = M[k] || {})[d] = [r.visitas, r.vendas]; lanc[d] = true; });
     (rs[2].data || []).forEach(c => { C[c.usuario_id+'|'+Number(String(c.data_ref).slice(8))] = c; });
-    const pes = pdExpandir(rs[0].data, rs[3]).filter(p => p.ativo || M[p.id]);
+    const pes = pdExpandir(rs[0].data, rs[3]).filter(p => p.ativo || M[p.id]).concat(pdCanais([]));
     PD.mapa = { M, lanc, C, pes, n };
     planDesenhar();
   }
@@ -1633,7 +1640,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const ids = a => a.map(p => p.id), idsC = c => ids(pes.filter(p => p.cargo === c));
     const tdiv = pdSoma(ids(div), M, n), rua = pdSoma(idsC('Promotor').concat(idsC('Luminoso'), idsC(TESTE), idsC('Indicação')), M, n), tele = pdSoma(idsC('Tele BH').concat(idsC('Tele interno')), M, n), todos = pdSoma(ids(ou), M, n);
     const mdiv = pdMetaDiv(pes, M, ids(div), n), rp = pdPct(rua.v, rua.s), tp = pdPct(tele.v, tele.s);
-    const cards = [['Eficiência da clínica', pdPct(todos.v, todos.s), mdiv, todos], ['Promotores, teste e Luminoso', rp, 30, rua], ['Teles (BH e interno)', tp, 45, tele], ['Divulgadores', pdPct(tdiv.v, tdiv.s), mdiv, tdiv]];
+    const cards = [['Eficiência da clínica', pdPct(todos.v, todos.s), mdiv, todos], ['Promotores, teste, Luminoso e Indicação', rp, 30, rua], ['Teles (BH e interno)', tp, 45, tele], ['Divulgadores', pdPct(tdiv.v, tdiv.s), mdiv, tdiv]];
     const placar = '<div class="pd-placar">'+cards.map(c => '<div class="pd-pc"><div class="k"><span>'+c[0]+'</span>'+pdPill(c[1], c[2])+'</div><div class="v">'+pf1(c[1]).replace('%','')+'<small>%</small></div>'
       + '<div class="b" title="Escala de 0 a 60%"><i style="width:'+Math.min(100, (c[1] || 0) / 60 * 100)+'%"></i>'+(c[2] != null ? '<u style="left:calc('+Math.min(100, c[2] / 60 * 100)+'% - 1px)"></u>' : '')+'</div>'
       + '<div class="f">Meta '+(c[2] != null ? pf1(c[2]) : '—')+' · '+c[3].s+' vendas · '+c[3].v+' visitas</div></div>').join('')+'</div>';
@@ -1706,12 +1713,14 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const dt = PD.data, tk = ++PD.tk;
     const rs = await Promise.all([sb.rpc('equipe_clinica', { p_clinica: PD.clin, p_de: dt, p_ate: dt }),
       sb.from('planilha_diaria').select('*').eq('clinica_id', PD.clin).eq('data_ref', dt),
-      sb.rpc('conferencia_corrida', { p_clinica: PD.clin, p_de: dt, p_ate: dt }), pdExtras()]);
+      sb.rpc('conferencia_corrida', { p_clinica: PD.clin, p_de: dt, p_ate: dt }), pdExtras(),
+      sb.from('planilha_canal').select('*').eq('clinica_id', PD.clin).eq('data_ref', dt)]);
     if (tk !== PD.tk) return;
-    const er = rs.slice(0, 3).map(r => r.error).find(Boolean); if (er){ pdErro(er); return; }
+    const er = [rs[0], rs[1], rs[2], rs[4]].map(r => r.error).find(Boolean); if (er){ pdErro(er); return; }
     const ex = {}; rs[1].data.forEach(r => { ex[pdChave(r.usuario_id, r.cargo)] = [r.visitas, r.vendas]; });
-    PD.existe = rs[1].data.length > 0;
-    PD.pessoas = pdExpandir(rs[0].data, rs[3]).filter(p => p.ativo || ex[p.id]);
+    PD.existe = rs[1].data.length > 0 || rs[4].data.length > 0;
+    const can = pdCanais(rs[4].data); can.forEach(c => { if (c._r) ex[c.id] = [c._r.visitas, c._r.vendas]; });
+    PD.pessoas = pdExpandir(rs[0].data, rs[3]).filter(p => p.ativo || ex[p.id]).concat(can);
     PD.r = {}; PD.pessoas.forEach(p => { PD.r[p.id] = ex[p.id] ? ex[p.id].slice() : [0, 0]; });
     PD.corr = {}; (rs[2].data || []).forEach(c => { PD.corr[c.usuario_id] = [c.visitas_corrida, c.vendas_corrida]; });
     diaDesenhar();
@@ -1733,7 +1742,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     $('#area').innerHTML = '<div class="pd-card" style="padding:16px 18px"><div class="pd-bar"><div><h2 style="margin:0">Lançamento diário</h2><p class="sub" style="margin:2px 0 0">'+esc(nomeDia)+(PD.existe ? ' · já lançado' : '')+'</p></div>'
       + '<div class="grp">'+pdSelClin()+'<div class="pd-mes"><button type="button" id="pd-dant" aria-label="Dia anterior">‹</button><input type="date" id="pd-data" value="'+esc(PD.data)+'" max="'+hj+'"'+' style="min-height:34px;padding:4px 8px"><button type="button" id="pd-dprox" aria-label="Próximo dia">›</button></div></div></div>'
       + (PD.pessoas.length ? '<div class="pd-lan" style="margin-top:14px"><div class="pd-card pd-box"><h2>Promotores e teles</h2>'+cab(true)
-        + PD_ORDEM.concat(TESTE).map(cg => { const a = ou.filter(p => p.cargo === cg); return a.length ? '<div class="pd-row g">'+(PD_ROT[cg] || 'Promotores de teste')+'</div>'+a.map(p => pdLinha(p, true)).join('') : ''; }).join('')
+        + ['Promotor', 'Tele BH', 'Tele interno', TESTE].map(cg => { const a = ou.filter(p => p.cargo === cg); return a.length ? '<div class="pd-row g">'+(PD_ROT[cg] || 'Promotores de teste')+'</div>'+a.map(p => pdLinha(p, true)).join('') : ''; }).join('')
+          + '<div class="pd-row g">Visitas sem promotor</div>'+ou.filter(p => p.canal).map(p => pdLinha(p, true)).join('')
           +'<p class="sub" style="margin:10px 0 0">Tab ou Enter passa para o próximo campo; setas ↑ ↓ descem e sobem na mesma coluna. Não achou alguém? A pessoa precisa atuar nesta clínica desde este dia (Cadastros › Pessoas › "Atua na clínica desde").</p></div>'
         + '<div class="pd-card pd-box"><h2>Divulgadores</h2><p class="sub" style="margin:0 0 6px">Quem atendeu as visitas. A soma deve ser igual à dos promotores e teles. Se não for, o dia fica marcado com !, mas pode ser salvo e corrigido depois.</p>'+cab(false)+(div.map(p => pdLinha(p, false)).join('') || '<div class="empty">Nenhum divulgador cadastrado nesta clínica.</div>')+'</div></div>'
         + '<div class="pd-conf" id="pd-conf"></div>'
@@ -1757,7 +1767,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   function diaConf(){
     const div = PD.pessoas.filter(p => p.cargo === 'Divulgador'), ou = PD.pessoas.filter(p => p.cargo !== 'Divulgador');
     const S = a => a.reduce((t, p) => [t[0] + PD.r[p.id][0], t[1] + PD.r[p.id][1]], [0, 0]), a = S(ou), b = S(div);
-    ou.forEach(p => { const el = $('#pd-c-'+p.id), c = PD.corr[p.u] || [0, 0], r = PD.r[p.id], ok = c[0] === r[0] && c[1] === r[1];
+    ou.forEach(p => { if (p.canal) return; const el = $('#pd-c-'+p.id), c = PD.corr[p.u] || [0, 0], r = PD.r[p.id], ok = c[0] === r[0] && c[1] === r[1];
       if (el) el.innerHTML = ok ? (c[0] || c[1] ? '<span class="pl ok">Bate</span>' : '<span class="pl nd">—</span>') : '<span class="pl no" title="Lançado na corrida">'+c[0]+' vis. / '+c[1]+' ven.</span>'; });
     const tele = ou.filter(p => p.cargo === 'Tele BH' || p.cargo === 'Tele interno').reduce((t, p) => t + PD.r[p.id][0], 0), rua = a[0] - tele;
     const meta = a[0] > 0 ? (rua * 30 + tele * 45) / a[0] : null;
@@ -1773,8 +1783,9 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 
   async function diaSalvar(){
     const bt = $('#pd-salvar'); bt.disabled = true; $('#pd-err').textContent = '';
-    const linhas = PD.pessoas.map(p => ({ usuario_id: p.u, cargo: p.rc, visitas: PD.r[p.id][0], vendas: PD.r[p.id][1] }));
-    const { error } = await sb.rpc('salvar_planilha_dia', { p_clinica: PD.clin, p_data: PD.data, p_linhas: linhas, p_motivo: null });
+    const linhas = PD.pessoas.filter(p => !p.canal).map(p => ({ usuario_id: p.u, cargo: p.rc, visitas: PD.r[p.id][0], vendas: PD.r[p.id][1] }));
+    const canais = PD.pessoas.filter(p => p.canal).map(p => ({ canal: p.canal, visitas: PD.r[p.id][0], vendas: PD.r[p.id][1] }));
+    const { error } = await sb.rpc('salvar_planilha_dia', { p_clinica: PD.clin, p_data: PD.data, p_linhas: linhas, p_motivo: null, p_canais: canais });
     if (error){ $('#pd-err').textContent = msgErro(error); bt.disabled = false; return; }
     toast('Dia salvo.'); diaCarregar();
   }
@@ -1872,7 +1883,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 
 
   /* ---------- mensagens push (enviar agora e programar) ---------- */
-  const MP_CARGOS = ['Promotor', 'Tele BH', 'Tele interno', 'Luminoso', 'Divulgador', 'Promotor de teste', 'Indicação', 'Gerente'];
+  const MP_CARGOS = ['Promotor', 'Tele BH', 'Tele interno', 'Divulgador', 'Promotor de teste', 'Gerente'];
   const MP_DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
   const MP_VARS = [['{nome}', 'Nome'], ['{visitas_ontem}', 'Visitas de ontem'], ['{vendas_ontem}', 'Vendas de ontem'], ['{vendas_semana}', 'Vendas 7 dias'], ['{visitas_mes}', 'Visitas do mês'], ['{vendas_mes}', 'Vendas do mês'], ['{fechamento_mes}', '% do mês'], ['{projecao}', 'Projeção do mês'], ['{falta_manter}', 'Falta p/ manter'], ['{falta_subir}', 'Falta p/ subir'], ['{situacao}', 'Situação (desce/mantém/sobe)']];
   const MP_MODELO = { titulo: 'Bom dia, {nome}! Seu resultado até ontem', texto: 'Ontem: {visitas_ontem} visitas e {vendas_ontem} vendas. Últimos 7 dias: {vendas_semana} vendas. No mês: {vendas_mes} vendas em {visitas_mes} visitas. Projeção do mês: {projecao} vendas. {situacao}' };
@@ -2343,7 +2354,9 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       tudo = tudo.concat(data);
       if (data.length < 1000 || tudo.length >= 50000) break;
     }
-    return { data: tudo };
+    const cn = await sb.from('planilha_canal').select('*').gte('data_ref', de).lte('data_ref', ate).limit(5000);
+    if (cn.error) return { error: cn.error };
+    return { data: tudo.concat((cn.data || []).map(x => ({ clinica_id: x.clinica_id, data_ref: x.data_ref, usuario_id: 0, cargo: x.canal, visitas: x.visitas, vendas: x.vendas }))) };
   }
   const dsMedia = (t, d) => d > 0 ? t / d : null;
   const dsNum = x => x == null ? '—' : x.toLocaleString('pt-BR', { maximumFractionDigits: 1 });

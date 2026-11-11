@@ -207,7 +207,7 @@ Deno.serve(async (req) => {
     const telefone = String(b.telefone || "").replace(/\D/g, "");
     const papel = b.papel;
     const cargo = papel === "promotor" ? b.cargo : null;
-    const CARGOS_OK = ["Promotor", "Tele BH", "Tele interno", "Divulgador", "Luminoso", "Promotor de teste", "Indicação"];
+    const CARGOS_OK = ["Promotor", "Tele BH", "Tele interno", "Divulgador", "Promotor de teste"];
     const cargosExtra: string[] = papel === "promotor" && Array.isArray(b.cargos_extra) ? [...new Set(b.cargos_extra.filter((c: string) => CARGOS_OK.includes(c) && c !== cargo))] as string[] : [];
     if (!["gerente", "promotor", "assistente"].includes(papel)) return json({ erro: "Escolha gerente, promotor ou assistente." }, 400);
     if (papel === "assistente" && !master) return json({ erro: "Só o gestor master cadastra assistentes." }, 403);
