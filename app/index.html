@@ -65,6 +65,9 @@ input:focus,select:focus{outline:none;background:var(--surface);border-color:var
 .dia b{font-weight:600}
 .dia i{width:6px;height:6px;border-radius:50%;display:block}
 .dia i.pt{background:var(--accent)}
+.dia i.pt.ok{background:#1f9d4c}
+.okc{color:#14753a;font-weight:700}
+.btn.verde{background:linear-gradient(180deg,#2bb35e,#1f9d4c);color:#fff}
 .dia.hj{box-shadow:inset 0 0 0 1.5px var(--accent)}
 .dia.sel{background:var(--accent);color:var(--on-accent)}
 .dia.sel i.pt{background:var(--on-accent)}
@@ -87,6 +90,7 @@ li:first-child>.ag-i{border-top:0}
 .gg-t{position:sticky;left:0;z-index:1;background:var(--surface);border-top:1px solid var(--line);padding:8px 4px;font:600 11px var(--font);color:var(--muted)}
 .gg-x{border-top:1px solid var(--line);border-left:1px solid var(--line);padding:3px;display:grid;gap:3px;align-content:start;min-height:40px}
 .gg-c{border:0;text-align:left;border-radius:8px;padding:5px 7px;display:grid;gap:0;background:color-mix(in srgb,var(--c) 18%,var(--surface));border-left:3px solid var(--c);color:var(--ink);font:500 12px var(--font);cursor:pointer}
+.gg-c.ok{background:color-mix(in srgb,#1f9d4c 16%,var(--surface));border-left-color:#1f9d4c}
 .gg-c b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gg-c small{color:var(--muted);font-size:10.5px}
 .ag-lg{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px;font-size:13px}
 .ag-lg span{color:var(--muted);font-weight:600;margin-right:4px}
@@ -371,7 +375,7 @@ li:first-child>.ag-i{border-top:0}
     const erroR = r.error ? '<div class="err">'+esc(msgErro(r.error))+'</div>' : '';
     const fn = (aba_, ico, tx) => '<button type="button" class="fn" data-ir="'+aba_+'">'+ICONES[ico]+'<span>'+tx+'</span></button>';
     $('#main').innerHTML =
-      '<div class="card"><h2>'+MESES[m].charAt(0).toUpperCase()+MESES[m].slice(1)+' de '+a+'</h2><p class="sub">'+(eu.papel === 'gerente' ? 'Números das suas clínicas no mês.' : 'Seus números no mês.')+'</p>'+erroR
+      '<div class="card"><h2>'+MESES[m].charAt(0).toUpperCase()+MESES[m].slice(1)+' de '+a+'</h2><p class="sub">'+(eu.papel === 'gerente' ? 'Números das teles da sua clínica no mês.' : 'Seus números no mês.')+'</p>'+erroR
       + '<div class="tiles">'
       + tile('Visitas', vis, proj(vis) != null ? 'projeção '+proj(vis) : '')
       + tile('Vendas', ven, proj(ven) != null ? 'projeção '+proj(ven) : '')
@@ -477,7 +481,8 @@ li:first-child>.ag-i{border-top:0}
     let cel = ''; for (let i = 0; i < vazios; i++) cel += '<span></span>';
     for (let d = 1; d <= n; d++){
       const k = ymd(a, m, d);
-      cel += '<button type="button" class="dia'+(k === hoje() ? ' hj' : '')+(k === AGP.sel ? ' sel' : '')+'" data-d="'+k+'" aria-label="'+d+' de '+MESES[m]+(cont[k] ? ', '+cont[k]+' agendamento(s)' : '')+'"><b>'+d+'</b>'+(cont[k] ? '<i class="pt"></i>' : '<i></i>')+'</button>';
+      const todos = AGP.itens.filter(g => g.data_agendamento === k), tudoOk = todos.length > 0 && todos.every(g => g.status === 'confirmado');
+      cel += '<button type="button" class="dia'+(k === hoje() ? ' hj' : '')+(k === AGP.sel ? ' sel' : '')+'" data-d="'+k+'" aria-label="'+d+' de '+MESES[m]+(cont[k] ? ', '+cont[k]+' agendamento(s)' : '')+'"><b>'+d+'</b>'+(cont[k] ? '<i class="pt'+(tudoOk ? ' ok' : '')+'"></i>' : '<i></i>')+'</button>';
     }
     const dia = AGP.itens.filter(g => g.data_agendamento === AGP.sel).sort((x, y) => (x.hora || '99').localeCompare(y.hora || '99'));
     $('#main').innerHTML =
@@ -486,7 +491,7 @@ li:first-child>.ag-i{border-top:0}
       + '<div class="cal">'+SEMANA.map(x => '<span class="sm">'+x+'</span>').join('')+cel+'</div></div>'
       + '<button type="button" class="btn block" id="g-novo">+ Novo agendamento</button>'
       + '<div class="card"><h2>'+dBR(AGP.sel)+(AGP.sel === hoje() ? ' · hoje' : '')+'</h2>'
-      + (dia.length ? '<ul class="items">'+dia.map(g => '<li><button type="button" class="ag-i" data-g="'+g.id+'"><span class="chip">'+(hh(g.hora) || 'sem horário')+'</span><span class="ag-n"><b>'+esc(g.paciente)+'</b><small>'+esc(fmtTelDigitos(g.telefone))+'</small></span><span class="sigla">'+esc(AGP.sig[g.clinica_id] || '')+'</span></button></li>').join('')+'</ul>' : '<div class="empty">Nenhum agendamento neste dia.</div>')
+      + (dia.length ? '<ul class="items">'+dia.map(g => '<li><button type="button" class="ag-i" data-g="'+g.id+'"><span class="chip">'+(hh(g.hora) || 'sem horário')+'</span><span class="ag-n"><b>'+esc(g.paciente)+'</b><small>'+esc(fmtTelDigitos(g.telefone))+(g.status === 'confirmado' ? ' · <span class="okc">✓ Confirmado</span>' : '')+'</small></span><span class="sigla">'+esc(AGP.sig[g.clinica_id] || '')+'</span></button></li>').join('')+'</ul>' : '<div class="empty">Nenhum agendamento neste dia.</div>')
       + '</div>';
     $('#g-voltar').addEventListener('click', () => mostrar('inicio'));
     $('#g-novo').addEventListener('click', () => mostrar('agendar'));
@@ -502,7 +507,10 @@ li:first-child>.ag-i{border-top:0}
     const editavel = g.data_agendamento >= hoje();
     const ov = document.createElement('div'); ov.className = 'sheet'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
     ov.innerHTML = '<div class="sh-c"><div class="line" style="justify-content:space-between"><h2 style="margin:0">'+esc(g.paciente)+'</h2><button type="button" class="sndbtn" data-x aria-label="Fechar">×</button></div>'
-      + '<p class="meta">'+esc(fmtTelDigitos(g.telefone))+' · <span class="sigla">'+esc(AGP.sig[g.clinica_id] || '')+'</span></p>'
+      + '<p class="meta">'+esc(fmtTelDigitos(g.telefone))+' · <span class="sigla">'+esc(AGP.sig[g.clinica_id] || '')+'</span> · '+(g.status === 'confirmado' ? '<span class="okc">✓ Confirmado</span>' : 'Agendado')+'</p>'
+      + (editavel ? (g.status === 'confirmado'
+          ? '<button type="button" class="link" id="e-desconf" style="justify-self:start">Desfazer confirmação</button>'
+          : '<button type="button" class="btn verde block" id="e-conf">Confirmado</button>') : '')
       + '<div class="form"><div class="g2"><label class="field" for="e-data">Data<input id="e-data" type="date" min="'+hoje()+'" value="'+esc(g.data_agendamento)+'"'+(editavel ? '' : ' disabled')+'></label>'
       + '<label class="field" for="e-hora">Horário<select id="e-hora"'+(editavel ? '' : ' disabled')+'>'+opHoras(hh(g.hora))+'</select></label></div>'
       + (editavel ? '<button type="button" class="btn ghost" id="e-salvar">Salvar nova data e horário</button>' : '<p class="meta">Agendamentos de dias passados não podem ser alterados nem excluídos.</p>')
@@ -516,6 +524,13 @@ li:first-child>.ag-i{border-top:0}
     const fechar = () => ov.remove(), erro = t => { $('#e-err', ov).textContent = t; };
     ov.addEventListener('click', e => { if (e.target === ov || e.target.closest('[data-x]')) fechar(); });
     const refaz = async () => { fechar(); await agendaCarregar(); };
+    const conf = $('#e-conf', ov), desconf = $('#e-desconf', ov);
+    const marca = async (valor) => {
+      const r = await sb.rpc('confirmar_agendamento', { p_id: id, p_confirmar: valor }); if (r.error) return erro(msgErro(r.error));
+      toast(valor ? 'Agendamento confirmado.' : 'Confirmação desfeita.'); refaz();
+    };
+    if (conf) conf.addEventListener('click', () => { conf.disabled = true; marca(true); });
+    if (desconf) desconf.addEventListener('click', () => marca(false));
     const salvar = $('#e-salvar', ov);
     if (salvar) salvar.addEventListener('click', async () => {
       const d = $('#e-data', ov).value, h = $('#e-hora', ov).value;
@@ -569,9 +584,9 @@ li:first-child>.ag-i{border-top:0}
   }
   async function gAgendaDados(){
     if (!$('#g-tot')) return;
-    let q = sb.from('agendamentos').select('id').is('excluido_em', null).gte('data_agendamento', GA.ini).lte('data_agendamento', GA.fim).limit(5000);
+    let q = sb.from('agendamentos').select('id,status').is('excluido_em', null).gte('data_agendamento', GA.ini).lte('data_agendamento', GA.fim).limit(5000);
     let pl = sb.from('planilha_diaria').select('visitas,vendas').gte('data_ref', GA.ini).lte('data_ref', GA.fim).limit(5000);
-    if (GA.tele){ q = q.eq('tele_id', Number(GA.tele)); pl = pl.eq('usuario_id', Number(GA.tele)); }
+    if (GA.tele){ q = q.eq('tele_id', Number(GA.tele)); pl = pl.eq('usuario_id', Number(GA.tele)); } else pl = pl.in('usuario_id', GA.teles.map(t => t.id));
     if (GA.clin){ q = q.eq('clinica_id', Number(GA.clin)); pl = pl.eq('clinica_id', Number(GA.clin)); }
     const [r, rp] = await Promise.all([q, pl]);
     if (!$('#g-tot')) return;
@@ -580,7 +595,7 @@ li:first-child>.ag-i{border-top:0}
     const nAg = r.data.length, vis = rp.data.reduce((t, x) => t + (x.visitas || 0), 0), ven = rp.data.reduce((t, x) => t + (x.vendas || 0), 0);
     const pct = (a, b) => b > 0 ? Math.round(a / b * 100)+'%' : '—';
     const tl = (rot, val, nota) => '<div class="tl"><span class="tl-r">'+rot+'</span><b class="tl-v">'+val+'</b><span class="tl-n">'+nota+'</span></div>';
-    $('#g-tot').innerHTML = '<div class="tiles gt">'+tl('Agendamentos', nAg, 'das teles')+tl('Visitas', vis, pct(vis, nAg)+' dos agend.')+tl('Vendas', ven, pct(ven, vis)+' das visitas')+tl('Agend. → venda', pct(ven, nAg), 'vendas ÷ agend.')+'</div>';
+    $('#g-tot').innerHTML = '<div class="tiles gt">'+tl('Agendamentos', nAg, r.data.filter(g => g.status === 'confirmado').length+' confirmados')+tl('Visitas', vis, pct(vis, nAg)+' dos agend.')+tl('Vendas', ven, pct(ven, vis)+' das visitas')+tl('Agend. → venda', pct(ven, nAg), 'vendas ÷ agend.')+'</div>';
     gGrade();
   }
   async function gGrade(){
@@ -596,7 +611,7 @@ li:first-child>.ag-i{border-top:0}
     const horas = []; for (let h = 8; h <= 19; h++){ horas.push(String(h).padStart(2, '0')+':00'); horas.push(String(h).padStart(2, '0')+':30'); }
     r.data.forEach(g => { if (g.hora && !horas.includes(slotDe(g))) horas.push(slotDe(g)); }); horas.sort();
     const semHora = r.data.filter(g => !g.hora), nomeT = Object.fromEntries(GA.teles.map(t => [t.id, t.nome.split(' ')[0]]));
-    const card = g => '<button type="button" class="gg-c" data-g="'+g.id+'" style="--c:'+esc((GA.clinicas.find(c => c.id === g.clinica_id) || {}).cor || '#5b9bff')+'"><b>'+(hh(g.hora) ? hh(g.hora)+' ' : '')+esc(g.paciente)+'</b><small>'+esc(nomeT[g.tele_id] || 'Tele')+'</small></button>';
+    const card = g => '<button type="button" class="gg-c'+(g.status === 'confirmado' ? ' ok' : '')+'" data-g="'+g.id+'" style="--c:'+esc((GA.clinicas.find(c => c.id === g.clinica_id) || {}).cor || '#5b9bff')+'"><b>'+(g.status === 'confirmado' ? '✓ ' : '')+(hh(g.hora) ? hh(g.hora)+' ' : '')+esc(g.paciente)+'</b><small>'+esc(nomeT[g.tele_id] || 'Tele')+'</small></button>';
     const linhas = (semHora.length ? [['Sem hora', semHora]] : []).concat(horas.map(h => [h, r.data.filter(g => g.hora && slotDe(g) === h)]));
     const somaDia = n => { const x = new Date(GA.dia+'T12:00:00'); x.setDate(x.getDate() + n); return x.toLocaleDateString('sv-SE'); };
     alvo.innerHTML = '<div class="cal-top"><button type="button" class="sndbtn" id="gd-ant" aria-label="Dia anterior">‹</button><div style="text-align:center"><b>'+dBR(GA.dia)+(GA.dia === hoje() ? ' · hoje' : '')+'</b><div class="meta">'+r.data.length+' agendamento(s)</div></div><button type="button" class="sndbtn" id="gd-prox" aria-label="Próximo dia">›</button></div>'
@@ -615,10 +630,10 @@ li:first-child>.ag-i{border-top:0}
     const nomeT = Object.fromEntries(GA.teles.map(t => [t.id, t.nome])), c = GA.clinicas.find(x => x.id === g.clinica_id) || {};
     const quando = t => new Date(t).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
     const dh = o => o ? dBR(o.data)+(o.hora ? ' às '+hh(o.hora) : '') : '';
-    const rot = l => l.acao === 'criar' ? 'Criado' : l.acao === 'alterar' ? 'Alterado de '+dh(l.antes)+' para '+dh(l.depois) : l.acao === 'conversa' ? 'Nova conversa incluída' : 'Excluído';
+    const rot = l => l.acao === 'confirmar' ? (l.depois && l.depois.status === 'confirmado' ? 'Confirmado' : 'Confirmação desfeita') : l.acao === 'criar' ? 'Criado' : l.acao === 'alterar' ? 'Alterado de '+dh(l.antes)+' para '+dh(l.depois) : l.acao === 'conversa' ? 'Nova conversa incluída' : 'Excluído';
     const ov = document.createElement('div'); ov.className = 'sheet'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
     ov.innerHTML = '<div class="sh-c"><div class="line" style="justify-content:space-between"><h2 style="margin:0">'+esc(g.paciente)+'</h2><button type="button" class="sndbtn" data-x aria-label="Fechar">×</button></div>'
-      + '<p class="meta">'+esc(fmtTelDigitos(g.telefone))+' · <span class="sigla">'+esc(c.sigla || '')+'</span> · '+dBR(g.data_agendamento)+(g.hora ? ' às '+hh(g.hora) : '')+'</p><p class="meta">Lançado por '+esc(nomeT[g.tele_id] || 'Tele')+'</p>'
+      + '<p class="meta">'+esc(fmtTelDigitos(g.telefone))+' · <span class="sigla">'+esc(c.sigla || '')+'</span> · '+dBR(g.data_agendamento)+(g.hora ? ' às '+hh(g.hora) : '')+'</p><p class="meta">Lançado por '+esc(nomeT[g.tele_id] || 'Tele')+' · '+(g.status === 'confirmado' ? '<span class="okc">✓ Confirmado</span>' : 'Agendado')+'</p>'
       + (urls.length ? urls.map(u => '<img class="cv" src="'+esc(u)+'" alt="Print da conversa">').join('') : '<div class="empty">Sem prints.</div>')
       + '<div><b>Histórico</b>'+((lg.data || []).length ? '<ul class="ag-lg">'+lg.data.map(l => '<li><span>'+quando(l.quando)+'</span> '+esc(rot(l))+'</li>').join('')+'</ul>' : '<p class="meta">Sem registros.</p>')+'</div></div>';
     ov.addEventListener('click', e => { if (e.target === ov || e.target.closest('[data-x]')) ov.remove(); });
