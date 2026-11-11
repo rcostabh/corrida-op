@@ -192,6 +192,12 @@ table.pd tr.tot td{font-weight:700}
 .mp-item:first-child{border-top:0}
 .mp-item .txt{color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 
+.ag-r{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}
+.ag-r:first-child{border-top:0}
+.ag-r .meta{margin:0}
+.ag-modal{position:fixed;inset:0;z-index:80;background:rgba(10,10,20,.7);display:grid;place-items:center;padding:20px}
+.ag-modal .cx{background:var(--surface);border-radius:22px;padding:16px;max-width:min(560px,100%);max-height:100%;overflow:auto;display:grid;gap:12px}
+.ag-modal img{max-width:100%;height:auto;border-radius:12px}
 .vr-bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:end}
 .vr-bar .field{min-width:150px}
 .vr-q{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
@@ -393,6 +399,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
         </div>
         <button type="button" data-r="relatorios" title="Relatórios"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span class="tx">Relatórios</span></button>
         <button type="button" data-r="mensagens" title="Mensagens push"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9a6 6 0 0 1 12 0c0 6 2 7 2 7H4s2-1 2-7z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg><span class="tx">Mensagens push</span></button>
+        <button type="button" data-r="agenda" title="Agenda das teles"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span class="tx">Agenda das teles</span></button>
         <button type="button" data-r="externo" title="Relatório NUV"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="17" height="12" rx="2"/><path d="M8 20h8M12 16v4"/><path d="M7 12l3-3 2.5 2 4-4"/></svg><span class="tx">Relatório NUV</span></button>
         <div class="sep"></div>
         <button type="button" data-g="cad" id="g-cad-btn" aria-expanded="false" aria-controls="g-cad" title="Cadastros"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7.5a2 2 0 0 1 2-2H10l2 2.5h6.5a2 2 0 0 1 2 2V17.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></svg><span class="tx">Cadastros</span><svg class="seta" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
@@ -436,6 +443,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.3.0', '2026-11-11', 'Nova tela Agenda das teles: todos os agendamentos lançados no app, por dia, telemarketing e clínica, com o print da conversa.'],
     ['1.2.0', '2026-11-11', 'Gerente: sem acesso a Campanhas; passa a ver e editar os promotores e divulgadores da própria clínica e a enviar convites.'],
     ['1.1.0', '2026-11-11', 'Perfil Gerente: vê todas as telas do painel, menos Pessoas, e só os dados da clínica dele. Controle de versão no topo.'],
     ['1.0.0', '2026-11-10', 'Versão inicial do painel.']
@@ -540,11 +548,12 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   async function carregar(){
     $('#area').style.gridTemplateColumns = '';
     marcarMenu();
-    if (recurso === 'campanhas' && (eu.papel === 'gerente' || modoVisao === 'gerente')){ recurso = 'inicio'; marcarMenu(); }
+    if ((recurso === 'campanhas' || recurso === 'agenda') && (eu.papel === 'gerente' || modoVisao === 'gerente')){ recurso = 'inicio'; marcarMenu(); }
     if (recurso === 'pessoas') return pessoasCarregar();
     if (recurso === 'campanhas') return campanhasCarregar();
     if (recurso === 'corrida') return corridaCarregar();
     if (recurso === 'relatorios') return relCarregar();
+    if (recurso === 'agenda') return agendaCarregar();
     if (recurso === 'externo') return externoCarregar();
     if (recurso === 'mensagens') return msgCarregar();
     if (recurso === 'inicio') return inicioCarregar();
@@ -1842,7 +1851,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   }
 
   /* ---------- menu lateral e início (dashboard) ---------- */
-  const TITULOS = { inicio: 'Início', corrida: 'Corrida', diario: 'Lançamento diário', planilha: 'Planilha do mês', ranking: 'Ranking de vendas', mensagens: 'Mensagens push', lancamentos: 'Lançamentos', relatorios: 'Relatórios', externo: 'Relatório NUV',
+  const TITULOS = { inicio: 'Início', corrida: 'Corrida', diario: 'Lançamento diário', planilha: 'Planilha do mês', ranking: 'Ranking de vendas', mensagens: 'Mensagens push', lancamentos: 'Lançamentos', relatorios: 'Relatórios', externo: 'Relatório NUV', agenda: 'Agenda das teles',
     clinicas: 'Clínicas', tipos: 'Tipos de lançamento', premios: 'Prêmios', pessoas: 'Pessoas', campanhas: 'Campanhas' };
   const CADASTROS = ['clinicas', 'tipos', 'premios', 'pessoas', 'campanhas'];
   const lerLS = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
@@ -1870,6 +1879,60 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       if (dentro && $('#v-app').classList.contains('aberto')) grupo(k, true);
       $('#g-'+k+'-btn').setAttribute('aria-current', dentro ? 'true' : 'false');
     });
+  }
+
+
+  /* ---------- agenda das teles: agendamentos lançados no app ---------- */
+  const AG = { dia: hoje(), modo: 'dia', tele: '', clin: '' };
+  async function agendaCarregar(){
+    $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const rs = await Promise.all([sb.from('usuarios').select('id,nome,cargo').in('cargo', ['Tele BH', 'Tele interno']).order('nome'), sb.from('clinicas').select('id,sigla,nome').order('nome')]);
+    const er = rs[0].error || rs[1].error;
+    if (er){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
+    AG.teles = rs[0].data; AG.clin = AG.clin || ''; AG.clinicas = rs[1].data;
+    $('#area').innerHTML =
+      '<div class="card full"><div class="vr-bar">'
+      + '<div class="seg" role="group" aria-label="Período"><button type="button" data-m="dia" aria-pressed="'+(AG.modo === 'dia')+'">Dia</button><button type="button" data-m="todos" aria-pressed="'+(AG.modo === 'todos')+'">Todos</button></div>'
+      + '<label class="field" for="ag-dia"'+(AG.modo === 'dia' ? '' : ' hidden')+' id="w-agdia">Dia do agendamento<input id="ag-dia" type="date" value="'+esc(AG.dia)+'"></label>'
+      + '<label class="field" for="ag-tele">Telemarketing<select id="ag-tele"><option value="">Todas</option>'+AG.teles.map(t => '<option value="'+t.id+'"'+(String(t.id) === String(AG.tele) ? ' selected' : '')+'>'+esc(t.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="field" for="ag-clin">Clínica<select id="ag-clin"><option value="">Todas</option>'+AG.clinicas.map(c => '<option value="'+c.id+'"'+(String(c.id) === String(AG.clin) ? ' selected' : '')+'>'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
+      + '</div></div><div id="ag-lista" class="full"></div>';
+    $$('#area .seg [data-m]').forEach(b => b.addEventListener('click', () => { AG.modo = b.dataset.m; agendaCarregar(); }));
+    $('#ag-dia').addEventListener('change', e => { AG.dia = e.target.value || hoje(); agendaLista(); });
+    $('#ag-tele').addEventListener('change', e => { AG.tele = e.target.value; agendaLista(); });
+    $('#ag-clin').addEventListener('change', e => { AG.clin = e.target.value; agendaLista(); });
+    agendaLista();
+  }
+  async function agendaLista(){
+    const alvo = $('#ag-lista'); if (!alvo) return;
+    alvo.innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    let q = sb.from('agendamentos').select('*').order('data_agendamento', { ascending: AG.modo === 'dia' }).order('criado_em', { ascending: false }).limit(500);
+    if (AG.modo === 'dia') q = q.eq('data_agendamento', AG.dia);
+    if (AG.tele) q = q.eq('tele_id', Number(AG.tele));
+    if (AG.clin) q = q.eq('clinica_id', Number(AG.clin));
+    const r = await q;
+    if (!$('#ag-lista')) return;
+    if (r.error){ alvo.innerHTML = '<div class="card"><div class="err">'+esc(msgErro(r.error))+'</div></div>'; return; }
+    const nomeT = Object.fromEntries(AG.teles.map(t => [t.id, t.nome])), sig = Object.fromEntries(AG.clinicas.map(c => [c.id, c.sigla]));
+    const porTele = {}; r.data.forEach(g => { porTele[g.tele_id] = (porTele[g.tele_id] || 0) + 1; });
+    AG.itens = r.data;
+    alvo.innerHTML = '<div class="card"><h2>'+(AG.modo === 'dia' ? 'Agendamentos de '+dBR(AG.dia) : 'Todos os agendamentos')+' <span class="chip" style="vertical-align:middle">'+r.data.length+'</span></h2>'
+      + (r.data.length ? '<div class="line" style="margin:6px 0 4px">'+Object.keys(porTele).map(id => '<span class="chip">'+esc(nomeT[id] || 'Tele')+' · '+porTele[id]+'</span>').join('')+'</div>'
+        + r.data.map(g => '<div class="ag-r"><div><b>'+esc(g.paciente)+'</b> <span class="sigla">'+esc(sig[g.clinica_id] || '')+'</span><p class="meta">'+esc(fmtTel(g.telefone))+' · '+(AG.modo === 'todos' ? dBR(g.data_agendamento)+' · ' : '')+'lançado por '+esc(nomeT[g.tele_id] || 'Tele')+'</p></div>'
+          + (g.print_path ? '<button type="button" class="btn ghost" data-pr="'+g.id+'">Ver print</button>' : '<span class="chip">Sem print</span>')+'</div>').join('')
+        : '<div class="empty">Nenhum agendamento neste filtro.</div>')
+      + '</div>';
+    $$('#ag-lista [data-pr]').forEach(b => b.addEventListener('click', () => agendaPrint(Number(b.dataset.pr))));
+  }
+  async function agendaPrint(id){
+    const g = (AG.itens || []).find(x => x.id === id); if (!g) return;
+    const u = await sb.storage.from('prints').createSignedUrl(g.print_path, 600);
+    if (u.error){ toast(msgErro(u.error)); return; }
+    const m = document.createElement('div'); m.className = 'ag-modal'; m.setAttribute('role', 'dialog');
+    m.innerHTML = '<div class="cx"><b>'+esc(g.paciente)+' · '+esc(fmtTel(g.telefone))+'</b><img src="'+esc(u.data.signedUrl)+'" alt="Print da conversa"><button type="button" class="btn ghost">Fechar</button></div>';
+    m.addEventListener('click', e => { if (e.target === m || e.target.closest('button')) m.remove(); });
+    document.body.appendChild(m);
   }
 
   const DS = { ano: 0, mes: 0, tk: 0, base: null, geo: null, proj: null, filtro: null, vb: null, full: null, anim: 0, nomes: {} };
@@ -2151,8 +2214,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const ger = modoVisao === 'gerente';
     $('#eyebrow').textContent = ger ? 'Painel da gerência' : (eu && eu.papel === 'assistente' ? 'Painel de suporte' : 'Painel do gestor');
     $$('#modo button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === modoVisao));
-    $$('#nav button[data-r]').forEach(b => { b.hidden = ger && b.dataset.r === 'campanhas'; });
-    if (ger && recurso === 'campanhas') recurso = 'inicio';
+    $$('#nav button[data-r]').forEach(b => { b.hidden = ger && (b.dataset.r === 'campanhas' || b.dataset.r === 'agenda'); });
+    if (ger && (recurso === 'campanhas' || recurso === 'agenda')) recurso = 'inicio';
     PD.clinicas = []; PD.ano = 0;
     if (recarregar) carregar();
   }
