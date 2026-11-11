@@ -251,6 +251,9 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 .side .marca{display:flex;align-items:center;gap:10px;padding:2px 4px 12px;min-height:52px}
 .side .marca img{width:40px;height:40px;border-radius:12px;flex:none;background:rgba(255,255,255,.18)}
 .side .marca b{font:700 15px/1.15 var(--font-display);letter-spacing:-.02em;white-space:nowrap}
+.ver{display:block;font-size:11px;font-weight:600;letter-spacing:.04em;opacity:.7;font-variant-numeric:tabular-nums}
+.side .ver{padding:0 4px 8px;margin-top:-8px}
+.login .ver{text-align:center;margin-top:6px;color:var(--muted)}
 .side .marca small{display:block;font-weight:600;font-size:11px;opacity:.8;letter-spacing:.02em}
 .side .tx{white-space:nowrap;overflow:hidden;opacity:0;width:0;transition:opacity .15s}
 #v-app.aberto .side .tx{opacity:1;width:auto}
@@ -356,6 +359,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       <div class="err" id="l-err" role="alert"></div>
       <button class="btn" type="submit" id="l-btn">Entrar</button>
       <button class="link" type="button" id="l-esqueci">Esqueci minha senha</button>
+      <span class="ver" id="ver-l"></span>
     </form>
   </div>
 
@@ -374,6 +378,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   <div id="v-app" hidden>
     <aside class="side" id="side" aria-label="Menu principal">
       <div class="marca"><img src="app/icon-192.png" alt="" width="40" height="40"><div class="tx"><b>Corrida OP</b><small id="eyebrow">Painel do gestor</small></div></div>
+      <span class="ver" id="ver" title=""></span>
       <button type="button" id="side-toggle" aria-expanded="false" aria-controls="nav" title="Abrir ou fechar o menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="tx">Recolher menu</span></button>
       <div class="sep"></div>
       <nav id="nav" aria-label="Seções" style="display:flex;flex-direction:column;gap:4px">
@@ -429,6 +434,13 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   let definindoSenha = veioDeLink;
 
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+  /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
+  const VERSOES = [
+    ['1.1.0', '2026-11-11', 'Perfil Gerente: vê todas as telas do painel, menos Pessoas, e só os dados da clínica dele. Controle de versão no topo.'],
+    ['1.0.0', '2026-11-10', 'Versão inicial do painel.']
+  ];
+  const VERSAO = VERSOES[0][0];
+  ['ver', 'ver-l'].forEach(id => { const e = document.getElementById(id); if (e){ e.textContent = 'v'+VERSAO; e.title = 'v'+VERSAO+' · '+VERSOES[0][1]+' · '+VERSOES[0][2]; } });
   let eu = null;           // linha da tabela usuarios
   /* gerente: só as clínicas em que atua aparecem em listas e totais */
   const soMinhasClin = q => q.then(r => { if (!r.error && eu && eu.papel === 'gerente' && eu.minhas) r.data = (r.data || []).filter(c => eu.minhas.includes(c.id)); return r; });
