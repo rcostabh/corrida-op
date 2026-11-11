@@ -192,6 +192,54 @@ table.pd tr.tot td{font-weight:700}
 .mp-item:first-child{border-top:0}
 .mp-item .txt{color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 
+.ag-top{display:grid;grid-template-rows:1fr;transition:grid-template-rows .34s cubic-bezier(.3,.7,.2,1),opacity .28s,margin .34s}
+.ag-wrap{display:grid;gap:0;min-width:0}
+.ag-top-in{overflow:hidden;min-height:0}
+.ag-top-pad{display:grid;gap:14px;padding-bottom:20px}
+.ag-top.fechado{grid-template-rows:0fr;opacity:0;pointer-events:none}
+.ag-resumo{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;text-align:left;border:0;background:var(--surface);color:var(--ink);border-radius:14px;box-shadow:var(--shadow);font:500 12.5px var(--font-body);cursor:pointer;padding:0 16px;max-height:0;opacity:0;overflow:hidden;margin:0;transition:max-height .34s cubic-bezier(.3,.7,.2,1),opacity .28s,padding .34s,margin .34s}
+.ag-resumo.on{max-height:90px;opacity:1;padding:10px 16px;margin-bottom:20px}
+.ag-resumo span{color:var(--muted)}.ag-resumo b{font-weight:700}.ag-resumo em{margin-left:auto;font-style:normal;font-weight:700;color:var(--accent)}
+.ag-card{padding:14px 16px}
+.ag-bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin-bottom:12px}
+.ag-nav{display:flex;align-items:center;gap:8px;flex:1;min-width:0;justify-content:center}
+.ag-per{min-width:170px;text-align:center;font:700 15px var(--font-body);color:var(--ink)}
+.ag-tools{display:flex;gap:8px;margin-left:auto}
+.ag-ib{border:0;background:var(--surface-2);color:var(--ink);width:38px;height:38px;border-radius:12px;display:grid;place-items:center;cursor:pointer;font:600 20px var(--font-body);transition:background .15s,transform .15s}
+.ag-ib:hover{background:var(--line)}.ag-ib:active{transform:scale(.94)}
+.ag-ib svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .3s}
+.ag-ib.inv{background:var(--accent);color:var(--on-accent)}
+#ag-recolher.inv svg{transform:rotate(180deg)}
+.ag-nav .btn{min-height:38px;padding:4px 14px;font-size:13px}
+.seg button{transition:background .2s,color .2s,box-shadow .2s}
+.ag-palco{--ex:0px;--es:1;--sx:0px;--ss:1;min-width:0}
+.ag-palco[data-dir=next]{--ex:34px;--sx:-22px}.ag-palco[data-dir=prev]{--ex:-34px;--sx:22px}
+.ag-palco[data-dir=zoom-in]{--es:.955;--ss:1.03}.ag-palco[data-dir=zoom-out]{--es:1.04;--ss:.97}
+.ag-palco.saindo{opacity:0;transform:translateX(var(--sx)) scale(var(--ss));transition:opacity .13s ease-in,transform .13s ease-in}
+.ag-palco.entrando{animation:agIn .36s cubic-bezier(.2,.8,.2,1) both}
+@keyframes agIn{from{opacity:0;transform:translateX(var(--ex)) scale(var(--es))}to{opacity:1;transform:none}}
+.ag-palco.entrando .ag-c{animation:agPop .4s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*18ms + 90ms)}
+.ag-palco.entrando .ag-md{animation:agPop .4s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0)*9ms)}
+@keyframes agPop{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
+.ag-c{transition:transform .15s,box-shadow .15s}
+.ag-c:hover{transform:translateY(-1px);box-shadow:0 4px 14px color-mix(in srgb,var(--c) 30%,transparent)}
+.ag-hd{text-align:center}.ag-hd b{font-weight:700}.ag-hd.hoje{background:color-mix(in srgb,var(--accent) 12%,var(--surface))}.ag-hd.hoje b{color:var(--accent)}
+.ag-x.hoje{background:color-mix(in srgb,var(--accent) 5%,transparent)}
+.ag-mes{border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.ag-mh,.ag-mg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.ag-mh span{padding:9px 8px;font:700 11.5px var(--font-body);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--surface-2);text-align:center}
+.ag-md,.ag-mv{min-height:104px;border-top:1px solid var(--line);border-left:1px solid var(--line)}
+.ag-mg>:nth-child(7n+1){border-left:0}
+.ag-md{position:relative;border-right:0;border-bottom:0;background:var(--surface);color:var(--ink);cursor:pointer;text-align:left;padding:8px;display:grid;align-content:start;gap:6px;font:500 12px var(--font-body);transition:background .18s,transform .18s}
+.ag-md:hover{background:var(--surface-2);transform:scale(1.015);z-index:1;box-shadow:0 6px 22px rgba(0,0,0,.12)}
+.ag-mn{font:700 14px var(--font-body)}
+.ag-md.hoje .ag-mn{background:var(--accent);color:var(--on-accent);border-radius:999px;width:26px;height:26px;display:grid;place-items:center;font-size:13px}
+.ag-mt{position:absolute;top:8px;right:8px;font:800 12px var(--font-body);background:var(--accent-soft,var(--surface-2));color:var(--accent);border-radius:999px;padding:2px 8px}
+.ag-mc{display:grid;gap:3px}
+.ag-mc i{font-style:normal;font-weight:600;font-size:11px;border-radius:6px;padding:2px 6px;background:color-mix(in srgb,var(--c) 20%,var(--surface));border-left:3px solid var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag-mc i.mais{--c:var(--muted);background:transparent;border-left:0;color:var(--muted)}
+@media (max-width:760px){.ag-nav{order:3;flex-basis:100%}.ag-md,.ag-mv{min-height:78px}.ag-mc i{font-size:10px}}
+@media (prefers-reduced-motion:reduce){.ag-palco.entrando,.ag-palco.entrando .ag-c,.ag-palco.entrando .ag-md{animation:none}.ag-palco.saindo,.ag-top,.ag-resumo,.topo,.side,.principal{transition:none}}
 .ag-sm{padding:12px 16px}
 .ag-sm h2{font-size:14px;margin:0 0 2px}
 .ag-sm .vr-bar{gap:8px 12px}
@@ -279,7 +327,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 #v-app{--sw:68px;display:block;min-height:100vh}
 #v-app.aberto{--sw:252px}
 .side{position:fixed;left:0;top:0;bottom:0;width:var(--sw);z-index:30;display:flex;flex-direction:column;gap:4px;padding:14px 10px;padding-left:max(10px,env(safe-area-inset-left,0px));
-  background:linear-gradient(180deg,var(--accent-2),var(--accent));color:var(--on-accent);overflow-y:auto;overflow-x:hidden;scrollbar-width:none;transition:width .22s cubic-bezier(.3,.7,.2,1);box-shadow:2px 0 24px rgba(0,0,0,.12)}
+  background:linear-gradient(180deg,var(--accent-2),var(--accent));color:var(--on-accent);overflow-y:auto;overflow-x:hidden;scrollbar-width:none;transition:width .22s cubic-bezier(.3,.7,.2,1),transform .34s cubic-bezier(.3,.7,.2,1),box-shadow .3s;box-shadow:2px 0 24px rgba(0,0,0,.12)}
 .side::-webkit-scrollbar{display:none}
 .side .marca{display:flex;align-items:center;gap:10px;padding:2px 4px 12px;min-height:52px}
 .side .marca img{width:40px;height:40px;border-radius:12px;flex:none;background:rgba(255,255,255,.18)}
@@ -305,7 +353,10 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 .principal{margin-left:var(--sw);transition:margin-left .22s cubic-bezier(.3,.7,.2,1);padding:18px 24px 56px;padding-right:max(24px,env(safe-area-inset-right,0px));min-width:0;max-width:1500px}
 @media (max-width:1000px){#v-app.aberto{--sw:252px}.principal{margin-left:68px}.side{box-shadow:none}#v-app.aberto .side{box-shadow:4px 0 40px rgba(0,0,0,.35)}}
 @media (max-width:600px){.principal{padding-inline:max(14px,env(safe-area-inset-left,0px)) max(14px,env(safe-area-inset-right,0px))}}
-.topo{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;margin-bottom:18px}
+.topo{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;margin-bottom:18px;max-height:200px;transition:max-height .34s cubic-bezier(.3,.7,.2,1),opacity .25s,margin .34s}
+#v-app.sem-menu .side{transform:translateX(-106%);box-shadow:none;pointer-events:none}
+#v-app.sem-menu .principal{margin-left:0}
+#v-app.sem-menu .topo{max-height:0;opacity:0;margin-bottom:0;overflow:hidden;pointer-events:none}
 .topo h1{font-size:clamp(24px,4vw,30px);margin:0}
 .topo .line{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
 .ds-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
@@ -486,6 +537,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.5.0', '2026-11-11', 'Agenda das teles: visões de dia, semana e mês com transições animadas; recolher filtros e totais; tela cheia que esconde o menu lateral.'],
     ['1.4.2', '2026-11-11', 'Link do e-mail (convite e nova senha) passa a ter um botão de confirmação, para o programa de e-mail não gastar o link antes da pessoa. Mensagem clara quando o link vence.'],
     ['1.4.1', '2026-11-11', 'Agenda das teles: cartões de filtros e totais menores, para a grade aparecer melhor.'],
     ['1.4.0', '2026-11-11', 'Agenda das teles com grade por clínica e horário, totalizadores Agendamento → Visita → Venda por período, tele e clínica, e histórico de alterações.'],
@@ -599,6 +651,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     if (recurso === 'campanhas') return campanhasCarregar();
     if (recurso === 'corrida') return corridaCarregar();
     if (recurso === 'relatorios') return relCarregar();
+    if (recurso !== 'agenda') $('#v-app').classList.remove('sem-menu');
     if (recurso === 'agenda') return agendaCarregar();
     if (recurso === 'externo') return externoCarregar();
     if (recurso === 'mensagens') return msgCarregar();
@@ -1930,7 +1983,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 
   /* ---------- agenda das teles: agendamentos lançados no app ---------- */
   const mesIni = () => hoje().slice(0, 8)+'01';
-  const AG = { ini: mesIni(), fim: hoje(), dia: hoje(), tele: '', clin: '', teles: [], clinicas: [] };
+  const AG = { ini: mesIni(), fim: hoje(), dia: hoje(), vis: 'dia', tk: 0, tele: '', clin: '', teles: [], clinicas: [] };
   const hhm = h => h ? String(h).slice(0, 5) : '';
   const nlin = (a, b) => b.length ? a+' de '+b : a;
   async function agendaCarregar(){
@@ -1941,13 +1994,27 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     if (er){ $('#area').innerHTML = '<div class="card full"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
     AG.teles = rs[0].data; AG.clinicas = rs[1].data;
     $('#area').innerHTML =
-      '<div class="card full ag-sm"><div class="vr-bar">'
+      '<div class="full ag-wrap"><div class="ag-top" id="ag-top"><div class="ag-top-in"><div class="ag-top-pad"><div class="card full ag-sm"><div class="vr-bar">'
       + '<label class="field" for="ag-ini">Data início<input id="ag-ini" type="date" value="'+esc(AG.ini)+'"></label>'
       + '<label class="field" for="ag-fim">Data fim<input id="ag-fim" type="date" value="'+esc(AG.fim)+'"></label>'
       + '<label class="field" for="ag-tele">Telemarketing<select id="ag-tele"><option value="">Todas</option>'+AG.teles.map(t => '<option value="'+t.id+'"'+(String(t.id) === String(AG.tele) ? ' selected' : '')+'>'+esc(t.nome)+'</option>').join('')+'</select></label>'
       + '<label class="field" for="ag-clin">Clínica<select id="ag-clin"><option value="">Todas</option>'+AG.clinicas.map(c => '<option value="'+c.id+'"'+(String(c.id) === String(AG.clin) ? ' selected' : '')+'>'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
       + '<button type="button" class="btn ghost" id="ag-mes">Mês atual</button></div></div>'
-      + '<div class="full" id="ag-tot"></div><div class="card full" id="ag-grid"></div><div class="full" id="ag-lista"></div>';
+      + '<div class="full" id="ag-tot"></div></div></div></div>'
+      + '<button type="button" class="ag-resumo" id="ag-resumo" aria-label="Mostrar filtros e totais"></button>'
+      + '<div class="card ag-card" id="ag-grid"><div class="ag-bar">'
+      + '<div class="seg" role="group" aria-label="Visão" id="ag-vis"><button type="button" data-v="dia">Dia</button><button type="button" data-v="sem">Semana</button><button type="button" data-v="mes">Mês</button></div>'
+      + '<div class="ag-nav"><button type="button" class="ag-ib" id="gd-ant" aria-label="Anterior">‹</button><b class="ag-per" id="ag-per"></b><button type="button" class="ag-ib" id="gd-prox" aria-label="Próximo">›</button><button type="button" class="btn ghost" id="gd-hoje">Hoje</button></div>'
+      + '<div class="ag-tools"><button type="button" class="ag-ib" id="ag-recolher" aria-label="Recolher filtros e totais" title="Recolher filtros e totais"><svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg></button>'
+      + '<button type="button" class="ag-ib" id="ag-cheia" aria-label="Esconder o menu lateral" title="Tela cheia: esconde o menu lateral (Esc volta)"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button></div></div>'
+      + '<div class="ag-palco" id="ag-palco"></div></div></div><div class="full" id="ag-lista"></div>';
+    $('#v-app').classList.remove('sem-menu'); AG.fechado = false;
+    $('#ag-recolher').addEventListener('click', () => agRecolher());
+    $('#ag-resumo').addEventListener('click', () => agRecolher(false));
+    $('#ag-cheia').addEventListener('click', () => agCheia());
+    $$('#ag-vis [data-v]').forEach(b => b.addEventListener('click', () => agVisao(b.dataset.v)));
+    $('#gd-ant').addEventListener('click', () => agNavega(-1)); $('#gd-prox').addEventListener('click', () => agNavega(1));
+    $('#gd-hoje').addEventListener('click', () => { const d = AG.dia === hoje() ? '' : (AG.dia < hoje() ? 'next' : 'prev'); AG.dia = hoje(); agendaGrade(d || 'fade'); });
     const muda = () => { AG.ini = $('#ag-ini').value || mesIni(); AG.fim = $('#ag-fim').value || hoje(); AG.tele = $('#ag-tele').value; AG.clin = $('#ag-clin').value; agendaDados(); };
     ['ag-ini', 'ag-fim', 'ag-tele', 'ag-clin'].forEach(id => $('#'+id).addEventListener('change', muda));
     $('#ag-mes').addEventListener('click', () => { AG.ini = mesIni(); AG.fim = hoje(); $('#ag-ini').value = AG.ini; $('#ag-fim').value = AG.fim; agendaDados(); });
@@ -1974,37 +2041,107 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + tile('Vendas', ven, pct(ven, vis)+' das visitas')
       + tile('Agendamento → venda', pct(ven, nAg), 'vendas ÷ agendamentos')
       + '</div><p class="sub" style="margin:6px 0 0;font-size:11.5px">Visitas e vendas: planilha diária, no mesmo período e filtros.</p></div>';
-    agendaGrade();
+    $('#ag-resumo').innerHTML = '<span>'+dBR(AG.ini).slice(0, 5)+' – '+dBR(AG.fim).slice(0, 5)+'</span><span>'+esc(AG.tele ? (AG.teles.find(t => String(t.id) === String(AG.tele)) || {}).nome || '' : 'Todas as teles')+'</span><span>'+esc(AG.clin ? (AG.clinicas.find(c => String(c.id) === String(AG.clin)) || {}).sigla || '' : 'Todas as clínicas')+'</span><b>'+nAg+' agend.</b><b>'+vis+' visitas</b><b>'+ven+' vendas</b><em>Mostrar</em>';
+    agendaGrade(AG.primeira ? 'fade' : null); AG.primeira = true;
     agendaLista();
   }
-  async function agendaGrade(){
-    const alvo = $('#ag-grid'); if (!alvo) return;
-    let q = sb.from('agendamentos').select('*').is('excluido_em', null).eq('data_agendamento', AG.dia).order('hora').limit(500);
+  /* ---- visões da agenda: dia, semana e mês, com transições ---- */
+  const ymdD = d => d.toLocaleDateString('sv-SE');
+  const somaDias = (str, n) => { const x = new Date(str+'T12:00:00'); x.setDate(x.getDate() + n); return ymdD(x); };
+  const iniSemana = str => { const x = new Date(str+'T12:00:00'); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return ymdD(x); };
+  const DSEM = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+  const MESES_L = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  const reduz = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function agIntervalo(){
+    if (AG.vis === 'dia') return [AG.dia, AG.dia];
+    if (AG.vis === 'sem'){ const i = iniSemana(AG.dia); return [i, somaDias(i, 6)]; }
+    const a = Number(AG.dia.slice(0, 4)), m = Number(AG.dia.slice(5, 7)) - 1;
+    return [AG.dia.slice(0, 8)+'01', AG.dia.slice(0, 8)+String(new Date(a, m + 1, 0).getDate()).padStart(2, '0')];
+  }
+  function agRotulo(){
+    const [i, f] = agIntervalo();
+    if (AG.vis === 'dia') return new Date(i+'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    if (AG.vis === 'sem') return dBR(i).slice(0, 5)+' – '+dBR(f).slice(0, 5)+' de '+f.slice(0, 4);
+    const m = Number(i.slice(5, 7)) - 1; return MESES_L[m].charAt(0).toUpperCase()+MESES_L[m].slice(1)+' de '+i.slice(0, 4);
+  }
+  function agRecolher(forca){
+    AG.fechado = forca === undefined ? !AG.fechado : forca; const t = $('#ag-top'); if (!t) return;
+    t.classList.toggle('fechado', AG.fechado); $('#ag-resumo').classList.toggle('on', AG.fechado);
+    $('#ag-recolher').classList.toggle('inv', AG.fechado);
+    $('#ag-recolher').setAttribute('aria-label', AG.fechado ? 'Mostrar filtros e totais' : 'Recolher filtros e totais');
+  }
+  function agCheia(forca){
+    const v = $('#v-app'); const on = forca === undefined ? !v.classList.contains('sem-menu') : forca;
+    v.classList.toggle('sem-menu', on); const b = $('#ag-cheia'); if (b){ b.classList.toggle('inv', on); b.setAttribute('aria-label', on ? 'Mostrar o menu lateral' : 'Esconder o menu lateral'); }
+  }
+  function agVisao(v){
+    if (v === AG.vis) return;
+    const ordem = { dia: 0, sem: 1, mes: 2 }, dir = ordem[v] > ordem[AG.vis] ? 'zoom-out' : 'zoom-in';
+    AG.vis = v; agendaGrade(dir);
+  }
+  function agNavega(n){
+    const passo = AG.vis === 'dia' ? n : AG.vis === 'sem' ? 7 * n : 0;
+    if (AG.vis === 'mes'){ const x = new Date(AG.dia.slice(0, 7)+'-01T12:00:00'); x.setMonth(x.getMonth() + n); AG.dia = ymdD(x); } else AG.dia = somaDias(AG.dia, passo);
+    agendaGrade(n > 0 ? 'next' : 'prev');
+  }
+  const agHorario = h => { const x = hhm(h); return x.slice(0, 2)+':'+(Number(x.slice(3)) >= 30 ? '30' : '00'); };
+  function agHoras(itens){
+    const horas = []; for (let h = 8; h <= 19; h++){ horas.push(String(h).padStart(2, '0')+':00'); horas.push(String(h).padStart(2, '0')+':30'); }
+    itens.forEach(g => { if (g.hora && !horas.includes(agHorario(g.hora))) horas.push(agHorario(g.hora)); });
+    return horas.sort();
+  }
+  const agCor = id => (AG.clinicas.find(c => c.id === id) || {}).cor || '#5b9bff';
+  const agNomeT = () => Object.fromEntries(AG.teles.map(t => [t.id, t.nome.split(' ')[0]]));
+  function agHtmlDia(its){
+    const cols = AG.clinicas.filter(c => AG.clin ? String(c.id) === String(AG.clin) : (c.ativa || its.some(g => g.clinica_id === c.id))), nomeT = agNomeT();
+    if (!cols.length) return '<div class="empty">Nenhuma clínica para mostrar.</div>';
+    let n = 0; const card = g => '<button type="button" class="ag-c" data-g="'+g.id+'" style="--c:'+esc(agCor(g.clinica_id))+';--i:'+(n++)+'"><b>'+(hhm(g.hora) ? hhm(g.hora)+' · ' : '')+esc(g.paciente)+'</b><small>'+esc(nomeT[g.tele_id] || 'Tele')+'</small></button>';
+    const semHora = its.filter(g => !g.hora), linhas = (semHora.length ? [['Sem horário', semHora]] : []).concat(agHoras(its).map(h => [h, its.filter(g => g.hora && agHorario(g.hora) === h)]));
+    return '<div class="ag-gw"><div class="ag-g" style="grid-template-columns:64px repeat('+cols.length+', minmax(150px, 1fr))"><div class="ag-h"></div>'
+      + cols.map(c => '<div class="ag-h" style="--c:'+esc(c.cor || '#5b9bff')+'"><b>'+esc(c.sigla)+'</b><small>'+esc(c.nome)+'</small></div>').join('')
+      + linhas.map(([h, l]) => '<div class="ag-t">'+esc(h)+'</div>'+cols.map(c => '<div class="ag-x">'+l.filter(g => g.clinica_id === c.id).map(card).join('')+'</div>').join('')).join('')+'</div></div>';
+  }
+  function agHtmlSemana(its){
+    const ini = iniSemana(AG.dia), dias = []; for (let i = 0; i < 7; i++) dias.push(somaDias(ini, i));
+    const nomeT = agNomeT(), sig = Object.fromEntries(AG.clinicas.map(c => [c.id, c.sigla])); let n = 0;
+    const card = g => '<button type="button" class="ag-c" data-g="'+g.id+'" style="--c:'+esc(agCor(g.clinica_id))+';--i:'+(n++)+'"><b>'+(hhm(g.hora) ? hhm(g.hora)+' · ' : '')+esc(g.paciente)+'</b><small>'+esc(sig[g.clinica_id] || '')+' · '+esc(nomeT[g.tele_id] || 'Tele')+'</small></button>';
+    const semHora = its.filter(g => !g.hora), linhas = (semHora.length ? [['Sem horário', null]] : []).concat(agHoras(its).map(h => [h, h]));
+    return '<div class="ag-gw"><div class="ag-g" style="grid-template-columns:64px repeat(7, minmax(132px, 1fr))"><div class="ag-h"></div>'
+      + dias.map((d, i) => '<div class="ag-h ag-hd'+(d === hoje() ? ' hoje' : '')+'"><b>'+DSEM[i]+'</b><small>'+dBR(d).slice(0, 5)+'</small></div>').join('')
+      + linhas.map(([rot, h]) => '<div class="ag-t">'+esc(rot)+'</div>'+dias.map(d => '<div class="ag-x'+(d === hoje() ? ' hoje' : '')+'">'+its.filter(g => g.data_agendamento === d && (h === null ? !g.hora : (g.hora && agHorario(g.hora) === h))).map(card).join('')+'</div>').join('')).join('')+'</div></div>';
+  }
+  function agHtmlMes(its){
+    const [i, f] = agIntervalo(), n = Number(f.slice(8)), vazios = (new Date(i+'T12:00:00').getDay() + 6) % 7, sig = Object.fromEntries(AG.clinicas.map(c => [c.id, c.sigla]));
+    const porDia = {}; its.forEach(g => { (porDia[g.data_agendamento] = porDia[g.data_agendamento] || []).push(g); });
+    let cel = ''; for (let k = 0; k < vazios; k++) cel += '<span class="ag-mv"></span>';
+    for (let d = 1; d <= n; d++){
+      const dia = i.slice(0, 8)+String(d).padStart(2, '0'), l = porDia[dia] || [], por = {}; l.forEach(g => { por[g.clinica_id] = (por[g.clinica_id] || 0) + 1; });
+      const chips = Object.keys(por).sort((a, b) => por[b] - por[a]);
+      cel += '<button type="button" class="ag-md'+(dia === hoje() ? ' hoje' : '')+(l.length ? ' tem' : '')+'" data-dia="'+dia+'" style="--i:'+d+'"><span class="ag-mn">'+d+'</span>'+(l.length ? '<span class="ag-mt">'+l.length+'</span>' : '')
+        + '<span class="ag-mc">'+chips.slice(0, 3).map(id => '<i style="--c:'+esc(agCor(Number(id)))+'">'+esc(sig[id] || '')+' '+por[id]+'</i>').join('')+(chips.length > 3 ? '<i class="mais">+'+(chips.length - 3)+'</i>' : '')+'</span></button>';
+    }
+    return '<div class="ag-mes"><div class="ag-mh">'+DSEM.map(x => '<span>'+x+'</span>').join('')+'</div><div class="ag-mg">'+cel+'</div></div>';
+  }
+  async function agendaGrade(dir){
+    const pal = $('#ag-palco'); if (!pal) return;
+    const tk = ++AG.tk, [i, f] = agIntervalo();
+    $$('#ag-vis [data-v]').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === AG.vis));
+    const rot = agRotulo(); $('#ag-per').textContent = rot.charAt(0).toUpperCase()+rot.slice(1);
+    let q = sb.from('agendamentos').select('*').is('excluido_em', null).gte('data_agendamento', i).lte('data_agendamento', f).order('hora').limit(3000);
     if (AG.tele) q = q.eq('tele_id', Number(AG.tele));
     if (AG.clin) q = q.eq('clinica_id', Number(AG.clin));
-    const r = await q; if (!$('#ag-grid')) return;
-    if (r.error){ alvo.innerHTML = '<div class="err">'+esc(msgErro(r.error))+'</div>'; return; }
+    const sai = !reduz() && pal.firstElementChild && dir;
+    const saindo = sai ? new Promise(ok => { pal.dataset.dir = dir; pal.classList.add('saindo'); setTimeout(ok, 130); }) : Promise.resolve();
+    const [r] = await Promise.all([q, saindo]);
+    if (tk !== AG.tk || !$('#ag-palco')) return;
+    if (r.error){ pal.className = 'ag-palco'; pal.innerHTML = '<div class="err">'+esc(msgErro(r.error))+'</div>'; return; }
     AG.dia_itens = r.data;
-    const cols = AG.clinicas.filter(c => AG.clin ? String(c.id) === String(AG.clin) : (c.ativa || r.data.some(g => g.clinica_id === c.id)));
-    const horas = []; for (let h = 8; h <= 19; h++){ horas.push(String(h).padStart(2, '0')+':00'); horas.push(String(h).padStart(2, '0')+':30'); }
-    r.data.forEach(g => { const h = hhm(g.hora); if (h){ const slot = h.slice(0, 2)+':'+(Number(h.slice(3)) >= 30 ? '30' : '00'); if (!horas.includes(slot)) horas.push(slot); } });
-    horas.sort();
-    const semHora = r.data.filter(g => !g.hora), nomeT = Object.fromEntries(AG.teles.map(t => [t.id, t.nome.split(' ')[0]]));
-    const slotDe = g => { const h = hhm(g.hora); return h.slice(0, 2)+':'+(Number(h.slice(3)) >= 30 ? '30' : '00'); };
-    const card = g => '<button type="button" class="ag-c" data-g="'+g.id+'" style="--c:'+esc((AG.clinicas.find(c => c.id === g.clinica_id) || {}).cor || '#5b9bff')+'"><b>'+(hhm(g.hora) ? hhm(g.hora)+' · ' : '')+esc(g.paciente)+'</b><small>'+esc(nomeT[g.tele_id] || 'Tele')+'</small></button>';
-    const linhas = (semHora.length ? [['Sem horário', semHora]] : []).concat(horas.map(h => [h, r.data.filter(g => g.hora && slotDe(g) === h)]));
-    const gridCols = '64px repeat('+cols.length+', minmax(150px, 1fr))';
-    alvo.innerHTML = '<div class="line" style="justify-content:space-between;margin-bottom:12px"><h2 style="margin:0">Grade do dia · '+(r.data.length)+' agendamento(s)</h2>'
-      + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:nowrap"><button type="button" class="btn ghost" id="gd-ant" aria-label="Dia anterior">‹</button><input id="gd-dia" type="date" value="'+esc(AG.dia)+'" aria-label="Dia da grade"><button type="button" class="btn ghost" id="gd-prox" aria-label="Próximo dia">›</button><button type="button" class="btn ghost" id="gd-hoje">Hoje</button></div></div>'
-      + (cols.length ? '<div class="ag-gw"><div class="ag-g" style="grid-template-columns:'+gridCols+'"><div class="ag-h"></div>'
-        + cols.map(c => '<div class="ag-h" style="--c:'+esc(c.cor || '#5b9bff')+'"><b>'+esc(c.sigla)+'</b><small>'+esc(c.nome)+'</small></div>').join('')
-        + linhas.map(([h, its]) => '<div class="ag-t">'+esc(h)+'</div>'+cols.map(c => '<div class="ag-x">'+its.filter(g => g.clinica_id === c.id).map(card).join('')+'</div>').join('')).join('')
-        + '</div></div>' : '<div class="empty">Nenhuma clínica para mostrar.</div>');
-    const vai = d => { AG.dia = d || hoje(); agendaGrade(); };
-    const somaDia = n => { const x = new Date(AG.dia+'T12:00:00'); x.setDate(x.getDate() + n); return x.toLocaleDateString('sv-SE'); };
-    $('#gd-ant').addEventListener('click', () => vai(somaDia(-1))); $('#gd-prox').addEventListener('click', () => vai(somaDia(1)));
-    $('#gd-hoje').addEventListener('click', () => vai(hoje())); $('#gd-dia').addEventListener('change', e => vai(e.target.value));
-    $$('#ag-grid [data-g]').forEach(b => b.addEventListener('click', () => agendaDetalhe(Number(b.dataset.g))));
+    const html = AG.vis === 'dia' ? agHtmlDia(r.data) : AG.vis === 'sem' ? agHtmlSemana(r.data) : agHtmlMes(r.data);
+    pal.classList.remove('saindo'); pal.dataset.dir = dir || 'fade'; pal.innerHTML = html;
+    if (!reduz()){ pal.classList.remove('entrando'); void pal.offsetWidth; pal.classList.add('entrando'); }
+    $$('#ag-palco [data-g]').forEach(b => b.addEventListener('click', () => agendaDetalhe(Number(b.dataset.g))));
+    $$('#ag-palco [data-dia]').forEach(b => b.addEventListener('click', () => { AG.dia = b.dataset.dia; AG.vis = 'dia'; agendaGrade('zoom-in'); }));
+    const nT = r.data.length; $('#ag-per').title = nT+' agendamento(s) nesta visão';
   }
   function agendaLista(){
     const alvo = $('#ag-lista'); if (!alvo) return;
@@ -2386,7 +2523,12 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     toast('Senha criada.'); aposLogin();
   });
 
-  $('#sair').addEventListener('click', async () => { await sb.auth.signOut(); eu = null; view('login'); });
+  $('#sair').addEventListener('click', async () => { $('#v-app').classList.remove('sem-menu'); await sb.auth.signOut(); eu = null; view('login'); });
+  document.addEventListener('keydown', e => {
+    if (recurso !== 'agenda' || !$('#ag-palco') || e.target.closest('input, select, textarea') || document.querySelector('.ag-modal')) return;
+    if (e.key === 'Escape' && $('#v-app').classList.contains('sem-menu')) agCheia(false);
+    else if (e.key === 'ArrowLeft') agNavega(-1); else if (e.key === 'ArrowRight') agNavega(1);
+  });
 
   sb.auth.onAuthStateChange(ev => { if (ev === 'PASSWORD_RECOVERY'){ definindoSenha = true; } });
   aposLogin();
