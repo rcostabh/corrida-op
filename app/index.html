@@ -416,6 +416,11 @@ li:first-child>.ag-i{border-top:0}
   const ligaHoras = (inpData, selHora) => { if (!inpData || !selHora) return; inpData.addEventListener('change', () => { const ant = selHora.value; selHora.innerHTML = opHoras(horasDia(inpData.value).includes(ant) ? ant : '', inpData.value); }); };
   const hh = h => h ? String(h).slice(0, 5) : '';
   const stChip = g => g.status === 'confirmado' ? '<span class="okc">✓ Confirmado</span>' : g.status === 'fechado' ? '<span class="okc fe">★ Fechado</span>' : g.status === 'nao_fechou' ? '<span class="nfc">✕ Não fechou</span>' : 'Agendado';
+  // Lançamento retroativo: enquanto estiver liberado no banco (parâmetro), datas anteriores a hoje são aceitas
+  let RETRO = false;
+  async function retroCarregar(){ try { const r = await sb.rpc('agendamento_retroativo'); RETRO = !r.error && r.data === true; } catch (e) { RETRO = false; } }
+  const passado = d => !RETRO && d < hoje();
+  const dataInicial = () => AGP.sel && (RETRO || AGP.sel >= hoje()) ? AGP.sel : hoje();
   let MOTIVOS = [];
   async function motivosCarregar(){ if (MOTIVOS.length) return; const r = await sb.from('motivos_nao_fechou').select('id,nome,exige_obs').eq('ativo', true).order('ordem'); if (!r.error) MOTIVOS = r.data || []; }
   const motivoTxt = g => { const m = MOTIVOS.find(x => x.id === g.motivo_id); return (m ? m.nome : 'Motivo não informado')+(g.motivo_obs ? ' — '+g.motivo_obs : ''); };
@@ -452,6 +457,7 @@ li:first-child>.ag-i{border-top:0}
   const AGP = { ano: 0, mes: 0, sel: '', itens: [], sig: {} };
 
   async function agendarCarregar(){
+    await retroCarregar();
     if (!ehTele()){ mostrar('inicio'); return; }
     $('#main').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
     const rc = await sb.from('clinicas').select('id,sigla,nome').order('nome');
@@ -465,8 +471,8 @@ li:first-child>.ag-i{border-top:0}
       + '<label class="field" for="a-clin">Clínica<select id="a-clin">'+clin.map((c, i) => '<option value="'+c.id+'"'+(i === 0 ? ' selected' : '')+'>'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
       + '<label class="field" for="a-nome">Nome do paciente<input id="a-nome" type="text" autocomplete="off" autocapitalize="words"></label>'
       + '<label class="field" for="a-tel">Telefone do paciente<input id="a-tel" type="tel" inputmode="numeric" autocomplete="off" placeholder="(31) 99999-9999"></label>'
-      + '<div class="g2"><label class="field" for="a-data">Data<input id="a-data" type="date" min="'+hoje()+'" value="'+(AGP.sel && AGP.sel >= hoje() ? AGP.sel : hoje())+'"></label>'
-      + '<label class="field" for="a-hora">Horário<select id="a-hora">'+opHoras('', (AGP.sel && AGP.sel >= hoje() ? AGP.sel : hoje()))+'</select></label></div>'
+      + '<div class="g2"><label class="field" for="a-data">Data<input id="a-data" type="date"'+(RETRO ? '' : ' min="'+hoje()+'"')+' value="'+dataInicial()+'"></label>'
+      + '<label class="field" for="a-hora">Horário<select id="a-hora">'+opHoras('', dataInicial())+'</select></label></div>'
       + '<div class="field">Print da conversa do WhatsApp<div class="btns" style="align-items:center"><label class="btn ghost sm" for="a-img" style="display:inline-grid;place-items:center">Escolher imagem</label><span class="meta" id="a-imgn">Nenhuma imagem</span></div>'
       + '<input id="a-img" type="file" accept="image/*" hidden><img id="a-prev" alt="" hidden style="max-width:100%;max-height:260px;border-radius:14px;object-fit:contain;justify-self:start"></div>'
       + '<div class="err" id="a-err" role="alert"></div><button class="btn block" type="submit" id="a-btn">Lançar agendamento</button></form></div>';
@@ -490,7 +496,7 @@ li:first-child>.ag-i{border-top:0}
     e.preventDefault();
     const clinica = Number($('#a-clin').value), nome = $('#a-nome').value.trim(), tel = $('#a-tel').value.replace(/\D/g, ''), data = $('#a-data').value, hora = $('#a-hora').value;
     const erro = !nome || nome.length < 2 ? 'Informe o nome do paciente.' : !/^[0-9]{10,11}$/.test(tel) ? 'Telefone com DDD, 10 ou 11 números.'
-      : !data || data < hoje() ? 'A data do agendamento não pode ser anterior a hoje.' : !hora ? 'Escolha o horário.' : !printArq ? 'Anexe o print da conversa do WhatsApp.' : '';
+      : !data || passado(data) ? 'A data do agendamento não pode ser anterior a hoje.' : !hora ? 'Escolha o horário.' : !printArq ? 'Anexe o print da conversa do WhatsApp.' : '';
     if (erro){ $('#a-err').textContent = erro; return; }
     const btn = $('#a-btn'); btn.disabled = true; $('#a-err').textContent = '';
     let caminho = null;
@@ -506,6 +512,7 @@ li:first-child>.ag-i{border-top:0}
   const SEMANA = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   async function agendaCarregar(){
     if (!ehTele()){ mostrar('inicio'); return; }
+    await retroCarregar();
     if (!AGP.sel){ AGP.sel = hoje(); AGP.ano = Number(AGP.sel.slice(0, 4)); AGP.mes = Number(AGP.sel.slice(5, 7)) - 1; }
     $('#main').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
     const ini = ymd(AGP.ano, AGP.mes, 1), fim = ymd(AGP.ano, AGP.mes, new Date(AGP.ano, AGP.mes + 1, 0).getDate());
@@ -546,7 +553,7 @@ li:first-child>.ag-i{border-top:0}
     await motivosCarregar();
     const ps = await sb.from('agendamento_prints').select('*').eq('agendamento_id', id).order('criado_em');
     const urls = await Promise.all((ps.data || []).map(x => sb.storage.from('prints').createSignedUrl(x.path, 3600).then(r => r.data ? r.data.signedUrl : null)));
-    const comResultado = g.status === 'fechado' || g.status === 'nao_fechou', editavel = g.data_agendamento >= hoje() && !comResultado;
+    const comResultado = g.status === 'fechado' || g.status === 'nao_fechou', editavel = (RETRO || g.data_agendamento >= hoje()) && !comResultado;
     const ov = document.createElement('div'); ov.className = 'sheet'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
     ov.innerHTML = '<div class="sh-c"><div class="line" style="justify-content:space-between"><h2 style="margin:0">'+esc(g.paciente)+'</h2><button type="button" class="sndbtn" data-x aria-label="Fechar">×</button></div>'
       + '<p class="meta">'+esc(fmtTelDigitos(g.telefone))+' · <span class="sigla">'+esc(AGP.sig[g.clinica_id] || '')+'</span> · '+stChip(g)+'</p>'
@@ -554,7 +561,7 @@ li:first-child>.ag-i{border-top:0}
           ? '<button type="button" class="link" id="e-desconf" style="justify-self:start">Desfazer confirmação</button>'
           : '<button type="button" class="btn verde block" id="e-conf">Confirmado</button>') : '')
       + resultadoHtml(g)
-      + '<div class="form"><div class="g2"><label class="field" for="e-data">Data<input id="e-data" type="date" min="'+hoje()+'" value="'+esc(g.data_agendamento)+'"'+(editavel ? '' : ' disabled')+'></label>'
+      + '<div class="form"><div class="g2"><label class="field" for="e-data">Data<input id="e-data" type="date"'+(RETRO ? '' : ' min="'+hoje()+'"')+' value="'+esc(g.data_agendamento)+'"'+(editavel ? '' : ' disabled')+'></label>'
       + '<label class="field" for="e-hora">Horário<select id="e-hora"'+(editavel ? '' : ' disabled')+'>'+opHoras(hh(g.hora), g.data_agendamento)+'</select></label></div>'
       + (editavel ? '<button type="button" class="btn ghost" id="e-salvar">Salvar nova data e horário</button>' : '<p class="meta">'+(comResultado ? 'Agendamento com resultado: desfaça o resultado para remarcar.' : 'Agendamentos de dias passados não podem ser alterados nem excluídos.')+'</p>')
       + '<div class="field">Conversas ('+urls.filter(Boolean).length+')</div>'
@@ -579,7 +586,7 @@ li:first-child>.ag-i{border-top:0}
     const salvar = $('#e-salvar', ov);
     if (salvar) salvar.addEventListener('click', async () => {
       const d = $('#e-data', ov).value, h = $('#e-hora', ov).value;
-      if (!d || d < hoje()) return erro('A data do agendamento não pode ser anterior a hoje.');
+      if (!d || passado(d)) return erro('A data do agendamento não pode ser anterior a hoje.');
       if (!h) return erro(horasDia(d).length ? 'Escolha o horário.' : 'Não há atendimento aos domingos.');
       salvar.disabled = true; const r = await sb.rpc('alterar_agendamento', { p_id: id, p_data: d, p_hora: h }); salvar.disabled = false;
       if (r.error) return erro(msgErro(r.error));
