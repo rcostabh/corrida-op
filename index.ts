@@ -207,13 +207,15 @@ Deno.serve(async (req) => {
     const telefone = String(b.telefone || "").replace(/\D/g, "");
     const papel = b.papel;
     const cargo = papel === "promotor" ? b.cargo : null;
+    const CARGOS_OK = ["Promotor", "Tele BH", "Tele interno", "Divulgador", "Luminoso", "Promotor de teste", "Indicação"];
+    const cargosExtra: string[] = papel === "promotor" && Array.isArray(b.cargos_extra) ? [...new Set(b.cargos_extra.filter((c: string) => CARGOS_OK.includes(c) && c !== cargo))] as string[] : [];
     if (!["gerente", "promotor", "assistente"].includes(papel)) return json({ erro: "Escolha gerente, promotor ou assistente." }, 400);
     if (papel === "assistente" && !master) return json({ erro: "Só o gestor master cadastra assistentes." }, 403);
     if (ehGerente && papel !== "promotor") return json({ erro: "O gerente cadastra só promotores e divulgadores." }, 403);
     if (!nome) return json({ erro: "Informe o nome." }, 400);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ erro: "E-mail inválido." }, 400);
     if (!/^[0-9]{10,11}$/.test(telefone)) return json({ erro: "Telefone com DDD, 10 ou 11 números." }, 400);
-    if (papel === "promotor" && !["Promotor", "Tele BH", "Tele interno", "Divulgador", "Luminoso", "Promotor de teste"].includes(cargo)) return json({ erro: "Escolha o cargo." }, 400);
+    if (papel === "promotor" && !CARGOS_OK.includes(cargo)) return json({ erro: "Escolha o cargo." }, 400);
     const hojeIso = new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10); // horário de Brasília
     const inicio = String(b.inicio || hojeIso).slice(0, 10);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(inicio) || isNaN(Date.parse(inicio)) || inicio > hojeIso) return json({ erro: "Data de início inválida (não pode ser futura)." }, 400);
@@ -239,7 +241,7 @@ Deno.serve(async (req) => {
     if (ie || !inv?.user) return json({ erro: ie?.message || "Não foi possível enviar o convite." }, 400);
 
     const { data: novo, error: ne } = await admin.from("usuarios")
-      .insert({ auth_id: inv.user.id, papel, nome, telefone, email, cargo, login })
+      .insert({ auth_id: inv.user.id, papel, nome, telefone, email, cargo, cargos_extra: cargosExtra, login })
       .select("id").single();
     if (ne) { await admin.auth.admin.deleteUser(inv.user.id); return json({ erro: ne.message }, 400); }
 
