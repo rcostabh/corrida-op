@@ -436,6 +436,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.2.0', '2026-11-11', 'Gerente: sem acesso a Campanhas; passa a ver e editar os promotores e divulgadores da própria clínica e a enviar convites.'],
     ['1.1.0', '2026-11-11', 'Perfil Gerente: vê todas as telas do painel, menos Pessoas, e só os dados da clínica dele. Controle de versão no topo.'],
     ['1.0.0', '2026-11-10', 'Versão inicial do painel.']
   ];
@@ -539,7 +540,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   async function carregar(){
     $('#area').style.gridTemplateColumns = '';
     marcarMenu();
-    if (recurso === 'pessoas' && (eu.papel === 'gerente' || modoVisao === 'gerente')){ recurso = 'inicio'; marcarMenu(); }
+    if (recurso === 'campanhas' && (eu.papel === 'gerente' || modoVisao === 'gerente')){ recurso = 'inicio'; marcarMenu(); }
     if (recurso === 'pessoas') return pessoasCarregar();
     if (recurso === 'campanhas') return campanhasCarregar();
     if (recurso === 'corrida') return corridaCarregar();
@@ -625,10 +626,11 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const [a, b, c] = await Promise.all([
       sb.from('usuarios').select('*').order('nome'),
       sb.from('vinculos_clinica').select('*'),
-      sb.from('clinicas').select('*').order('nome')]);
+      soMinhasClin(sb.from('clinicas').select('*').order('nome'))]);
     const er = a.error || b.error || c.error;
     if (er){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
-    pessoas = a.data.filter(p => p.papel !== 'gestor' && (eu.papel === 'gestor' || p.papel !== 'assistente'));
+    const gerV = eu.papel === 'gerente' || modoVisao === 'gerente';
+    pessoas = a.data.filter(p => p.papel !== 'gestor' && (eu.papel === 'gestor' || p.papel !== 'assistente') && (!gerV || p.papel === 'promotor'));
     vincs = b.data.filter(v => !v.fim); clin = c.data;
     pessoasDesenhar();
   }
@@ -643,7 +645,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       '<div class="card"><h2>'+(atual ? 'Editar pessoa' : 'Nova pessoa')+'</h2>'
       + '<p class="sub">'+(atual ? 'Se trocar o e-mail, a pessoa recebe um link no novo endereço para criar a senha. Para tirar alguém de uso, desmarque "Pessoa ativa".' : 'A pessoa recebe um e-mail para criar a própria senha e colocar a foto.')+'</p>'
       + '<form class="form" id="f-pes" novalidate>'
-      + '<label class="field" for="p-papel">Função<select id="p-papel"'+(atual?' disabled':'')+'><option value="promotor"'+(papelForm==='promotor'?' selected':'')+'>Promotor</option><option value="gerente"'+(papelForm==='gerente'?' selected':'')+'>Gerente de clínica</option>'+(eu.papel === 'gestor' ? '<option value="assistente"'+(papelForm==='assistente'?' selected':'')+'>Assistente (suporte, vê tudo como o gestor)</option>' : '')+'</select></label>'
+      + '<label class="field" for="p-papel">Função<select id="p-papel"'+(atual?' disabled':'')+'><option value="promotor"'+(papelForm==='promotor'?' selected':'')+'>Promotor</option>'+(eu.papel === 'gerente' || modoVisao === 'gerente' ? '' : '<option value="gerente"'+(papelForm==='gerente'?' selected':'')+'>Gerente de clínica</option>')+(eu.papel === 'gestor' ? '<option value="assistente"'+(papelForm==='assistente'?' selected':'')+'>Assistente (suporte, vê tudo como o gestor)</option>' : '')+'</select></label>'
       + '<label class="field" for="p-nome">Nome<input id="p-nome" type="text" autocomplete="off" value="'+esc(atual?atual.nome:'')+'"></label>'
       + '<label class="field" for="p-email">E-mail<input id="p-email" type="email" inputmode="email" autocomplete="off" value="'+esc(atual?(atual.email||''):'')+'"'+'></label>'
       + '<label class="field" for="p-tel">Telefone com DDD<input id="p-tel" type="tel" inputmode="numeric" autocomplete="off" placeholder="(31) 99999-9999" value="'+esc(atual?fmtTel(atual.telefone):'')+'"></label>'
@@ -706,6 +708,12 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const libera = () => btns.forEach(b => { b.disabled = false; });
 
     if (!atual && semConvite){
+      if (eu.papel === 'gerente'){
+        const g = await sb.rpc('gerente_criar_promotor', { p_nome: d.nome, p_telefone: d.telefone || null, p_email: d.email || null, p_cargo: d.cargo, p_clinica: d.clinica_id, p_inicio: d.inicio });
+        libera();
+        if (g.error){ $('#p-err').textContent = msgErro(g.error); return; }
+        toast(d.nome+' foi salva, sem convite. Quando quiser dar acesso, edite a pessoa e use "Enviar convite agora".'); pessoasCarregar(); return;
+      }
       const login = await loginUnico(d.email || d.nome);
       const ins = await sb.from('usuarios').insert({ papel: d.papel, nome: d.nome, telefone: d.telefone || null, email: d.email || null, cargo: d.cargo || null, login }).select('id').single();
       if (ins.error){ libera(); $('#p-err').textContent = ins.error.code === '23505' ? 'Já existe uma pessoa com este e-mail.' : msgErro(ins.error); return; }
@@ -2143,8 +2151,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const ger = modoVisao === 'gerente';
     $('#eyebrow').textContent = ger ? 'Painel da gerência' : (eu && eu.papel === 'assistente' ? 'Painel de suporte' : 'Painel do gestor');
     $$('#modo button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === modoVisao));
-    $$('#nav button[data-r]').forEach(b => { b.hidden = ger && b.dataset.r === 'pessoas'; });
-    if (ger && recurso === 'pessoas') recurso = 'inicio';
+    $$('#nav button[data-r]').forEach(b => { b.hidden = ger && b.dataset.r === 'campanhas'; });
+    if (ger && recurso === 'campanhas') recurso = 'inicio';
     PD.clinicas = []; PD.ano = 0;
     if (recarregar) carregar();
   }

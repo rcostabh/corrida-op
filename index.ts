@@ -1,5 +1,5 @@
 // Função do servidor: convida pessoas, envia link de nova senha e dispara os avisos no celular.
-// Convites e senhas: só gestor/assistente. Avisos: chamada do banco (segredo) ou teste da própria pessoa. Usa a chave secreta que o próprio Supabase injeta (nunca vai para o navegador).
+// Convites e senhas: gestor, assistente e gerente (o gerente só mexe em promotores e divulgadores da própria clínica). Avisos: chamada do banco (segredo) ou teste da própria pessoa. Usa a chave secreta que o próprio Supabase injeta (nunca vai para o navegador).
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 
 const cors = {
@@ -101,14 +101,21 @@ Deno.serve(async (req) => {
       const esperado = Deno.env.get("PUSH_SECRET");
       if (!esperado || segredo !== esperado) return json({ erro: "Não autorizado." }, 401);
       if (!vapidPub || !vapidPriv) return json({ erro: "Chaves VAPID não configuradas." }, 400); // não reserva nada enquanto não estiver pronto
-      const { data: pend } = await admin.from("notificacoes").select("id").is("enviada_em", null).order("criada_em").limit(200);
-      const ids = (pend || []).map((x: { id: number }) => x.id);
-      if (!ids.length) return json({ ok: true, enviados: 0 });
-      // "Reserva" os avisos antes de enviar, para que duas chamadas seguidas não mandem o mesmo aviso duas vezes.
-      const { data: meus } = await admin.from("notificacoes").update({ enviada_em: new Date().toISOString() }).in("id", ids).is("enviada_em", null).select("usuario_id,titulo,texto");
-      let n = 0;
-      for (const m of meus || []) n += await enviarPara(m.usuario_id, m.titulo, m.texto);
-      return json({ ok: true, avisos: (meus || []).length, enviados: n });
+      let avisos = 0, enviados = 0;
+      for (let rodada = 0; rodada < 6; rodada++) {   // até 6 lotes de 100 por chamada
+        const { data: pend } = await admin.from("notificacoes").select("id").is("enviada_em", null).order("criada_em").limit(100);
+        const ids = (pend || []).map((x: { id: number }) => x.id);
+        if (!ids.length) break;
+        // "Reserva" os avisos antes de enviar, para que duas chamadas seguidas não mandem o mesmo aviso duas vezes.
+        const { data: meus } = await admin.from("notificacoes").update({ enviada_em: new Date().toISOString() }).in("id", ids).is("enviada_em", null).select("usuario_id,titulo,texto");
+        const lista = meus || [];
+        avisos += lista.length;
+        for (let i = 0; i < lista.length; i += 10) {   // 10 envios ao mesmo tempo
+          const r = await Promise.all(lista.slice(i, i + 10).map((m: { usuario_id: number; titulo: string; texto: string }) => enviarPara(m.usuario_id, m.titulo, m.texto)));
+          enviados += r.reduce((t: number, x: number) => t + x, 0);
+        }
+      }
+      return json({ ok: true, avisos, enviados });
     }
 
     const b = await req.json().catch(() => ({}));
@@ -125,20 +132,35 @@ Deno.serve(async (req) => {
       const n = await enviarPara(eu.id, "Corrida OP", "Teste: os avisos estão funcionando neste aparelho.");
       return json({ ok: true, enviados: n });
     }
-    // Daqui para a frente, só gestor ou assistente.
-    if (!eu || !["gestor", "assistente"].includes(eu.papel) || !eu.ativo) return json({ erro: "Apenas o gestor ou o assistente pode fazer isso." }, 403);
+    // Daqui para a frente, só gestor, assistente ou gerente.
+    if (!eu || !["gestor", "assistente", "gerente"].includes(eu.papel) || !eu.ativo) return json({ erro: "Apenas o gestor, o assistente ou o gerente pode fazer isso." }, 403);
     const master = eu.papel === "gestor";
-    // Gestor e assistente só podem ser mexidos pelo gestor master.
+    const ehGerente = eu.papel === "gerente";
+    // Gerente: clínicas em que atua hoje (só mexe em promotores e divulgadores delas).
+    const hojeBR = new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10);
+    let minhas: number[] = [];
+    if (ehGerente) {
+      const { data: vs } = await admin.from("vinculos_clinica").select("clinica_id,inicio,fim").eq("usuario_id", eu.id);
+      minhas = (vs || []).filter((v: { inicio: string; fim: string | null }) => v.inicio <= hojeBR && (!v.fim || v.fim >= hojeBR)).map((v: { clinica_id: number }) => v.clinica_id);
+    }
+    const msgProt = ehGerente ? "Você só mexe em promotores e divulgadores da sua clínica." : "Só o gestor master mexe em gestores e assistentes.";
+    // Gestor e assistente só podem ser mexidos pelo gestor master; o gerente só mexe em promotores da própria clínica.
     const protegido = async (id: unknown) => {
       const { data: t } = await admin.from("usuarios").select("papel").eq("id", id).maybeSingle();
-      return !!t && ["gestor", "assistente"].includes(t.papel) && !master;
+      if (!t) return false;
+      if (ehGerente) {
+        if (t.papel !== "promotor" || !minhas.length) return true;
+        const { data: v } = await admin.from("vinculos_clinica").select("id").eq("usuario_id", id).in("clinica_id", minhas).limit(1);
+        return !(v && v.length);
+      }
+      return ["gestor", "assistente"].includes(t.papel) && !master;
     };
 
     const redirectTo = String(b.redirectTo || "");
 
     // 2. Enviar link de nova senha para uma pessoa já cadastrada.
     if (b.acao === "redefinir") {
-      if (await protegido(b.pessoa_id)) return json({ erro: "Só o gestor master mexe em gestores e assistentes." }, 403);
+      if (await protegido(b.pessoa_id)) return json({ erro: msgProt }, 403);
       const { data: p } = await admin.from("usuarios").select("email").eq("id", b.pessoa_id).maybeSingle();
       if (!p?.email) return json({ erro: "Pessoa sem e-mail cadastrado." }, 400);
       const { error } = await admin.auth.resetPasswordForEmail(p.email, { redirectTo });
@@ -150,7 +172,7 @@ Deno.serve(async (req) => {
     if (b.acao === "trocar_email") {
       const novo = String(b.email || "").trim().toLowerCase();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(novo)) return json({ erro: "E-mail inválido." }, 400);
-      if (await protegido(b.pessoa_id)) return json({ erro: "Só o gestor master mexe em gestores e assistentes." }, 403);
+      if (await protegido(b.pessoa_id)) return json({ erro: msgProt }, 403);
       const { data: p } = await admin.from("usuarios").select("id,auth_id").eq("id", b.pessoa_id).maybeSingle();
       if (!p?.auth_id) return json({ erro: "Pessoa não encontrada." }, 404);
       const { data: igual } = await admin.from("usuarios").select("id").eq("email", novo).neq("id", p.id).maybeSingle();
@@ -166,7 +188,7 @@ Deno.serve(async (req) => {
 
     // 2c. Dar acesso a quem foi cadastrado sem convite: manda o convite para o e-mail já salvo.
     if (b.acao === "convidar_existente") {
-      if (await protegido(b.pessoa_id)) return json({ erro: "Só o gestor master mexe em gestores e assistentes." }, 403);
+      if (await protegido(b.pessoa_id)) return json({ erro: msgProt }, 403);
       const { data: p } = await admin.from("usuarios").select("id,auth_id,email,nome").eq("id", b.pessoa_id).maybeSingle();
       if (!p) return json({ erro: "Pessoa não encontrada." }, 404);
       if (p.auth_id) return json({ erro: "Esta pessoa já tem acesso." }, 400);
@@ -187,6 +209,7 @@ Deno.serve(async (req) => {
     const cargo = papel === "promotor" ? b.cargo : null;
     if (!["gerente", "promotor", "assistente"].includes(papel)) return json({ erro: "Escolha gerente, promotor ou assistente." }, 400);
     if (papel === "assistente" && !master) return json({ erro: "Só o gestor master cadastra assistentes." }, 403);
+    if (ehGerente && papel !== "promotor") return json({ erro: "O gerente cadastra só promotores e divulgadores." }, 403);
     if (!nome) return json({ erro: "Informe o nome." }, 400);
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ erro: "E-mail inválido." }, 400);
     if (!/^[0-9]{10,11}$/.test(telefone)) return json({ erro: "Telefone com DDD, 10 ou 11 números." }, 400);
@@ -199,6 +222,7 @@ Deno.serve(async (req) => {
       const { data } = await admin.from("clinicas").select("id").eq("id", b.clinica_id).maybeSingle();
       cl = data;
       if (!cl) return json({ erro: "Escolha a clínica." }, 400);
+      if (ehGerente && !minhas.includes(cl.id)) return json({ erro: "Você só cadastra pessoas na sua própria clínica." }, 403);
     }
     const { data: ja } = await admin.from("usuarios").select("id").eq("email", email).maybeSingle();
     if (ja) return json({ erro: "Já existe uma pessoa com este e-mail." }, 400);
