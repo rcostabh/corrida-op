@@ -526,6 +526,9 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 4500); }
 
   /* Se o convite ou a recuperação de senha chegou pelo link do e-mail, o endereço traz "type=invite" ou "type=recovery". */
+  /* Endereço sem o "ponto final" no nome do site (corrida...com.br.): com o ponto, o navegador mostra "conexão não privada". */
+  const enderecoLimpo = () => (location.origin + location.pathname).replace(/^(https?:\/\/[^\/:]+?)\.(?=[\/:]|$)/, '$1');
+  if (/\.$/.test(location.hostname)){ location.replace(location.href.replace(/^(https?:\/\/[^\/:]+?)\.(?=[\/:]|$)/, '$1')); }
   const veioDeLink = /type=(invite|recovery)/.test(location.hash);
   let definindoSenha = veioDeLink;
   /* Link novo do e-mail: traz "token_hash" e "type" no endereço e só vale depois que a pessoa toca no botão. */
@@ -537,6 +540,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.5.1', '2026-11-11', 'Convites e links de nova senha nunca saem com ponto no fim do endereço (causa do aviso "conexão não privada").'],
     ['1.5.0', '2026-11-11', 'Agenda das teles: visões de dia, semana e mês com transições animadas; recolher filtros e totais; tela cheia que esconde o menu lateral.'],
     ['1.4.2', '2026-11-11', 'Link do e-mail (convite e nova senha) passa a ter um botão de confirmação, para o programa de e-mail não gastar o link antes da pessoa. Mensagem clara quando o link vence.'],
     ['1.4.1', '2026-11-11', 'Agenda das teles: cartões de filtros e totais menores, para a grade aparecer melhor.'],
@@ -716,7 +720,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const clinicaDe = p => { const v = vincs.find(x => x.usuario_id === p.id); return v ? clin.find(c => c.id === v.clinica_id) : null; };
 
   async function chamar(body){
-    body.redirectTo = location.origin + location.pathname;
+    body.redirectTo = enderecoLimpo();
     const { data, error } = await sb.functions.invoke('bright-service', { body });
     if (error){
       let m = error.message || '';
@@ -2507,7 +2511,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   $('#l-esqueci').addEventListener('click', async () => {
     const email = $('#l-email').value.trim();
     if (!email){ $('#l-err').textContent = 'Digite seu e-mail acima e toque em "Esqueci minha senha" de novo.'; return; }
-    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: enderecoLimpo() });
     $('#l-err').textContent = '';
     toast(error ? msgErro(error) : 'Se o e-mail estiver cadastrado, enviamos um link para criar uma nova senha.');
   });

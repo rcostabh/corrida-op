@@ -261,7 +261,8 @@ li:first-child>.ag-i{border-top:0}
 
   let definindoSenha = /type=(invite|recovery)/.test(location.hash);
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
-  const urlPainel = new URL('../', location.href).href;
+  const urlPainel = new URL('../', location.href).href.replace(/^(https?:\/\/[^\/:]+?)\.(?=[\/:]|$)/, '$1');
+  if (/\.$/.test(location.hostname)){ location.replace(location.href.replace(/^(https?:\/\/[^\/:]+?)\.(?=[\/:]|$)/, '$1')); }
 
   let eu = null, authUid = null, minhasClin = [], aba = 'inicio', timer = null;
   const view = id => { ['load','login','foto','app'].forEach(v => { $('#v-'+v).hidden = v !== id; }); $('#tabs').hidden = id !== 'app'; };
