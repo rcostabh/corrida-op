@@ -204,7 +204,12 @@ table.pd tr.tot td{font-weight:700}
 .ag-bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin-bottom:12px}
 .ag-nav{display:flex;align-items:center;gap:8px;flex:1;min-width:0;justify-content:center}
 .ag-per{min-width:170px;text-align:center;font:700 15px var(--font-body);color:var(--ink)}
-.ag-tools{display:flex;gap:8px;margin-left:auto}
+.ag-tools{display:flex;gap:8px;margin-left:auto;align-items:center}
+.ag-zoom{display:inline-flex;align-items:center;gap:2px;background:var(--surface-2);border-radius:12px;padding:0 2px 0 8px;height:38px}
+.ag-zoom svg.lupa{width:17px;height:17px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round}
+.ag-zoom .ag-ib{background:transparent;width:30px;height:34px;font-size:19px}
+.ag-zoom .ag-ib:disabled{opacity:.35;cursor:default}
+.ag-zoom output{min-width:38px;text-align:center;font:700 12px var(--font-body);color:var(--ink);cursor:pointer}
 .ag-ib{border:0;background:var(--surface-2);color:var(--ink);width:38px;height:38px;border-radius:12px;display:grid;place-items:center;cursor:pointer;font:600 20px var(--font-body);transition:background .15s,transform .15s}
 .ag-ib:hover{background:var(--line)}.ag-ib:active{transform:scale(.94)}
 .ag-ib svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .3s}
@@ -232,7 +237,7 @@ table.pd tr.tot td{font-weight:700}
 .ag-cl{display:flex;flex-wrap:wrap;gap:6px 8px;margin:0 0 10px}
 .ag-cl span{display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border-radius:999px;padding:4px 11px 4px 9px;font:500 12px var(--font-body);color:var(--ink);border-left:4px solid var(--c)}
 .ag-cl b{font-weight:800}.ag-cl em{font-style:normal;color:var(--muted)}
-.ag-h .ag-ht{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:600 10.5px var(--font-body);color:var(--ink)}
+.ag-h .ag-ht{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--font-body);font-weight:600;font-size:calc(10.5px * var(--z,1));color:var(--ink)}
 .ag-tab{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 8px}
 .ag-tab button{border:0;background:var(--surface-2);color:var(--ink);font:600 12px var(--font-body);padding:6px 14px;border-radius:999px;cursor:pointer;min-height:30px}
 .ag-tab button[aria-pressed=true]{background:var(--accent);color:var(--on-accent)}
@@ -255,7 +260,7 @@ table.pd tr.tot td{font-weight:700}
 .ag-mes{border:1px solid var(--line);border-radius:16px;overflow:hidden}
 .ag-mh,.ag-mg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
 .ag-mh span{padding:9px 8px;font:700 11.5px var(--font-body);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);background:var(--surface-2);text-align:center}
-.ag-md,.ag-mv{min-height:84px;border-top:1px solid var(--line);border-left:1px solid var(--line)}
+.ag-md,.ag-mv{min-height:calc(84px * var(--z,1));border-top:1px solid var(--line);border-left:1px solid var(--line)}
 .ag-mg>:nth-child(7n+1){border-left:0}
 .ag-md{position:relative;border-right:0;border-bottom:0;background:var(--surface);color:var(--ink);cursor:pointer;text-align:left;padding:8px;display:grid;align-content:start;gap:6px;font:500 12px var(--font-body);transition:background .18s,transform .18s}
 .ag-md:hover{background:var(--surface-2);transform:scale(1.015);z-index:1;box-shadow:0 6px 22px rgba(0,0,0,.12)}
@@ -288,11 +293,11 @@ table.pd tr.tot td{font-weight:700}
 .ag-g{display:grid;min-width:max-content;width:100%}
 .ag-h{position:sticky;top:0;z-index:2;background:var(--surface);border-bottom:2px solid var(--c,var(--line));padding:5px 8px;display:grid;gap:0;line-height:1.2;font-size:12px}
 .ag-h small{color:var(--muted);font-size:10.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ag-t{padding:5px 6px;font:600 10.5px var(--font-body);color:var(--muted);border-top:1px solid var(--line);position:sticky;left:0;background:var(--surface);z-index:1}
-.ag-x{border-top:1px solid var(--line);border-left:1px solid var(--line);padding:2px;display:grid;gap:2px;align-content:start;min-height:26px}
-.ag-c{border:0;text-align:left;cursor:pointer;border-radius:7px;padding:2px 6px;display:grid;gap:0;line-height:1.25;background:color-mix(in srgb,var(--c) 18%,var(--surface));border-left:3px solid var(--c);color:var(--ink);font:500 11.5px var(--font-body);min-width:0}
+.ag-t{padding:5px 6px;font-family:var(--font-body);font-weight:600;font-size:calc(10.5px * var(--z,1));color:var(--muted);border-top:1px solid var(--line);position:sticky;left:0;background:var(--surface);z-index:1}
+.ag-x{border-top:1px solid var(--line);border-left:1px solid var(--line);padding:2px;display:grid;gap:2px;align-content:start;min-height:calc(26px * var(--z,1))}
+.ag-c{border:0;text-align:left;cursor:pointer;border-radius:7px;padding:2px 6px;display:grid;gap:0;line-height:1.25;background:color-mix(in srgb,var(--c) 18%,var(--surface));border-left:3px solid var(--c);color:var(--ink);font-family:var(--font-body);font-weight:500;font-size:calc(11.5px * var(--z,1));min-width:0}
 .ag-c b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ag-c small{color:var(--muted);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag-c small{color:var(--muted);font-size:calc(10px * var(--z,1));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ag-log{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px;font-size:13px;text-align:left}
 .ag-log span{color:var(--muted);font-weight:600;margin-right:4px}
 .ag-r{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:14px 0;border-top:1px solid var(--line)}
@@ -568,6 +573,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.10.0', '2026-11-11', 'Agenda das teles: lupa com + e − para aumentar ou diminuir o zoom do grid (dia, semana e mês). O ajuste fica salvo neste aparelho.'],
     ['1.9.0', '2026-11-11', 'Pessoas: mais de um cargo por pessoa (ex.: Divulgador e Promotor, com uma linha para cada na planilha) e novo cargo Indicação. Gerência e Gestão veem só as linhas de promotor nos totais de vendas.'],
     ['1.8.0', '2026-11-11', 'Agenda: status Atendido, totais por clínica (agendamentos, confirmados, atendidos e fechamentos) no dia, na semana e no mês. Nomes das funções: Vendas, Gerência e Gestão.'],
     ['1.7.0', '2026-11-11', 'Agenda das teles: grid menor; status Agendado, Confirmado, Fechado e Não fechou (com motivo guardado); filtro por status e totais por clínica, tele e motivo.'],
@@ -2061,13 +2067,14 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + '<div class="card ag-card" id="ag-grid"><div class="ag-bar">'
       + '<div class="seg" role="group" aria-label="Visão" id="ag-vis"><button type="button" data-v="dia">Dia</button><button type="button" data-v="sem">Semana</button><button type="button" data-v="mes">Mês</button></div>'
       + '<div class="ag-nav"><button type="button" class="ag-ib" id="gd-ant" aria-label="Anterior">‹</button><b class="ag-per" id="ag-per"></b><button type="button" class="ag-ib" id="gd-prox" aria-label="Próximo">›</button><button type="button" class="btn ghost" id="gd-hoje">Hoje</button></div>'
-      + '<div class="ag-tools"><button type="button" class="ag-ib" id="ag-recolher" aria-label="Recolher filtros e totais" title="Recolher filtros e totais"><svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg></button>'
+      + '<div class="ag-tools"><div class="ag-zoom" role="group" aria-label="Zoom da agenda"><svg class="lupa" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><button type="button" class="ag-ib" id="ag-zm" aria-label="Diminuir zoom" title="Zoom out">−</button><output id="ag-zv" title="Voltar a 100%">100%</output><button type="button" class="ag-ib" id="ag-zp" aria-label="Aumentar zoom" title="Zoom in">+</button></div><button type="button" class="ag-ib" id="ag-recolher" aria-label="Recolher filtros e totais" title="Recolher filtros e totais"><svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg></button>'
       + '<button type="button" class="ag-ib" id="ag-cheia" aria-label="Esconder o menu lateral" title="Tela cheia: esconde o menu lateral (Esc volta)"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button></div></div>'
       + '<div class="ag-palco" id="ag-palco"></div></div></div><div class="full" id="ag-quad"></div><div class="full" id="ag-lista"></div>';
     $('#v-app').classList.remove('sem-menu'); AG.fechado = false;
     $('#ag-recolher').addEventListener('click', () => agRecolher());
     $('#ag-resumo').addEventListener('click', () => agRecolher(false));
     $('#ag-cheia').addEventListener('click', () => agCheia());
+    $('#ag-zm').addEventListener('click', () => agZoom(-1)); $('#ag-zp').addEventListener('click', () => agZoom(1)); $('#ag-zv').addEventListener('click', () => agZoom(0)); agZoom(null);
     $$('#ag-vis [data-v]').forEach(b => b.addEventListener('click', () => agVisao(b.dataset.v)));
     $('#gd-ant').addEventListener('click', () => agNavega(-1)); $('#gd-prox').addEventListener('click', () => agNavega(1));
     $('#gd-hoje').addEventListener('click', () => { const d = AG.dia === hoje() ? '' : (AG.dia < hoje() ? 'next' : 'prev'); AG.dia = hoje(); agendaGrade(d || 'fade'); });
@@ -2126,6 +2133,15 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     $('#ag-recolher').classList.toggle('inv', AG.fechado);
     $('#ag-recolher').setAttribute('aria-label', AG.fechado ? 'Mostrar filtros e totais' : 'Recolher filtros e totais');
   }
+  const AG_ZS = [0.6, 0.7, 0.8, 0.9, 1, 1.15, 1.3, 1.5];
+  function agZoom(d){
+    if (AG.zi === undefined){ AG.zi = 4; try { const v = parseInt(localStorage.getItem('ag_zoom'), 10); if (v >= 0 && v < AG_ZS.length) AG.zi = v; } catch (e) {} }
+    if (d === 0) AG.zi = 4; else if (d) AG.zi = Math.max(0, Math.min(AG_ZS.length - 1, AG.zi + d));
+    if (d !== null){ try { localStorage.setItem('ag_zoom', String(AG.zi)); } catch (e) {} }
+    const z = AG_ZS[AG.zi], pl = $('#ag-palco'); if (pl) pl.style.setProperty('--z', z);
+    const o = $('#ag-zv'); if (o) o.textContent = Math.round(z * 100)+'%';
+    const m = $('#ag-zm'), p = $('#ag-zp'); if (m) m.disabled = AG.zi === 0; if (p) p.disabled = AG.zi === AG_ZS.length - 1;
+  }
   function agCheia(forca){
     const v = $('#v-app'); const on = forca === undefined ? !v.classList.contains('sem-menu') : forca;
     v.classList.toggle('sem-menu', on); const b = $('#ag-cheia'); if (b){ b.classList.toggle('inv', on); b.setAttribute('aria-label', on ? 'Mostrar o menu lateral' : 'Esconder o menu lateral'); }
@@ -2155,7 +2171,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     if (!cols.length) return '<div class="empty">Nenhuma clínica para mostrar.</div>';
     let n = 0; const card = g => '<button type="button" class="ag-c '+agStCls(g.status)+'" data-g="'+g.id+'" style="--c:'+esc(agCor(g.clinica_id))+';--i:'+(n++)+'"><b>'+agIco(g.status)+(hhm(g.hora) ? hhm(g.hora)+' · ' : '')+esc(g.paciente)+'</b><small>'+esc(nomeT[g.tele_id] || 'Tele')+(g.status !== 'agendado' ? ' · '+AG_ST[g.status].toLowerCase() : '')+'</small></button>';
     const semHora = its.filter(g => !g.hora), linhas = (semHora.length ? [['Sem horário', semHora]] : []).concat(agHoras(its, AG.dia).map(h => [h, its.filter(g => g.hora && agHorario(g.hora) === h)]));
-    return '<div class="ag-gw"><div class="ag-g" style="grid-template-columns:52px repeat('+cols.length+', minmax(118px, 1fr))"><div class="ag-h"></div>'
+    return '<div class="ag-gw"><div class="ag-g" style="grid-template-columns:52px repeat('+cols.length+', minmax(calc(118px * var(--z,1)), 1fr))"><div class="ag-h"></div>'
       + cols.map(c => '<div class="ag-h" style="--c:'+esc(c.cor || '#5b9bff')+'"><b>'+esc(c.sigla)+'</b><small>'+esc(c.nome)+'</small><span class="ag-ht">'+esc(agTxtTot(agTotais(its.filter(g => g.clinica_id === c.id))))+'</span></div>').join('')
       + linhas.map(([h, l]) => '<div class="ag-t">'+esc(h)+'</div>'+cols.map(c => '<div class="ag-x">'+l.filter(g => g.clinica_id === c.id).map(card).join('')+'</div>').join('')).join('')+'</div></div>';
   }
@@ -2164,7 +2180,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const nomeT = agNomeT(), sig = Object.fromEntries(AG.clinicas.map(c => [c.id, c.sigla])); let n = 0;
     const card = g => '<button type="button" class="ag-c '+agStCls(g.status)+'" data-g="'+g.id+'" style="--c:'+esc(agCor(g.clinica_id))+';--i:'+(n++)+'"><b>'+agIco(g.status)+(hhm(g.hora) ? hhm(g.hora)+' · ' : '')+esc(g.paciente)+'</b><small>'+esc(sig[g.clinica_id] || '')+' · '+esc(nomeT[g.tele_id] || 'Tele')+'</small></button>';
     const semHora = its.filter(g => !g.hora), linhas = (semHora.length ? [['Sem horário', null]] : []).concat(agHoras(its).map(h => [h, h]));
-    return agFaixa(its)+'<div class="ag-gw"><div class="ag-g" style="grid-template-columns:52px repeat(7, minmax(108px, 1fr))"><div class="ag-h"></div>'
+    return agFaixa(its)+'<div class="ag-gw"><div class="ag-g" style="grid-template-columns:52px repeat(7, minmax(calc(108px * var(--z,1)), 1fr))"><div class="ag-h"></div>'
       + dias.map((d, i) => '<div class="ag-h ag-hd'+(d === hoje() ? ' hoje' : '')+'"><b>'+DSEM[i]+'</b><small>'+dBR(d).slice(0, 5)+'</small></div>').join('')
       + linhas.map(([rot, h]) => '<div class="ag-t">'+esc(rot)+'</div>'+dias.map(d => '<div class="ag-x'+(d === hoje() ? ' hoje' : '')+'">'+its.filter(g => g.data_agendamento === d && (h === null ? !g.hora : (g.hora && agHorario(g.hora) === h))).map(card).join('')+'</div>').join('')).join('')+'</div></div>';
   }
