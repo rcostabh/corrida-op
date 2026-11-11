@@ -430,6 +430,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   let eu = null;           // linha da tabela usuarios
+  /* gerente: só as clínicas em que atua aparecem em listas e totais */
+  const soMinhasClin = q => q.then(r => { if (!r.error && eu && eu.papel === 'gerente' && eu.minhas) r.data = (r.data || []).filter(c => eu.minhas.includes(c.id)); return r; });
   let recurso = 'inicio';
   let editId = null;
   let lista = [];
@@ -525,6 +527,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   async function carregar(){
     $('#area').style.gridTemplateColumns = '';
     marcarMenu();
+    if (recurso === 'pessoas' && (eu.papel === 'gerente' || modoVisao === 'gerente')){ recurso = 'inicio'; marcarMenu(); }
     if (recurso === 'pessoas') return pessoasCarregar();
     if (recurso === 'campanhas') return campanhasCarregar();
     if (recurso === 'corrida') return corridaCarregar();
@@ -1118,7 +1121,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   async function lancCarregar(){
     $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
     $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
-    const rs = await Promise.all([sb.from('tipos_lancamento').select('*').order('nome'), sb.from('clinicas').select('*').order('nome'), sb.from('usuarios').select('*').order('nome'),
+    const rs = await Promise.all([sb.from('tipos_lancamento').select('*').order('nome'), soMinhasClin(sb.from('clinicas').select('*').order('nome')), sb.from('usuarios').select('*').order('nome'),
       sb.from('campanhas').select('*'), sb.from('vinculos_clinica').select('*')]);
     const er = rs.map(r => r.error).find(Boolean);
     if (er){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
@@ -1255,7 +1258,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
     $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
     $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
-    const rs = await Promise.all([sb.from('tipos_lancamento').select('*'), sb.from('clinicas').select('*').order('nome'), sb.from('usuarios').select('*').order('nome'), sb.from('campanhas').select('*')]);
+    const rs = await Promise.all([sb.from('tipos_lancamento').select('*'), soMinhasClin(sb.from('clinicas').select('*').order('nome')), sb.from('usuarios').select('*').order('nome'), sb.from('campanhas').select('*')]);
     const er = rs.map(r => r.error).find(Boolean);
     if (er){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
     RP.tipos = rs[0].data; RP.clin = rs[1].data; RP.usu = rs[2].data; RP.camps = rs[3].data;
@@ -1702,7 +1705,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   async function msgCarregar(){
     $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
     $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
-    const rs = await Promise.all([sb.from('clinicas').select('*').order('nome'), sb.from('mensagens_programadas').select('*').order('hora'), sb.from('config_niveis').select('*')]);
+    const rs = await Promise.all([soMinhasClin(sb.from('clinicas').select('*').order('nome')), sb.from('mensagens_programadas').select('*').order('hora'), sb.from('config_niveis').select('*')]);
     const er = rs.map(r => r.error).find(Boolean); if (er){ pdErro(er); return; }
     MP.clin = rs[0].data.filter(c => c.ativa !== false); MP.prog = rs[1].data;
     if (rs[2].data && rs[2].data[0]) MP.niveis = rs[2].data[0];
@@ -1906,7 +1909,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const n = pdN(DS.ano, DS.mes), de = pdIso(DS.ano, DS.mes, 1), ate = pdIso(DS.ano, DS.mes, n), tk = ++DS.tk;
     DS.geoErro = '';
     const geoP = Promise.all([mgContorno(), mgMunicipios()]).catch(e => { DS.geoErro = (e && e.message) || 'erro'; return null; });
-    const rs = await Promise.all([sb.from('clinicas').select('*').order('nome'), sb.from('usuarios').select('id,cargo'), buscarPlanilha(de, ate), geoP]);
+    const rs = await Promise.all([soMinhasClin(sb.from('clinicas').select('*').order('nome')), sb.from('usuarios').select('id,cargo'), buscarPlanilha(de, ate), geoP]);
     if (tk !== DS.tk || recurso !== 'inicio') return;
     const er = rs.slice(0, 3).map(r => r.error).find(Boolean); if (er){ pdErro(er); return; }
     const cargo = {}; rs[1].data.forEach(u => { cargo[u.id] = u.cargo; });
@@ -2128,12 +2131,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const ger = modoVisao === 'gerente';
     $('#eyebrow').textContent = ger ? 'Painel da gerência' : (eu && eu.papel === 'assistente' ? 'Painel de suporte' : 'Painel do gestor');
     $$('#modo button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === modoVisao));
-    $$('#nav button[data-r]').forEach(b => { b.hidden = ger && !['diario', 'planilha'].includes(b.dataset.r); });
-    $$('#nav .sep').forEach(x => { x.hidden = ger; });
-    Object.keys(GRUPOS).forEach(k => { const esc_ = ger && k !== 'vend'; $('#g-'+k+'-btn').hidden = esc_; if (esc_) grupo(k, false); });
-    if (ger) grupo('vend', true);
-    if (ger && !['diario', 'planilha'].includes(recurso)) recurso = 'diario';
-    if (!ger && ['diario', 'planilha'].includes(recurso) && recarregar) recurso = 'inicio';
+    $$('#nav button[data-r]').forEach(b => { b.hidden = ger && b.dataset.r === 'pessoas'; });
+    if (ger && recurso === 'pessoas') recurso = 'inicio';
     PD.clinicas = []; PD.ano = 0;
     if (recarregar) carregar();
   }
@@ -2149,10 +2148,14 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       $('#l-err').textContent = 'Seu login existe, mas ainda não foi cadastrado no sistema. Fale com o gestor.'; return;
     }
     if (!['gestor', 'gerente', 'assistente'].includes(data.papel)){ location.replace('app/'); return; }
-    eu = data; $('#quem').textContent = data.nome;
+    eu = data; $('#quem').textContent = data.nome; eu.minhas = null;
+    if (data.papel === 'gerente'){
+      const vv = await sb.from('vinculos_clinica').select('clinica_id,inicio,fim').eq('usuario_id', data.id);
+      eu.minhas = (vv.data || []).filter(x => x.inicio <= hoje() && (!x.fim || x.fim >= hoje())).map(x => x.clinica_id);
+    }
     $('#modo').hidden = data.papel === 'gerente'; modoVisao = data.papel === 'gerente' ? 'gerente' : 'gestor';
     aplicarModo(false);
-    lateral(lerLS('menu-aberto') === '1' && window.innerWidth > 1000); if (data.papel !== 'gerente' && !recurso) recurso = 'inicio';
+    lateral(lerLS('menu-aberto') === '1' && window.innerWidth > 1000); if (!recurso) recurso = 'inicio';
     view('app'); carregar();
   }
 
