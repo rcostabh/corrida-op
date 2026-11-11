@@ -74,6 +74,22 @@ li:first-child>.ag-i{border-top:0}
 .sheet{position:fixed;inset:0;z-index:70;background:rgba(10,10,20,.6);display:flex;align-items:flex-end;justify-content:center}
 .sh-c{background:var(--surface);width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:24px 24px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom,0px));display:grid;gap:12px}
 .sh-c .cv{width:100%;height:auto;border-radius:14px;display:block}
+.gc{padding:12px}
+.gc .field{font-size:11px;gap:3px}
+.gc .field input,.gc .field select{min-height:38px;font-size:13px}
+.gc .g2{gap:8px}
+.tiles.gt{gap:8px}
+.gt .tl{padding:10px 12px;border-radius:14px}
+.gt .tl-r{font-size:10.5px}.gt .tl-v{font-size:22px}.gt .tl-n{font-size:11px}
+.gg-w{overflow:auto;border:1px solid var(--line);border-radius:14px;max-height:62vh;-webkit-overflow-scrolling:touch}
+.gg{display:grid;min-width:max-content;width:100%}
+.gg-h{position:sticky;top:0;z-index:2;background:var(--surface);border-bottom:2px solid var(--c,var(--line));padding:8px 8px;font:700 13px var(--font)}
+.gg-t{position:sticky;left:0;z-index:1;background:var(--surface);border-top:1px solid var(--line);padding:8px 4px;font:600 11px var(--font);color:var(--muted)}
+.gg-x{border-top:1px solid var(--line);border-left:1px solid var(--line);padding:3px;display:grid;gap:3px;align-content:start;min-height:40px}
+.gg-c{border:0;text-align:left;border-radius:8px;padding:5px 7px;display:grid;gap:0;background:color-mix(in srgb,var(--c) 18%,var(--surface));border-left:3px solid var(--c);color:var(--ink);font:500 12px var(--font);cursor:pointer}
+.gg-c b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gg-c small{color:var(--muted);font-size:10.5px}
+.ag-lg{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px;font-size:13px}
+.ag-lg span{color:var(--muted);font-weight:600;margin-right:4px}
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .tl{background:var(--surface-2);border-radius:18px;padding:14px;display:grid;gap:2px;min-width:0;align-content:start}
 .tl-r{font-weight:600;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
@@ -259,7 +275,6 @@ li:first-child>.ag-i{border-top:0}
     const { data, error } = await sb.from('usuarios').select('*').eq('auth_id', authUid).maybeSingle();
     if (error || !data){ await sb.auth.signOut(); view('login'); $('#l-err').textContent = 'Seu login existe, mas ainda não foi cadastrado. Fale com o gestor.'; return; }
     if (!data.ativo){ await sb.auth.signOut(); view('login'); $('#l-err').textContent = 'Seu acesso está desativado. Fale com o gestor.'; return; }
-    if (data.papel === 'gestor' || data.papel === 'assistente'){ location.replace(urlPainel); return; }
     eu = data;
     const v = await sb.from('vinculos_clinica').select('*').eq('usuario_id', eu.id);
     minhasClin = (v.data || []).filter(x => !x.fim).map(x => x.clinica_id);
@@ -318,6 +333,7 @@ li:first-child>.ag-i{border-top:0}
 
 
   /* ---------- início: números do mês e funções ---------- */
+  const ehGestao = () => !!eu && (eu.papel === 'gestor' || eu.papel === 'assistente');
   const ehTele = () => !!eu && eu.papel === 'promotor' && (eu.cargo === 'Tele BH' || eu.cargo === 'Tele interno');
   const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
   const ymd = (a, m, d) => a+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
@@ -527,6 +543,87 @@ li:first-child>.ag-i{border-top:0}
     });
   }
 
+
+  /* ---------- gestor e assistente no celular: só consulta da agenda das teles ---------- */
+  const GA = { ini: '', fim: '', dia: '', tele: '', clin: '', teles: [], clinicas: [], itens: [], diaItens: [] };
+  const mesIniG = () => hoje().slice(0, 8)+'01';
+  async function gAgendaCarregar(){
+    if (!ehGestao()){ mostrar('inicio'); return; }
+    if (!GA.ini){ GA.ini = mesIniG(); GA.fim = hoje(); GA.dia = hoje(); }
+    $('#main').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const rs = await Promise.all([sb.from('usuarios').select('id,nome,cargo').in('cargo', ['Tele BH', 'Tele interno']).order('nome'), sb.from('clinicas').select('id,sigla,nome,cor,ativa').order('nome')]);
+    if (aba !== 'agenda') return;
+    const er = rs[0].error || rs[1].error;
+    if (er){ $('#main').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
+    GA.teles = rs[0].data; GA.clinicas = rs[1].data;
+    $('#main').innerHTML =
+      '<div class="card gc"><div class="g2">'
+      + '<label class="field" for="g-ini">Início<input id="g-ini" type="date" value="'+esc(GA.ini)+'"></label><label class="field" for="g-fim">Fim<input id="g-fim" type="date" value="'+esc(GA.fim)+'"></label>'
+      + '<label class="field" for="g-tele">Tele<select id="g-tele"><option value="">Todas</option>'+GA.teles.map(t => '<option value="'+t.id+'"'+(String(t.id) === String(GA.tele) ? ' selected' : '')+'>'+esc(t.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="field" for="g-clin">Clínica<select id="g-clin"><option value="">Todas</option>'+GA.clinicas.map(c => '<option value="'+c.id+'"'+(String(c.id) === String(GA.clin) ? ' selected' : '')+'>'+esc(c.sigla)+'</option>').join('')+'</select></label></div></div>'
+      + '<div id="g-tot"></div><div class="card gc" id="g-grade"></div>';
+    const muda = () => { GA.ini = $('#g-ini').value || mesIniG(); GA.fim = $('#g-fim').value || hoje(); GA.tele = $('#g-tele').value; GA.clin = $('#g-clin').value; gAgendaDados(); };
+    ['g-ini', 'g-fim', 'g-tele', 'g-clin'].forEach(id => $('#'+id).addEventListener('change', muda));
+    gAgendaDados();
+  }
+  async function gAgendaDados(){
+    if (!$('#g-tot')) return;
+    let q = sb.from('agendamentos').select('id').is('excluido_em', null).gte('data_agendamento', GA.ini).lte('data_agendamento', GA.fim).limit(5000);
+    let pl = sb.from('planilha_diaria').select('visitas,vendas').gte('data_ref', GA.ini).lte('data_ref', GA.fim).limit(5000);
+    if (GA.tele){ q = q.eq('tele_id', Number(GA.tele)); pl = pl.eq('usuario_id', Number(GA.tele)); }
+    if (GA.clin){ q = q.eq('clinica_id', Number(GA.clin)); pl = pl.eq('clinica_id', Number(GA.clin)); }
+    const [r, rp] = await Promise.all([q, pl]);
+    if (!$('#g-tot')) return;
+    const er = r.error || rp.error;
+    if (er){ $('#g-tot').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
+    const nAg = r.data.length, vis = rp.data.reduce((t, x) => t + (x.visitas || 0), 0), ven = rp.data.reduce((t, x) => t + (x.vendas || 0), 0);
+    const pct = (a, b) => b > 0 ? Math.round(a / b * 100)+'%' : '—';
+    const tl = (rot, val, nota) => '<div class="tl"><span class="tl-r">'+rot+'</span><b class="tl-v">'+val+'</b><span class="tl-n">'+nota+'</span></div>';
+    $('#g-tot').innerHTML = '<div class="tiles gt">'+tl('Agendamentos', nAg, 'das teles')+tl('Visitas', vis, pct(vis, nAg)+' dos agend.')+tl('Vendas', ven, pct(ven, vis)+' das visitas')+tl('Agend. → venda', pct(ven, nAg), 'vendas ÷ agend.')+'</div>';
+    gGrade();
+  }
+  async function gGrade(){
+    const alvo = $('#g-grade'); if (!alvo) return;
+    let q = sb.from('agendamentos').select('*').is('excluido_em', null).eq('data_agendamento', GA.dia).order('hora').limit(500);
+    if (GA.tele) q = q.eq('tele_id', Number(GA.tele));
+    if (GA.clin) q = q.eq('clinica_id', Number(GA.clin));
+    const r = await q; if (!$('#g-grade')) return;
+    if (r.error){ alvo.innerHTML = '<div class="err">'+esc(msgErro(r.error))+'</div>'; return; }
+    GA.diaItens = r.data;
+    const cols = GA.clinicas.filter(c => GA.clin ? String(c.id) === String(GA.clin) : (c.ativa || r.data.some(g => g.clinica_id === c.id)));
+    const slotDe = g => { const h = hh(g.hora); return h.slice(0, 2)+':'+(Number(h.slice(3)) >= 30 ? '30' : '00'); };
+    const horas = []; for (let h = 8; h <= 19; h++){ horas.push(String(h).padStart(2, '0')+':00'); horas.push(String(h).padStart(2, '0')+':30'); }
+    r.data.forEach(g => { if (g.hora && !horas.includes(slotDe(g))) horas.push(slotDe(g)); }); horas.sort();
+    const semHora = r.data.filter(g => !g.hora), nomeT = Object.fromEntries(GA.teles.map(t => [t.id, t.nome.split(' ')[0]]));
+    const card = g => '<button type="button" class="gg-c" data-g="'+g.id+'" style="--c:'+esc((GA.clinicas.find(c => c.id === g.clinica_id) || {}).cor || '#5b9bff')+'"><b>'+(hh(g.hora) ? hh(g.hora)+' ' : '')+esc(g.paciente)+'</b><small>'+esc(nomeT[g.tele_id] || 'Tele')+'</small></button>';
+    const linhas = (semHora.length ? [['Sem hora', semHora]] : []).concat(horas.map(h => [h, r.data.filter(g => g.hora && slotDe(g) === h)]));
+    const somaDia = n => { const x = new Date(GA.dia+'T12:00:00'); x.setDate(x.getDate() + n); return x.toLocaleDateString('sv-SE'); };
+    alvo.innerHTML = '<div class="cal-top"><button type="button" class="sndbtn" id="gd-ant" aria-label="Dia anterior">‹</button><div style="text-align:center"><b>'+dBR(GA.dia)+(GA.dia === hoje() ? ' · hoje' : '')+'</b><div class="meta">'+r.data.length+' agendamento(s)</div></div><button type="button" class="sndbtn" id="gd-prox" aria-label="Próximo dia">›</button></div>'
+      + '<div class="gg-w"><div class="gg" style="grid-template-columns:48px repeat('+Math.max(cols.length, 1)+', minmax(128px, 1fr))"><div class="gg-h"></div>'
+      + cols.map(c => '<div class="gg-h" style="--c:'+esc(c.cor || '#5b9bff')+'"><b>'+esc(c.sigla)+'</b></div>').join('')
+      + linhas.map(([h, its]) => '<div class="gg-t">'+esc(h)+'</div>'+cols.map(c => '<div class="gg-x">'+its.filter(g => g.clinica_id === c.id).map(card).join('')+'</div>').join('')).join('')
+      + '</div></div><button type="button" class="link" id="gd-hoje" style="justify-self:center">Ir para hoje</button>';
+    const vai = d => { GA.dia = d || hoje(); gGrade(); };
+    $('#gd-ant').addEventListener('click', () => vai(somaDia(-1))); $('#gd-prox').addEventListener('click', () => vai(somaDia(1))); $('#gd-hoje').addEventListener('click', () => vai(hoje()));
+    $$('#g-grade [data-g]').forEach(b => b.addEventListener('click', () => gDetalhe(Number(b.dataset.g))));
+  }
+  async function gDetalhe(id){
+    const g = GA.diaItens.find(x => x.id === id); if (!g) return;
+    const [ps, lg] = await Promise.all([sb.from('agendamento_prints').select('*').eq('agendamento_id', id).order('criado_em'), sb.from('agendamentos_log').select('*').eq('agendamento_id', id).order('quando')]);
+    const urls = (await Promise.all((ps.data || []).map(x => sb.storage.from('prints').createSignedUrl(x.path, 600).then(r => r.data ? r.data.signedUrl : null)))).filter(Boolean);
+    const nomeT = Object.fromEntries(GA.teles.map(t => [t.id, t.nome])), c = GA.clinicas.find(x => x.id === g.clinica_id) || {};
+    const quando = t => new Date(t).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    const dh = o => o ? dBR(o.data)+(o.hora ? ' às '+hh(o.hora) : '') : '';
+    const rot = l => l.acao === 'criar' ? 'Criado' : l.acao === 'alterar' ? 'Alterado de '+dh(l.antes)+' para '+dh(l.depois) : l.acao === 'conversa' ? 'Nova conversa incluída' : 'Excluído';
+    const ov = document.createElement('div'); ov.className = 'sheet'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
+    ov.innerHTML = '<div class="sh-c"><div class="line" style="justify-content:space-between"><h2 style="margin:0">'+esc(g.paciente)+'</h2><button type="button" class="sndbtn" data-x aria-label="Fechar">×</button></div>'
+      + '<p class="meta">'+esc(fmtTelDigitos(g.telefone))+' · <span class="sigla">'+esc(c.sigla || '')+'</span> · '+dBR(g.data_agendamento)+(g.hora ? ' às '+hh(g.hora) : '')+'</p><p class="meta">Lançado por '+esc(nomeT[g.tele_id] || 'Tele')+'</p>'
+      + (urls.length ? urls.map(u => '<img class="cv" src="'+esc(u)+'" alt="Print da conversa">').join('') : '<div class="empty">Sem prints.</div>')
+      + '<div><b>Histórico</b>'+((lg.data || []).length ? '<ul class="ag-lg">'+lg.data.map(l => '<li><span>'+quando(l.quando)+'</span> '+esc(rot(l))+'</li>').join('')+'</ul>' : '<p class="meta">Sem registros.</p>')+'</div></div>';
+    ov.addEventListener('click', e => { if (e.target === ov || e.target.closest('[data-x]')) ov.remove(); });
+    document.body.appendChild(ov);
+  }
+
   /* ---------- casca do app ---------- */
   const ICONES = {
     agenda: '<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
@@ -538,21 +635,21 @@ li:first-child>.ag-i{border-top:0}
   };
   let naoLidas = 0;
   function abrirApp(){
-    $('#h-papel').textContent = eu.papel === 'gerente' ? 'Gerente' : (eu.cargo || 'Promotor');
+    $('#h-papel').textContent = eu.papel === 'gerente' ? 'Gerente' : eu.papel === 'gestor' ? 'Gestor' : eu.papel === 'assistente' ? 'Assistente' : (eu.cargo || 'Promotor');
     $('#h-nome').textContent = eu.nome.split(' ')[0];
     $('#h-av').innerHTML = avatar(eu);
-    view('app'); desenharAbas(); mostrar(aba === 'lancar' && eu.papel !== 'gerente' ? 'inicio' : ((aba === 'agendar' || aba === 'agenda') && !ehTele() ? 'inicio' : aba)); pushManter();
+    view('app'); desenharAbas(); mostrar(ehGestao() ? (aba === 'perfil' ? 'perfil' : 'agenda') : aba === 'lancar' && eu.papel !== 'gerente' ? 'inicio' : ((aba === 'agendar' || aba === 'agenda') && !ehTele() ? 'inicio' : aba)); pushManter();
     contarAvisos();
     clearInterval(timer); timer = setInterval(() => { if (!document.hidden && $('#v-app').hidden === false){ if (aba === 'corrida') corridaAtualizar(); contarAvisos(); } }, 15000);
   }
   function desenharAbas(){
-    const abas = [['inicio','Início'],['corrida','Corrida']].concat(eu.papel === 'gerente' ? [['lancar','Lançar']] : [], [['avisos','Avisos'],['perfil','Perfil']]);
+    const abas = ehGestao() ? [['agenda','Agenda'],['perfil','Perfil']] : [['inicio','Início'],['corrida','Corrida']].concat(eu.papel === 'gerente' ? [['lancar','Lançar']] : [], [['avisos','Avisos'],['perfil','Perfil']]);
     $('#tabs').innerHTML = abas.map(a => '<button type="button" data-aba="'+a[0]+'" aria-current="'+((a[0]===aba||(a[0]==='inicio'&&(aba==='agendar'||aba==='agenda')))?'page':'false')+'">'+ICONES[a[0]]+'<span>'+a[1]+'</span>'+(a[0]==='avisos'&&naoLidas?'<span class="n">'+naoLidas+'</span>':'')+'</button>').join('');
   }
   $('#tabs').addEventListener('click', e => { const b = e.target.closest('[data-aba]'); if (b) mostrar(b.dataset.aba); });
   function mostrar(a){
     aba = a; desenharAbas();
-    ({ inicio: inicioCarregar, agenda: agendaCarregar, agendar: agendarCarregar, corrida: corridaCarregar, lancar: lancCarregar, avisos: avisosCarregar, perfil: perfilCarregar })[a]();
+    ({ inicio: inicioCarregar, agenda: ehGestao() ? gAgendaCarregar : agendaCarregar, agendar: agendarCarregar, corrida: corridaCarregar, lancar: lancCarregar, avisos: avisosCarregar, perfil: perfilCarregar })[a]();
     window.scrollTo(0, 0);
   }
   async function contarAvisos(){
@@ -1018,12 +1115,13 @@ li:first-child>.ag-i{border-top:0}
     const minhas = (cl.data || []).filter(c => minhasClin.includes(c.id));
     $('#main').innerHTML =
       '<div class="card" style="text-align:center"><div id="p-av">'+avatar(eu, 'xl')+'</div><h2 style="margin-top:10px">'+esc(eu.nome)+'</h2>'
-      + '<p class="meta">'+esc(eu.email || '')+'</p><p class="meta">'+(eu.papel==='gerente'?'Gerente':esc(eu.cargo||'Promotor'))+(minhas.length?' · '+minhas.map(c => esc(c.sigla)).join(', '):'')+'</p>'
+      + '<p class="meta">'+esc(eu.email || '')+'</p><p class="meta">'+(eu.papel==='gerente'?'Gerente':eu.papel==='gestor'?'Gestor':eu.papel==='assistente'?'Assistente':esc(eu.cargo||'Promotor'))+(minhas.length?' · '+minhas.map(c => esc(c.sigla)).join(', '):'')+'</p>'
       + '<div class="err" id="p-ferr" role="alert"></div><div class="btns" style="justify-content:center"><label class="btn sm" style="line-height:24px">Tirar foto<input type="file" accept="image/*" capture="user" id="p-cam" hidden></label>'
       + '<label class="btn ghost sm" style="line-height:26px">Escolher da galeria<input type="file" accept="image/*" id="p-gal" hidden></label></div></div>'
       + '<div class="card"><h2>Meus dados</h2><form class="form" id="f-perfil" novalidate><label class="field" for="p-nome">Nome<input id="p-nome" type="text" autocomplete="name" value="'+esc(eu.nome)+'"></label>'
       + '<label class="field" for="p-tel">Telefone com DDD<input id="p-tel" type="tel" inputmode="numeric" autocomplete="tel" value="'+esc(fmtTel(eu.telefone))+'"></label>'
       + '<p class="meta">Clínica e cargo só o gestor altera.</p><div class="err" id="p-err" role="alert"></div><button class="btn block" type="submit">Salvar dados</button></form></div>'
+      + (ehGestao() ? '<div class="card"><h2>Painel completo</h2><p class="meta" style="margin-bottom:10px">Esta versão do celular é só para consulta.</p><a class="btn ghost block" href="'+esc(urlPainel)+'" style="display:grid;place-items:center;text-decoration:none">Abrir o painel completo</a></div>' : '')
       + '<div class="card"><h2>Trocar senha</h2><form class="form" id="f-senha" novalidate><label class="field" for="s-nova">Nova senha<input id="s-nova" type="password" autocomplete="new-password" placeholder="Mínimo de 8 caracteres"></label>'
       + '<label class="field" for="s-rep">Repita a senha<input id="s-rep" type="password" autocomplete="new-password"></label><div class="err" id="s-err" role="alert"></div><button class="btn block" type="submit">Trocar senha</button></form></div>'
       + '<button class="btn ghost block" type="button" id="p-sair">Sair</button><p class="meta" style="text-align:center">Versão '+VERSAO+'</p>';

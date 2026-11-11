@@ -192,13 +192,24 @@ table.pd tr.tot td{font-weight:700}
 .mp-item:first-child{border-top:0}
 .mp-item .txt{color:var(--muted);font-size:13px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 
+.ag-sm{padding:12px 16px}
+.ag-sm h2{font-size:14px;margin:0 0 2px}
+.ag-sm .vr-bar{gap:8px 12px}
+.ag-sm .field{font-size:11px;gap:3px}
+.ag-sm .field input,.ag-sm .field select{min-height:34px;font-size:13px;padding:4px 10px;border-radius:10px}
+.ag-sm .btn{min-height:34px;font-size:13px;padding:4px 14px}
+.ag-sm .ag-tls{gap:8px;margin-top:6px}
+.ag-sm .ag-tl{padding:8px 12px;border-radius:14px}
+.ag-sm .ag-tl span{font-size:10.5px}
+.ag-sm .ag-tl b{font-size:20px}
+.ag-sm .ag-tl small{font-size:11px}
 .ag-tls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:10px}
 @media (max-width:760px){.ag-tls{grid-template-columns:1fr 1fr}}
 .ag-tl{background:var(--surface-2);border-radius:18px;padding:16px;display:grid;gap:2px;min-width:0}
 .ag-tl span{font-weight:600;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 .ag-tl b{font:800 30px/1.1 var(--font-body);color:var(--ink)}
 .ag-tl small{color:var(--muted);font-size:12.5px}
-.ag-gw{overflow:auto;border:1px solid var(--line);border-radius:16px;max-height:70vh}
+.ag-gw{overflow:auto;border:1px solid var(--line);border-radius:16px;max-height:78vh}
 .ag-g{display:grid;min-width:max-content;width:100%}
 .ag-h{position:sticky;top:0;z-index:2;background:var(--surface);border-bottom:2px solid var(--c,var(--line));padding:10px 12px;display:grid;gap:1px}
 .ag-h small{color:var(--muted);font-size:12px;font-weight:500}
@@ -459,6 +470,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.4.1', '2026-11-11', 'Agenda das teles: cartões de filtros e totais menores, para a grade aparecer melhor.'],
     ['1.4.0', '2026-11-11', 'Agenda das teles com grade por clínica e horário, totalizadores Agendamento → Visita → Venda por período, tele e clínica, e histórico de alterações.'],
     ['1.3.0', '2026-11-11', 'Nova tela Agenda das teles: todos os agendamentos lançados no app, por dia, telemarketing e clínica, com o print da conversa.'],
     ['1.2.0', '2026-11-11', 'Gerente: sem acesso a Campanhas; passa a ver e editar os promotores e divulgadores da própria clínica e a enviar convites.'],
@@ -1912,7 +1924,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     if (er){ $('#area').innerHTML = '<div class="card full"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
     AG.teles = rs[0].data; AG.clinicas = rs[1].data;
     $('#area').innerHTML =
-      '<div class="card full"><div class="vr-bar">'
+      '<div class="card full ag-sm"><div class="vr-bar">'
       + '<label class="field" for="ag-ini">Data início<input id="ag-ini" type="date" value="'+esc(AG.ini)+'"></label>'
       + '<label class="field" for="ag-fim">Data fim<input id="ag-fim" type="date" value="'+esc(AG.fim)+'"></label>'
       + '<label class="field" for="ag-tele">Telemarketing<select id="ag-tele"><option value="">Todas</option>'+AG.teles.map(t => '<option value="'+t.id+'"'+(String(t.id) === String(AG.tele) ? ' selected' : '')+'>'+esc(t.nome)+'</option>').join('')+'</select></label>'
@@ -1939,12 +1951,12 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const nAg = r.data.length, vis = rp.data.reduce((t, x) => t + (x.visitas || 0), 0), ven = rp.data.reduce((t, x) => t + (x.vendas || 0), 0);
     const pct = (a, b) => b > 0 ? Math.round(a / b * 100)+'%' : '—';
     const tile = (rot, val, nota) => '<div class="ag-tl"><span>'+rot+'</span><b>'+val+'</b><small>'+(nota || '&nbsp;')+'</small></div>';
-    $('#ag-tot').innerHTML = '<div class="card"><h2>'+dBR(AG.ini)+' a '+dBR(AG.fim)+'</h2><div class="ag-tls">'
+    $('#ag-tot').innerHTML = '<div class="card ag-sm"><h2>'+dBR(AG.ini)+' a '+dBR(AG.fim)+'</h2><div class="ag-tls">'
       + tile('Agendamentos', nAg, 'lançados pelas teles')
       + tile('Visitas', vis, pct(vis, nAg)+' dos agendamentos')
       + tile('Vendas', ven, pct(ven, vis)+' das visitas')
       + tile('Agendamento → venda', pct(ven, nAg), 'vendas ÷ agendamentos')
-      + '</div><p class="sub" style="margin:10px 0 0">Visitas e vendas vêm da planilha diária (Vendas → Lançamento diário), no mesmo período e filtros.</p></div>';
+      + '</div><p class="sub" style="margin:6px 0 0;font-size:11.5px">Visitas e vendas: planilha diária, no mesmo período e filtros.</p></div>';
     agendaGrade();
     agendaLista();
   }
