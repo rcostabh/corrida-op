@@ -603,6 +603,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.18.1', '2026-11-12', 'Agenda das teles: clicar num botão da legenda de cima volta a descer a tela até a lista dos pacientes. Os botões da legenda de baixo só filtram, sem rolar.'],
     ['1.18.0', '2026-11-12', 'Agenda das teles: cartões de totais 40% mais baixos; a lista de agendamentos virou grid fino, com a legenda de status repetida acima, busca por nome ou telefone, filtros de clínica e motivo e ordenação ao clicar no título de cada coluna.'],
     ['1.17.0', '2026-11-12', 'Agenda das teles: a legenda virou botões com os totais do período (agendamentos, confirmaram, atendidos, fecharam, não fecharam e não compareceram). Clicar num botão lista os nomes. Novo status visual Não compareceu, separado do Não fechou.'],
     ['1.16.1', '2026-11-12', 'Agenda das teles: Visitas e Vendas do topo agora contam os atendidos e fechados da própria agenda (antes vinham da planilha diária e ficavam zeradas quando ela não estava preenchida).'],
@@ -2156,7 +2157,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const html = '<b>Legenda</b>'+AG_CATS.map(c => '<button type="button" class="lg '+c[2]+'" data-cat="'+c[0]+'" aria-pressed="'+(AG.cat === c[0])+'" title="'+esc(c[4])+'. Clique para listar os nomes.">'+c[3]+esc(c[1])+' <b>'+(AG.todos || []).filter(c[5]).length+'</b></button>').join('')
       + '<i class="ag0" title="Cartão ainda sem confirmação: a cor é a da clínica">cor da clínica = só agendado</i>';
     els.forEach(el => { el.innerHTML = html; });
-    $$('.ag-leg [data-cat]').forEach(b => b.addEventListener('click', () => { AG.cat = AG.cat === b.dataset.cat ? '' : b.dataset.cat; agLegAtualiza(); agendaLista(); }));
+    $$('.ag-leg [data-cat]').forEach(b => b.addEventListener('click', () => { const topo = !b.closest('#ag-lista'); AG.cat = AG.cat === b.dataset.cat ? '' : b.dataset.cat; agLegAtualiza(); agendaLista(); const al = $('#ag-lista'); if (topo && AG.cat && al) al.scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
   };
   function agFaixa(its){
     const cs = AG.clinicas.filter(c => AG.clin ? String(c.id) === String(AG.clin) : (c.ativa || its.some(g => g.clinica_id === c.id)));
