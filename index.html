@@ -48,7 +48,7 @@ h2{font:650 19px/1.2 var(--font-display);letter-spacing:-.02em;margin:0 0 4px}
 input,select{font:inherit;font-weight:500;font-size:15px;color:var(--ink);background:var(--surface-2);border:1px solid transparent;border-radius:12px;padding:10px 14px;min-height:46px;width:100%;transition:border-color .2s,box-shadow .2s,background .2s}
 input:hover,select:hover{border-color:var(--line)}
 input:focus,select:focus{outline:none;background:var(--surface);border-color:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 22%,transparent)}
-input[type=checkbox]{width:20px;height:20px;min-height:0;padding:0;accent-color:var(--accent);flex:none}
+input[type=checkbox],input[type=radio]{width:20px;height:20px;min-height:0;padding:0;accent-color:var(--accent);flex:none}
 .chk{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface-2);border-radius:12px;min-height:46px;cursor:pointer;font-weight:500;color:var(--ink)}
 .err{color:var(--red);font-weight:500;font-size:13px;min-height:1em}
 .btns{display:flex;flex-wrap:wrap;gap:8px}
@@ -605,6 +605,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.22.1', '2026-11-12', 'Exportar Excel: as opções de escolha única (Separar por e Resumo por) saíram gigantes; agora têm o mesmo tamanho das demais caixas de seleção.'],
     ['1.22.0', '2026-11-12', 'Agenda das teles: botão Exportar Excel. A gerente escolhe separar por clínica, por tele ou não separar; resumo por dia, semana ou mês (agendamentos, confirmaram, atendidos, fecharam, não fecharam, não compareceram e percentuais); e a lista de nomes de quem ela quiser (quem fechou, quem não foi etc.), uma aba por clínica ou tele.'],
     ['1.21.1', '2026-11-12', 'Agenda das teles: clicar num botão da legenda limpa os filtros de status, motivo e busca do grid que estavam sobrando e escondiam os nomes; escolher um status no grid solta o botão da legenda. A mensagem de lista vazia ganhou o botão Limpar filtros do grid.'],
     ['1.21.0', '2026-11-12', 'Agenda das teles: a gerência (e o gestor) pode corrigir o status de qualquer agendamento da sua clínica, por exemplo de Atendido para Não compareceu, ficando registrado no histórico. Tele BH não confirma mais presença nem marca atendimento, fechou ou não fechou: só marca e remarca a agenda.'],
