@@ -581,6 +581,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.16.0', '2026-11-12', 'A gerente passa a ver a Agenda das teles (só as clínicas dela): abre o agendamento, marca Atendido (paciente compareceu) e Fechado ou Não fechou. Teles com Tele BH como cargo extra também aparecem no filtro.'],
     ['1.15.0', '2026-11-12', 'Agenda das teles: legenda das cores (agendado na cor da clínica, confirmado, atendido, fechado e não fechou) acima do calendário.'],
     ['1.14.0', '2026-11-12', 'Fontes de visita agora têm cadastro (Cadastros › Fontes de visita): Luminoso, Indicação e a nova Prospecta, com meta própria. O gestor inclui, renomeia ou desativa fontes sem mexer no sistema; elas valem para todas as clínicas.'],
     ['1.13.0', '2026-11-12', 'A gerente pode atuar também como divulgadora: em Pessoas (feito pelo gestor), a gerente ganha "Também atua como: Divulgador". Com isso ela aparece nos lançamentos de visita e venda, na planilha diária e nas campanhas, na clínica dela.'],
@@ -714,7 +715,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   async function carregar(){
     $('#area').style.gridTemplateColumns = '';
     marcarMenu();
-    if ((recurso === 'campanhas' || recurso === 'agenda') && (eu.papel === 'gerente' || modoVisao === 'gerente')){ recurso = 'inicio'; marcarMenu(); }
+    if (recurso === 'campanhas' && (eu.papel === 'gerente' || modoVisao === 'gerente')){ recurso = 'inicio'; marcarMenu(); }
     if (recurso === 'pessoas') return pessoasCarregar();
     if (recurso === 'campanhas') return campanhasCarregar();
     if (recurso === 'corrida') return corridaCarregar();
@@ -2134,7 +2135,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   async function agendaCarregar(){
     $$('#nav button[data-r]').forEach(b => b.setAttribute('aria-current', b.dataset.r === recurso ? 'page' : 'false'));
     $('#area').innerHTML = '<div class="card full"><p class="sub">Carregando...</p></div>';
-    const rs = await Promise.all([sb.from('usuarios').select('id,nome,cargo').in('cargo', ['Tele BH', 'Tele interno']).order('nome'), sb.from('clinicas').select('id,sigla,nome,cor,ativa').order('nome'), sb.from('motivos_nao_fechou').select('id,nome,exige_obs').eq('ativo', true).order('ordem')]);
+    const rs = await Promise.all([sb.from('usuarios').select('id,nome,cargo,cargos_extra').or('cargo.in.("Tele BH","Tele interno"),cargos_extra.ov.{"Tele BH","Tele interno"}').order('nome'), soMinhasClin(sb.from('clinicas').select('id,sigla,nome,cor,ativa').order('nome')), sb.from('motivos_nao_fechou').select('id,nome,exige_obs').eq('ativo', true).order('ordem')]);
     const er = rs[0].error || rs[1].error || rs[2].error;
     if (er){ $('#area').innerHTML = '<div class="card full"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
     AG.teles = rs[0].data; AG.clinicas = rs[1].data; AG.motivos = rs[2].data;
@@ -2663,8 +2664,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const ger = modoVisao === 'gerente';
     $('#eyebrow').textContent = ger ? 'Painel da gerência' : (eu && eu.papel === 'assistente' ? 'Painel de suporte' : 'Painel do gestor');
     $$('#modo button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === modoVisao));
-    $$('#nav button[data-r]').forEach(b => { b.hidden = ger && (b.dataset.r === 'campanhas' || b.dataset.r === 'agenda'); });
-    if (ger && (recurso === 'campanhas' || recurso === 'agenda')) recurso = 'inicio';
+    $$('#nav button[data-r]').forEach(b => { b.hidden = ger && b.dataset.r === 'campanhas'; });
+    if (ger && recurso === 'campanhas') recurso = 'inicio';
     PD.clinicas = []; PD.ano = 0;
     if (recarregar) carregar();
   }
