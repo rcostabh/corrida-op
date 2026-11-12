@@ -573,6 +573,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.13.0', '2026-11-12', 'A gerente pode atuar também como divulgadora: em Pessoas (feito pelo gestor), a gerente ganha "Também atua como: Divulgador". Com isso ela aparece nos lançamentos de visita e venda, na planilha diária e nas campanhas, na clínica dela.'],
     ['1.12.0', '2026-11-12', 'Tele BH em mais de uma clínica: em Pessoas, a Tele marca as outras clínicas em que atende; ao lançar o agendamento ela escolhe a clínica e ele aparece para o gerente daquela clínica. Também vale quando Tele BH está em "Também atua como".'],
     ['1.11.0', '2026-11-11', 'Luminoso e Indicação deixam de ser cargos de pessoa: agora são linhas fixas, em todas as clínicas, no Lançamento diário e na Planilha do mês (abaixo de promotores e teles), e entram nos totais.'],
     ['1.10.0', '2026-11-11', 'Agenda das teles: lupa com + e − para aumentar ou diminuir o zoom do grid (dia, semana e mês). O ajuste fica salvo neste aparelho.'],
@@ -758,6 +759,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const CARGOS = ['Promotor','Tele BH','Tele interno','Divulgador','Promotor de teste'];
   const soDigitos = v => String(v||'').replace(/\D/g,'');
   const fmtTel = v => { const d = soDigitos(v); return d.length === 11 ? '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7) : d.length === 10 ? '('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6) : d; };
+  const ehPart = u => u.papel === 'promotor' || (u.papel === 'gerente' && (u.cargos_extra || []).includes('Divulgador'));
   const ehTeleCargo = g => g === 'Tele BH' || g === 'Tele interno';
   const clinicasDe = p => vincs.filter(x => x.usuario_id === p.id).map(v => clin.find(c => c.id === v.clinica_id)).filter(Boolean);
   const gestorVe = () => eu.papel !== 'gerente' && modoVisao !== 'gerente';
@@ -810,7 +812,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + '<label class="field" for="p-desde" id="w-desde"'+(papelForm==='assistente'?' hidden':'')+'>Atua na clínica desde<input id="p-desde" type="date" max="'+hoje()+'" value="'+esc(vAtual ? vAtual.inicio : hoje())+'"><span class="sub" style="margin:0">Permite lançar visitas e vendas na planilha desde essa data, mesmo antes do cadastro aqui.</span></label>'
       + (gestorVe() ? '<div class="field" id="w-outras" hidden>Também atende nas clínicas <small>(Tele: ao lançar um agendamento ela escolhe a clínica, e ele aparece na lista dessa clínica para o gerente)</small><div class="mp-opts" id="p-outras">'+clin.filter(c => c.ativa || outrasAtual.includes(c.id)).map(c => '<label class="chk" data-oc="'+c.id+'"><input type="checkbox" data-o="'+c.id+'"'+(outrasAtual.includes(c.id) ? ' checked' : '')+'><span>'+esc(c.sigla)+' · '+esc(c.nome)+'</span></label>').join('')+'</div></div>' : '')
       + '<label class="field" for="p-cargo" id="w-cargo"'+(papelForm==='promotor'?'':' hidden')+'>Cargo<select id="p-cargo"><option value="">Escolha...</option>'+CARGOS.map(g => '<option'+(atual&&atual.cargo===g?' selected':'')+'>'+g+'</option>').join('')+'</select></label>'
-      + '<div class="field" id="w-extra"'+(papelForm==='promotor'?'':' hidden')+'>Também atua como <small>(opcional; a pessoa ganha uma linha própria para cada cargo na planilha)</small><div class="mp-opts" id="p-extra">'+CARGOS.map(g => '<label class="chk" data-xg="'+esc(g)+'"><input type="checkbox" data-x="'+esc(g)+'"'+(atual && (atual.cargos_extra || []).includes(g) ? ' checked' : '')+'><span>'+esc(g)+'</span></label>').join('')+'</div></div>'
+      + '<div class="field" id="w-extra"'+(papelForm==='promotor'||papelForm==='gerente'?'':' hidden')+'>Também atua como <small>(opcional; a pessoa ganha uma linha própria para cada cargo na planilha)</small><div class="mp-opts" id="p-extra">'+(papelForm==='gerente'?['Divulgador']:CARGOS).map(g => '<label class="chk" data-xg="'+esc(g)+'"><input type="checkbox" data-x="'+esc(g)+'"'+(atual && (atual.cargos_extra || []).includes(g) ? ' checked' : '')+'><span>'+esc(g)+'</span></label>').join('')+'</div></div>'
       + (atual ? '<label class="chk" for="p-ativo"><input id="p-ativo" type="checkbox"'+(atual.ativo?' checked':'')+'><span>Pessoa ativa</span></label>' : '')
       + '<div class="err" id="p-err" role="alert"></div>'
       + '<div class="btns"><button class="btn" type="submit" id="p-btn">'+(atual?'Salvar':'Enviar convite')+'</button>'
@@ -819,7 +821,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + '</div></form></div>'
       + '<div class="card"><h2>Pessoas</h2><label class="chk" style="margin-bottom:10px"><input type="checkbox" id="mostra-inat"'+(mostrarInativos?' checked':'')+'><span>Mostrar inativos</span></label>'
       + '<p class="sub">'+vis.length+' cadastrada'+(vis.length===1?'':'s')+'. Pessoas com lançamentos não são apagadas, só inativadas.</p>'
-      + '<ul class="items">'+(vis.map(p => { const cs = clinicasDe(p); return '<li class="item"><div><div class="line"><b>'+esc(p.nome)+'</b><span class="badge">'+(p.papel==='gerente'?'Gerência':p.papel==='assistente'?'Gestão':esc(p.cargo||'Vendas')+((p.cargos_extra || []).length ? ' + '+esc(p.cargos_extra.join(' + ')) : ''))+'</span>'+(cs.length?cs.map(c => '<span class="sigla">'+esc(c.sigla)+'</span>').join(''):(p.papel==='assistente'?'':'<span class="chip off">Sem clínica</span>'))+(p.auth_id?'':'<span class="chip off">Sem convite</span>')+(p.ativo?'':'<span class="chip off">Inativa</span>')+'</div><div class="meta">'+esc(p.email||'sem e-mail')+(p.telefone?' · '+esc(fmtTel(p.telefone)):'')+'</div></div><div><button type="button" class="btn ghost sm" data-ped="'+p.id+'">Editar</button></div></li>'; }).join('') || '<li class="empty">Ninguém cadastrado ainda.</li>')+'</ul></div>';
+      + '<ul class="items">'+(vis.map(p => { const cs = clinicasDe(p); return '<li class="item"><div><div class="line"><b>'+esc(p.nome)+'</b><span class="badge">'+(p.papel==='gerente'?'Gerência'+((p.cargos_extra || []).length ? ' + '+esc(p.cargos_extra.join(' + ')) : ''):p.papel==='assistente'?'Gestão':esc(p.cargo||'Vendas')+((p.cargos_extra || []).length ? ' + '+esc(p.cargos_extra.join(' + ')) : ''))+'</span>'+(cs.length?cs.map(c => '<span class="sigla">'+esc(c.sigla)+'</span>').join(''):(p.papel==='assistente'?'':'<span class="chip off">Sem clínica</span>'))+(p.auth_id?'':'<span class="chip off">Sem convite</span>')+(p.ativo?'':'<span class="chip off">Inativa</span>')+'</div><div class="meta">'+esc(p.email||'sem e-mail')+(p.telefone?' · '+esc(fmtTel(p.telefone)):'')+'</div></div><div><button type="button" class="btn ghost sm" data-ped="'+p.id+'">Editar</button></div></li>'; }).join('') || '<li class="empty">Ninguém cadastrado ainda.</li>')+'</ul></div>';
     $('#f-pes').addEventListener('submit', pessoaSalvar);
     const sem = $('#p-sem'); if (sem) sem.addEventListener('click', () => pessoaSalvar(null, true));
     const cv = $('#p-conv'); if (cv) cv.addEventListener('click', async () => {
@@ -840,7 +842,12 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     $('#p-cargo').addEventListener('change', () => { extraSync(); outrasSync(); });
     $('#p-extra').addEventListener('change', outrasSync); $('#p-clin').addEventListener('change', outrasSync);
     extraSync(); outrasSync();
-    $('#p-papel').addEventListener('change', e => { papelForm = e.target.value; $('#w-cargo').hidden = papelForm !== 'promotor'; $('#w-extra').hidden = papelForm !== 'promotor'; $('#w-clin').hidden = papelForm === 'assistente'; outrasSync(); $('#w-desde').hidden = papelForm === 'assistente'; });
+    const pessoasDesenharExtra = () => {
+      const marc = new Set($$('#p-extra input:checked').map(i => i.dataset.x));
+      $('#p-extra').innerHTML = (papelForm === 'gerente' ? ['Divulgador'] : CARGOS).map(g => '<label class="chk" data-xg="'+esc(g)+'"><input type="checkbox" data-x="'+esc(g)+'"'+(marc.has(g) ? ' checked' : '')+'><span>'+esc(g)+'</span></label>').join('');
+      extraSync(); outrasSync();
+    };
+    $('#p-papel').addEventListener('change', e => { papelForm = e.target.value; $('#w-cargo').hidden = papelForm !== 'promotor'; $('#w-extra').hidden = papelForm !== 'promotor' && papelForm !== 'gerente'; pessoasDesenharExtra(); $('#w-clin').hidden = papelForm === 'assistente'; outrasSync(); $('#w-desde').hidden = papelForm === 'assistente'; });
     $('#mostra-inat').addEventListener('change', e => { mostrarInativos = e.target.checked; pessoasDesenhar(); });
     $$('[data-ped]').forEach(b => b.addEventListener('click', () => { editId = Number(b.dataset.ped); pessoasDesenhar(); }));
     const cn = $('#p-cancel'); if (cn) cn.addEventListener('click', () => { editId = null; pessoasDesenhar(); });
@@ -865,7 +872,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const atual = pessoas.find(p => p.id === editId) || null;
     const d = { papel: atual ? atual.papel : $('#p-papel').value, nome: $('#p-nome').value.trim(), email: $('#p-email').value.trim().toLowerCase(),
       telefone: soDigitos($('#p-tel').value), clinica_id: Number($('#p-clin').value) || null, cargo: $('#p-cargo').value, cargos_extra: $$('#p-extra input:checked').map(i => i.dataset.x), inicio: ($('#p-desde').value || hoje()) };
-    if (d.papel !== 'promotor'){ d.cargo = null; d.cargos_extra = []; }
+    if (d.papel !== 'promotor'){ d.cargo = null; d.cargos_extra = d.papel === 'gerente' ? d.cargos_extra.filter(c => c === 'Divulgador') : []; }
     d.cargos_extra = d.cargos_extra.filter(c => c !== d.cargo);
     const teleOk = d.papel === 'promotor' && (ehTeleCargo(d.cargo) || d.cargos_extra.some(ehTeleCargo));
     d.outras = (teleOk && $('#p-outras')) ? $$('#p-outras input:checked').map(i => Number(i.dataset.o)).filter(id => id !== d.clinica_id) : [];
@@ -975,7 +982,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     if (er){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
     C.camps = rs[0].data.slice().sort((a, b) => a.inicio < b.inicio ? 1 : -1);
     C.tipos = rs[1].data; C.premios = rs[2].data;
-    C.promos = rs[3].data.filter(u => u.papel === 'promotor' && u.ativo);
+    C.promos = rs[3].data.filter(u => ehPart(u) && u.ativo);
     vincs = rs[4].data.filter(v => !v.fim); clin = rs[5].data;
     C.cc = rs[6].data; C.cp = rs[7].data; C.rg = rs[8].data; C.cs = rs[9].data;
     if (ed) editorDesenhar(); else campanhasLista();
@@ -1339,10 +1346,10 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   }
 
   function lancOpcPromotores(clinicaId){
-    const ativos = L.usu.filter(u => u.papel === 'promotor' && u.ativo);
+    const ativos = L.usu.filter(u => ehPart(u) && u.ativo);
     const daClin = ativos.filter(u => L.vincs.some(v => v.usuario_id === u.id && v.clinica_id === clinicaId));
     const outros = ativos.filter(u => !daClin.includes(u));
-    const o = u => '<option value="'+u.id+'">'+esc(u.nome)+(u.cargo ? ' · '+esc(u.cargo) : '')+'</option>';
+    const o = u => '<option value="'+u.id+'">'+esc(u.nome)+(u.papel === 'gerente' ? ' · Gerente (Divulgador)' : u.cargo ? ' · '+esc(u.cargo) : '')+'</option>';
     return '<option value="">Escolha...</option>'+(daClin.length ? '<optgroup label="Desta clínica">'+daClin.map(o).join('')+'</optgroup>' : '')+(outros.length ? '<optgroup label="Outros promotores">'+outros.map(o).join('')+'</optgroup>' : '');
   }
 
@@ -1596,8 +1603,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const PD_ROT = { 'Promotor': 'Promotores', 'Tele BH': 'Tele BH', 'Tele interno': 'Tele interno', 'Luminoso': 'Luminoso', 'Divulgador': 'Divulgadores', 'Indicação': 'Indicação' };
   /* uma pessoa com mais de um cargo aparece em uma linha por cargo: a principal (id numérico) e uma por cargo extra (id "N_cX") */
   const pdChave = (uid, cargo) => cargo ? uid+'_c'+CARGOS.indexOf(cargo) : uid;
-  async function pdExtras(){ const r = await sb.from('usuarios').select('id,cargos_extra').eq('papel', 'promotor'); const m = {}; (r.data || []).forEach(u => { if ((u.cargos_extra || []).length) m[u.id] = u.cargos_extra; }); return m; }
-  const pdExpandir = (lista, extras) => { const o = []; lista.forEach(p => { o.push(Object.assign({}, p, { u: p.id, rc: '' })); (extras[p.id] || []).forEach(c => o.push(Object.assign({}, p, { id: pdChave(p.id, c), u: p.id, rc: c, cargo: c }))); }); return o; };
+  async function pdExtras(){ const r = await sb.from('usuarios').select('id,cargos_extra').in('papel', ['promotor', 'gerente']); const m = {}; (r.data || []).forEach(u => { if ((u.cargos_extra || []).length) m[u.id] = u.cargos_extra; }); return m; }
+  const pdExpandir = (lista, extras) => { const o = []; lista.forEach(p => { if (p.cargo) o.push(Object.assign({}, p, { u: p.id, rc: '' })); (extras[p.id] || []).forEach(c => o.push(Object.assign({}, p, { id: pdChave(p.id, c), u: p.id, rc: c, cargo: c }))); }); return o; };
   const pd2 = n => String(n).padStart(2, '0');
   const pdIso = (a, m, d) => a+'-'+pd2(m + 1)+'-'+pd2(d);
   const pdN = (a, m) => new Date(a, m + 1, 0).getDate();

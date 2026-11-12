@@ -914,11 +914,11 @@ li:first-child>.ag-i{border-top:0}
     if (casasP.length){ const g = await sb.from('ganhadores').select('*').in('casa_premio_id', casasP.map(x => x.id)); if (tk !== K.tk) return; if (!g.error) gan = g.data; }
 
     const ehMeu = id => modo === 'promotor' ? id === eu.id : minhasClin.includes(id);
-    const meuId = modo === 'promotor' ? (eu.papel === 'promotor' ? eu.id : null) : (minhasClin.find(id => rank.some(r => r[idCol] === id)) || null);
+    const meuId = modo === 'promotor' ? (eu.papel === 'promotor' || (eu.papel === 'gerente' && (eu.cargos_extra || []).includes('Divulgador')) ? eu.id : null) : (minhasClin.find(id => rank.some(r => r[idCol] === id)) || null);
     const ents = {};
     rank.forEach((r, i) => {
       const id = r[idCol];
-      if (modo === 'promotor'){ const u = pessoas.find(x => x.id === id) || {}; ents[id] = { nome: u.nome || 'Participante', tag: iniciais(u.nome), sub: u.cargo || '', cor: PALETA[i % PALETA.length], foto_url: u.foto_url }; }
+      if (modo === 'promotor'){ const u = pessoas.find(x => x.id === id) || {}; ents[id] = { nome: u.nome || 'Participante', tag: iniciais(u.nome), sub: u.cargo || (u.papel === 'gerente' ? 'Divulgador' : ''), cor: PALETA[i % PALETA.length], foto_url: u.foto_url }; }
       else { const cl = cls.find(x => x.id === id) || {}; ents[id] = { nome: cl.nome || 'Clínica', tag: cl.sigla || '?', sub: cl.sigla || '', cor: cl.cor || PALETA[i % PALETA.length], foto_url: null }; }
     });
     const N = c.casas;
@@ -1023,12 +1023,12 @@ li:first-child>.ag-i{border-top:0}
     const er = rs.map(r => r.error).find(Boolean);
     if (er){ $('#main').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
     L.tipos = rs[0].data.filter(t => t.ativo); L.clin = rs[1].data.filter(c => minhasClin.includes(c.id));
-    L.pess = rs[2].data.filter(p => p.papel === 'promotor'); L.camps = rs[3].data; L.acao = null;
+    L.pess = rs[2].data.filter(p => p.papel === 'promotor' || (p.papel === 'gerente' && (p.cargos_extra || []).includes('Divulgador'))); L.camps = rs[3].data; L.acao = null;
     if (!L.clin.length){ $('#main').innerHTML = '<div class="card"><h2>Lançar</h2><div class="empty">Você ainda não está vinculado a uma clínica. Fale com o gestor.</div></div>'; return; }
     $('#main').innerHTML =
       '<div class="card"><h2>Novo lançamento</h2><p class="sub">Conta em todas as campanhas em que o promotor e a clínica participam.</p><form class="form" id="f-lanc" novalidate>'
       + (L.clin.length > 1 ? '<label class="field" for="n-clin">Clínica<select id="n-clin">'+L.clin.map(c => '<option value="'+c.id+'">'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>' : '<input type="hidden" id="n-clin" value="'+L.clin[0].id+'">')
-      + '<label class="field" for="n-prom">Promotor<select id="n-prom"><option value="">Escolha...</option>'+L.pess.map(p => '<option value="'+p.id+'">'+esc(p.nome)+(p.cargo?' · '+esc(p.cargo):'')+'</option>').join('')+'</select></label>'
+      + '<label class="field" for="n-prom">Promotor<select id="n-prom"><option value="">Escolha...</option>'+L.pess.map(p => '<option value="'+p.id+'">'+esc(p.nome)+(p.papel==='gerente'?' · Gerente (Divulgador)':p.cargo?' · '+esc(p.cargo):'')+'</option>').join('')+'</select></label>'
       + '<label class="field" for="n-tipo">O que foi feito<select id="n-tipo"><option value="">Escolha...</option>'+L.tipos.map(t => '<option value="'+t.id+'" data-v="'+(t.usa_valor?1:0)+'">'+esc(t.nome)+'</option>').join('')+'</select></label>'
       + '<div class="g2"><label class="field" for="n-qtd">Quantidade<input id="n-qtd" type="number" inputmode="decimal" min="0.01" step="any" value="1"></label>'
       + '<label class="field" for="n-data">Data<input id="n-data" type="date" value="'+hoje()+'" max="'+hoje()+'"></label></div>'
