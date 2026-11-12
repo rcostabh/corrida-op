@@ -344,7 +344,8 @@ li:first-child>.ag-i{border-top:0}
 
   /* ---------- início: números do mês e funções ---------- */
   const ehGestao = () => !!eu && (eu.papel === 'gestor' || eu.papel === 'assistente');
-  const ehTele = () => !!eu && eu.papel === 'promotor' && (eu.cargo === 'Tele BH' || eu.cargo === 'Tele interno');
+  const rotCargo = u => [u.cargo].concat(u.cargos_extra || []).filter(Boolean).join(' + ');
+  const ehTele = () => !!eu && eu.papel === 'promotor' && [eu.cargo].concat(eu.cargos_extra || []).some(g => g === 'Tele BH' || g === 'Tele interno');
   const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
   const ymd = (a, m, d) => a+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
   function feriadosNacionais(a){
@@ -711,7 +712,7 @@ li:first-child>.ag-i{border-top:0}
   };
   let naoLidas = 0;
   function abrirApp(){
-    $('#h-papel').textContent = eu.papel === 'gerente' ? 'Gerência' : eu.papel === 'gestor' ? 'Gestão' : eu.papel === 'assistente' ? 'Gestão' : (eu.cargo || 'Vendas');
+    $('#h-papel').textContent = eu.papel === 'gerente' ? 'Gerência' : eu.papel === 'gestor' ? 'Gestão' : eu.papel === 'assistente' ? 'Gestão' : (rotCargo(eu) || 'Vendas');
     $('#h-nome').textContent = eu.nome.split(' ')[0];
     $('#h-av').innerHTML = avatar(eu);
     view('app'); desenharAbas(); mostrar(ehGestao() ? (aba === 'perfil' ? 'perfil' : 'agenda') : aba === 'lancar' && eu.papel !== 'gerente' ? 'inicio' : ((aba === 'agendar' || aba === 'agenda') && !ehTele() ? 'inicio' : aba)); pushManter();
@@ -1204,7 +1205,7 @@ li:first-child>.ag-i{border-top:0}
     const minhas = (cl.data || []).filter(c => minhasClin.includes(c.id));
     $('#main').innerHTML =
       '<div class="card" style="text-align:center"><div id="p-av">'+avatar(eu, 'xl')+'</div><h2 style="margin-top:10px">'+esc(eu.nome)+'</h2>'
-      + '<p class="meta">'+esc(eu.email || '')+'</p><p class="meta">'+(eu.papel==='gerente'?'Gerência':eu.papel==='gestor'?'Gestão':eu.papel==='assistente'?'Gestão':esc(eu.cargo||'Vendas'))+(minhas.length?' · '+minhas.map(c => esc(c.sigla)).join(', '):'')+'</p>'
+      + '<p class="meta">'+esc(eu.email || '')+'</p><p class="meta">'+(eu.papel==='gerente'?'Gerência':eu.papel==='gestor'?'Gestão':eu.papel==='assistente'?'Gestão':esc(rotCargo(eu)||'Vendas'))+(minhas.length?' · '+minhas.map(c => esc(c.sigla)).join(', '):'')+'</p>'
       + '<div class="err" id="p-ferr" role="alert"></div><div class="btns" style="justify-content:center"><label class="btn sm" style="line-height:24px">Tirar foto<input type="file" accept="image/*" capture="user" id="p-cam" hidden></label>'
       + '<label class="btn ghost sm" style="line-height:26px">Escolher da galeria<input type="file" accept="image/*" id="p-gal" hidden></label></div></div>'
       + '<div class="card"><h2>Meus dados</h2><form class="form" id="f-perfil" novalidate><label class="field" for="p-nome">Nome<input id="p-nome" type="text" autocomplete="name" value="'+esc(eu.nome)+'"></label>'

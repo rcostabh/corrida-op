@@ -573,6 +573,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.12.0', '2026-11-12', 'Tele BH em mais de uma clínica: em Pessoas, a Tele marca as outras clínicas em que atende; ao lançar o agendamento ela escolhe a clínica e ele aparece para o gerente daquela clínica. Também vale quando Tele BH está em "Também atua como".'],
     ['1.11.0', '2026-11-11', 'Luminoso e Indicação deixam de ser cargos de pessoa: agora são linhas fixas, em todas as clínicas, no Lançamento diário e na Planilha do mês (abaixo de promotores e teles), e entram nos totais.'],
     ['1.10.0', '2026-11-11', 'Agenda das teles: lupa com + e − para aumentar ou diminuir o zoom do grid (dia, semana e mês). O ajuste fica salvo neste aparelho.'],
     ['1.9.0', '2026-11-11', 'Pessoas: mais de um cargo por pessoa (ex.: Divulgador e Promotor, com uma linha para cada na planilha) e novo cargo Indicação. Gerência e Gestão veem só as linhas de promotor nos totais de vendas.'],
@@ -757,6 +758,9 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const CARGOS = ['Promotor','Tele BH','Tele interno','Divulgador','Promotor de teste'];
   const soDigitos = v => String(v||'').replace(/\D/g,'');
   const fmtTel = v => { const d = soDigitos(v); return d.length === 11 ? '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7) : d.length === 10 ? '('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6) : d; };
+  const ehTeleCargo = g => g === 'Tele BH' || g === 'Tele interno';
+  const clinicasDe = p => vincs.filter(x => x.usuario_id === p.id).map(v => clin.find(c => c.id === v.clinica_id)).filter(Boolean);
+  const gestorVe = () => eu.papel !== 'gerente' && modoVisao !== 'gerente';
   const clinicaDe = p => { const v = vincs.find(x => x.usuario_id === p.id); return v ? clin.find(c => c.id === v.clinica_id) : null; };
 
   async function chamar(body){
@@ -791,6 +795,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const atual = pessoas.find(p => p.id === editId) || null;
     if (atual) papelForm = atual.papel;
     const cAtual = atual ? clinicaDe(atual) : null, vAtual = atual ? vincs.find(x => x.usuario_id === atual.id) : null;
+    const outrasAtual = atual ? vincs.filter(x => x.usuario_id === atual.id && (!vAtual || x.id !== vAtual.id)).map(x => x.clinica_id) : [];
     const opcClin = clin.filter(c => c.ativa || (cAtual && c.id === cAtual.id));
     const vis = pessoas.filter(p => mostrarInativos || p.ativo || p.id === editId);
     $('#area').innerHTML =
@@ -803,6 +808,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + '<label class="field" for="p-tel">Telefone com DDD<input id="p-tel" type="tel" inputmode="numeric" autocomplete="off" placeholder="(31) 99999-9999" value="'+esc(atual?fmtTel(atual.telefone):'')+'"></label>'
       + '<label class="field" for="p-clin" id="w-clin"'+(papelForm==='assistente'?' hidden':'')+'>Clínica<select id="p-clin"><option value="">Escolha...</option>'+opcClin.map(c => '<option value="'+c.id+'"'+(cAtual&&cAtual.id===c.id?' selected':'')+'>'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
       + '<label class="field" for="p-desde" id="w-desde"'+(papelForm==='assistente'?' hidden':'')+'>Atua na clínica desde<input id="p-desde" type="date" max="'+hoje()+'" value="'+esc(vAtual ? vAtual.inicio : hoje())+'"><span class="sub" style="margin:0">Permite lançar visitas e vendas na planilha desde essa data, mesmo antes do cadastro aqui.</span></label>'
+      + (gestorVe() ? '<div class="field" id="w-outras" hidden>Também atende nas clínicas <small>(Tele: ao lançar um agendamento ela escolhe a clínica, e ele aparece na lista dessa clínica para o gerente)</small><div class="mp-opts" id="p-outras">'+clin.filter(c => c.ativa || outrasAtual.includes(c.id)).map(c => '<label class="chk" data-oc="'+c.id+'"><input type="checkbox" data-o="'+c.id+'"'+(outrasAtual.includes(c.id) ? ' checked' : '')+'><span>'+esc(c.sigla)+' · '+esc(c.nome)+'</span></label>').join('')+'</div></div>' : '')
       + '<label class="field" for="p-cargo" id="w-cargo"'+(papelForm==='promotor'?'':' hidden')+'>Cargo<select id="p-cargo"><option value="">Escolha...</option>'+CARGOS.map(g => '<option'+(atual&&atual.cargo===g?' selected':'')+'>'+g+'</option>').join('')+'</select></label>'
       + '<div class="field" id="w-extra"'+(papelForm==='promotor'?'':' hidden')+'>Também atua como <small>(opcional; a pessoa ganha uma linha própria para cada cargo na planilha)</small><div class="mp-opts" id="p-extra">'+CARGOS.map(g => '<label class="chk" data-xg="'+esc(g)+'"><input type="checkbox" data-x="'+esc(g)+'"'+(atual && (atual.cargos_extra || []).includes(g) ? ' checked' : '')+'><span>'+esc(g)+'</span></label>').join('')+'</div></div>'
       + (atual ? '<label class="chk" for="p-ativo"><input id="p-ativo" type="checkbox"'+(atual.ativo?' checked':'')+'><span>Pessoa ativa</span></label>' : '')
@@ -813,7 +819,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + '</div></form></div>'
       + '<div class="card"><h2>Pessoas</h2><label class="chk" style="margin-bottom:10px"><input type="checkbox" id="mostra-inat"'+(mostrarInativos?' checked':'')+'><span>Mostrar inativos</span></label>'
       + '<p class="sub">'+vis.length+' cadastrada'+(vis.length===1?'':'s')+'. Pessoas com lançamentos não são apagadas, só inativadas.</p>'
-      + '<ul class="items">'+(vis.map(p => { const c = clinicaDe(p); return '<li class="item"><div><div class="line"><b>'+esc(p.nome)+'</b><span class="badge">'+(p.papel==='gerente'?'Gerência':p.papel==='assistente'?'Gestão':esc(p.cargo||'Vendas')+((p.cargos_extra || []).length ? ' + '+esc(p.cargos_extra.join(' + ')) : ''))+'</span>'+(c?'<span class="sigla">'+esc(c.sigla)+'</span>':(p.papel==='assistente'?'':'<span class="chip off">Sem clínica</span>'))+(p.auth_id?'':'<span class="chip off">Sem convite</span>')+(p.ativo?'':'<span class="chip off">Inativa</span>')+'</div><div class="meta">'+esc(p.email||'sem e-mail')+(p.telefone?' · '+esc(fmtTel(p.telefone)):'')+'</div></div><div><button type="button" class="btn ghost sm" data-ped="'+p.id+'">Editar</button></div></li>'; }).join('') || '<li class="empty">Ninguém cadastrado ainda.</li>')+'</ul></div>';
+      + '<ul class="items">'+(vis.map(p => { const cs = clinicasDe(p); return '<li class="item"><div><div class="line"><b>'+esc(p.nome)+'</b><span class="badge">'+(p.papel==='gerente'?'Gerência':p.papel==='assistente'?'Gestão':esc(p.cargo||'Vendas')+((p.cargos_extra || []).length ? ' + '+esc(p.cargos_extra.join(' + ')) : ''))+'</span>'+(cs.length?cs.map(c => '<span class="sigla">'+esc(c.sigla)+'</span>').join(''):(p.papel==='assistente'?'':'<span class="chip off">Sem clínica</span>'))+(p.auth_id?'':'<span class="chip off">Sem convite</span>')+(p.ativo?'':'<span class="chip off">Inativa</span>')+'</div><div class="meta">'+esc(p.email||'sem e-mail')+(p.telefone?' · '+esc(fmtTel(p.telefone)):'')+'</div></div><div><button type="button" class="btn ghost sm" data-ped="'+p.id+'">Editar</button></div></li>'; }).join('') || '<li class="empty">Ninguém cadastrado ainda.</li>')+'</ul></div>';
     $('#f-pes').addEventListener('submit', pessoaSalvar);
     const sem = $('#p-sem'); if (sem) sem.addEventListener('click', () => pessoaSalvar(null, true));
     const cv = $('#p-conv'); if (cv) cv.addEventListener('click', async () => {
@@ -824,8 +830,17 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       toast('Convite enviado para '+em+'.'); pessoasCarregar();
     });
     const extraSync = () => { const c = $('#p-cargo').value; $$('#p-extra label').forEach(l => { const igual = l.dataset.xg === c; l.hidden = igual; if (igual) l.querySelector('input').checked = false; }); };
-    $('#p-cargo').addEventListener('change', extraSync); extraSync();
-    $('#p-papel').addEventListener('change', e => { papelForm = e.target.value; $('#w-cargo').hidden = papelForm !== 'promotor'; $('#w-extra').hidden = papelForm !== 'promotor'; $('#w-clin').hidden = papelForm === 'assistente'; $('#w-desde').hidden = papelForm === 'assistente'; });
+    const outrasSync = () => {
+      const w = $('#w-outras'); if (!w) return;
+      const tele = papelForm === 'promotor' && (ehTeleCargo($('#p-cargo').value) || $$('#p-extra input:checked').some(i => ehTeleCargo(i.dataset.x)));
+      w.hidden = !tele;
+      const prim = $('#p-clin').value;
+      $$('#p-outras label').forEach(l => { const igual = l.dataset.oc === prim; l.hidden = igual; if (igual) l.querySelector('input').checked = false; });
+    };
+    $('#p-cargo').addEventListener('change', () => { extraSync(); outrasSync(); });
+    $('#p-extra').addEventListener('change', outrasSync); $('#p-clin').addEventListener('change', outrasSync);
+    extraSync(); outrasSync();
+    $('#p-papel').addEventListener('change', e => { papelForm = e.target.value; $('#w-cargo').hidden = papelForm !== 'promotor'; $('#w-extra').hidden = papelForm !== 'promotor'; $('#w-clin').hidden = papelForm === 'assistente'; outrasSync(); $('#w-desde').hidden = papelForm === 'assistente'; });
     $('#mostra-inat').addEventListener('change', e => { mostrarInativos = e.target.checked; pessoasDesenhar(); });
     $$('[data-ped]').forEach(b => b.addEventListener('click', () => { editId = Number(b.dataset.ped); pessoasDesenhar(); }));
     const cn = $('#p-cancel'); if (cn) cn.addEventListener('click', () => { editId = null; pessoasDesenhar(); });
@@ -852,6 +867,9 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       telefone: soDigitos($('#p-tel').value), clinica_id: Number($('#p-clin').value) || null, cargo: $('#p-cargo').value, cargos_extra: $$('#p-extra input:checked').map(i => i.dataset.x), inicio: ($('#p-desde').value || hoje()) };
     if (d.papel !== 'promotor'){ d.cargo = null; d.cargos_extra = []; }
     d.cargos_extra = d.cargos_extra.filter(c => c !== d.cargo);
+    const teleOk = d.papel === 'promotor' && (ehTeleCargo(d.cargo) || d.cargos_extra.some(ehTeleCargo));
+    d.outras = (teleOk && $('#p-outras')) ? $$('#p-outras input:checked').map(i => Number(i.dataset.o)).filter(id => id !== d.clinica_id) : [];
+    const outrasIns = async uid => { let er = null; for (const cid of d.outras){ const r = await sb.from('vinculos_clinica').insert({ usuario_id: uid, clinica_id: cid, inicio: d.inicio }); if (r.error) er = r.error; } return er; };
     const exigeContato = !atual && !semConvite;   // convite precisa de e-mail e telefone; salvar sem convite não
     const erro = !d.nome ? 'Informe o nome.'
       : ((exigeContato || d.email) && !emailOk(d.email)) ? 'Informe um e-mail válido.'
@@ -876,6 +894,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       if (d.papel !== 'assistente'){
         const v = await sb.from('vinculos_clinica').insert({ usuario_id: ins.data.id, clinica_id: d.clinica_id, inicio: d.inicio });
         if (v.error){ await sb.from('usuarios').delete().eq('id', ins.data.id); libera(); $('#p-err').textContent = msgErro(v.error); return; }
+        const eo = await outrasIns(ins.data.id); if (eo) toast('Salvo, mas não consegui vincular às outras clínicas: '+msgErro(eo));
       }
       libera(); toast(d.nome+' foi salva, sem convite. Quando quiser dar acesso, edite a pessoa e use "Enviar convite agora".'); pessoasCarregar(); return;
     }
@@ -888,9 +907,12 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     }
     if (!atual){
       const r = await chamar(Object.assign({ acao: 'convidar' }, d));
-      libera();
-      if (r.erro){ $('#p-err').textContent = r.erro; return; }
-      toast('Convite enviado para '+d.email+'.'); pessoasCarregar(); return;
+      if (r.erro){ libera(); $('#p-err').textContent = r.erro; return; }
+      if (d.outras.length){
+        const u = await sb.from('usuarios').select('id').eq('email', d.email).maybeSingle();
+        const eo = u.data ? await outrasIns(u.data.id) : true; if (eo) toast('Convite enviado, mas vincule as outras clínicas editando a pessoa.');
+      }
+      libera(); toast('Convite enviado para '+d.email+'.'); pessoasCarregar(); return;
     }
     const upd = { nome: d.nome, telefone: d.telefone || null, cargo: d.cargo, cargos_extra: d.cargos_extra, ativo: $('#p-ativo').checked };
     if (!atual.auth_id) upd.email = d.email || null;   // sem acesso ainda: o e-mail é só um cadastro, troca direto
@@ -908,6 +930,17 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
         if (v){ const r1 = await sb.from('vinculos_clinica').update({ fim: fimAnt < v.inicio ? v.inicio : fimAnt }).eq('id', v.id); err2 = r1.error; }
         if (!err2){ const r2 = await sb.from('vinculos_clinica').insert({ usuario_id: atual.id, clinica_id: d.clinica_id, inicio: novoIni }); err2 = r2.error; }
       }
+    }
+    if (!err2 && atual.papel !== 'assistente' && $('#p-outras')){
+      const ontem = (() => { const x = new Date(); x.setDate(x.getDate() - 1); return x.toLocaleDateString('sv-SE'); })();
+      const pv = vincs.find(x => x.usuario_id === atual.id);
+      const outros = vincs.filter(x => x.usuario_id === atual.id && (!pv || x.id !== pv.id));
+      for (const o of outros){
+        if (d.outras.includes(o.clinica_id)) continue;
+        const r3 = await sb.from('vinculos_clinica').update({ fim: ontem < o.inicio ? o.inicio : ontem }).eq('id', o.id); if (r3.error) err2 = r3.error;
+      }
+      const ja = new Set(outros.map(o => o.clinica_id));
+      for (const cid of d.outras){ if (ja.has(cid)) continue; const r4 = await sb.from('vinculos_clinica').insert({ usuario_id: atual.id, clinica_id: cid, inicio: hoje() }); if (r4.error) err2 = r4.error; }
     }
     libera();
     if (err2){ $('#p-err').textContent = err2.code === '23505' ? 'Já existe uma pessoa com este e-mail.' : msgErro(err2); return; }
