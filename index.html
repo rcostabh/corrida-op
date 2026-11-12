@@ -526,7 +526,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
         <div class="sep"></div>
         <button type="button" data-g="cad" id="g-cad-btn" aria-expanded="false" aria-controls="g-cad" title="Cadastros"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 7.5a2 2 0 0 1 2-2H10l2 2.5h6.5a2 2 0 0 1 2 2V17.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></svg><span class="tx">Cadastros</span><svg class="seta" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
         <div class="grupo-lista" id="g-cad">
-          <button type="button" data-r="clinicas">Clínicas</button><button type="button" data-r="tipos">Tipos de lançamento</button><button type="button" data-r="premios">Prêmios</button><button type="button" data-r="pessoas">Pessoas</button><button type="button" data-r="campanhas">Campanhas</button>
+          <button type="button" data-r="clinicas">Clínicas</button><button type="button" data-r="tipos">Tipos de lançamento</button><button type="button" data-r="canais">Fontes de visita</button><button type="button" data-r="premios">Prêmios</button><button type="button" data-r="pessoas">Pessoas</button><button type="button" data-r="campanhas">Campanhas</button>
         </div>
       </nav>
       <div class="rodape"><button type="button" id="sair" title="Sair"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5.5a1.5 1.5 0 0 0-1.5 1.5v13A1.5 1.5 0 0 0 5.5 20H10"/><path d="M15 8l4 4-4 4M19 12H9"/></svg><span class="tx">Sair</span></button></div>
@@ -573,6 +573,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.14.0', '2026-11-12', 'Fontes de visita agora têm cadastro (Cadastros › Fontes de visita): Luminoso, Indicação e a nova Prospecta, com meta própria. O gestor inclui, renomeia ou desativa fontes sem mexer no sistema; elas valem para todas as clínicas.'],
     ['1.13.0', '2026-11-12', 'A gerente pode atuar também como divulgadora: em Pessoas (feito pelo gestor), a gerente ganha "Também atua como: Divulgador". Com isso ela aparece nos lançamentos de visita e venda, na planilha diária e nas campanhas, na clínica dela.'],
     ['1.12.0', '2026-11-12', 'Tele BH em mais de uma clínica: em Pessoas, a Tele marca as outras clínicas em que atende; ao lançar o agendamento ela escolhe a clínica e ele aparece para o gerente daquela clínica. Também vale quando Tele BH está em "Também atua como".'],
     ['1.11.0', '2026-11-11', 'Luminoso e Indicação deixam de ser cargos de pessoa: agora são linhas fixas, em todas as clínicas, no Lançamento diário e na Planilha do mês (abaixo de promotores e teles), e entram nos totais.'],
@@ -647,6 +648,18 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
         {k:'ativo', rot:'Tipo ativo', tipo:'check', padrao:true}
       ],
       resumo: r => '<div class="line"><b>'+esc(r.nome)+'</b><span class="badge">'+(r.categoria==='visita'?'Visita':'Venda')+'</span>'+(r.usa_valor?'<span class="chip">pede valor</span>':'')+(r.base_fechamento!=='nenhum'?'<span class="chip">fechamento: '+(r.base_fechamento==='visita'?'visita':'venda')+'</span>':'')+(r.ativo?'':'<span class="chip off">Inativo</span>')+'</div>'
+    },
+    canais: {
+      titulo: 'Fonte de visita', plural: 'Fontes de visita', tabela: 'canais_visita', ordem: 'ordem', ativo: 'ativo',
+      intro: 'De onde vêm as visitas que não são de uma pessoa da equipe: Luminoso (o paciente vem por conta própria), Indicação, empresas parceiras como a Prospecta... Cada fonte aparece em todas as clínicas, no Lançamento diário e na Planilha do mês. Fonte que não é mais usada: desmarque "ativa" (o histórico fica).',
+      campos: [
+        {k:'nome', rot:'Nome da fonte', tipo:'text', obrig:true},
+        {k:'meta', rot:'Meta de fechamento (% de vendas sobre visitas)', tipo:'number', padrao:30},
+        {k:'ordem', rot:'Ordem na tela (1 aparece primeiro)', tipo:'number', padrao:10},
+        {k:'ativo', rot:'Fonte ativa', tipo:'check', padrao:true}
+      ],
+      validar: d => d.meta > 100 ? 'A meta é uma porcentagem, de 0 a 100.' : '',
+      resumo: r => '<div class="line"><b>'+esc(r.nome)+'</b><span class="chip">meta '+esc(String(r.meta))+'%</span>'+(r.ativo?'':'<span class="chip off">Inativa</span>')+'</div>'
     },
     premios: {
       titulo: 'Prêmio', plural: 'Prêmios', tabela: 'premios', ordem: 'nome', ativo: 'ativo',
@@ -1595,12 +1608,15 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   /* ---------- planilha diária: lançamento do dia e planilha do mês ---------- */
   const PD = { clinicas: [], clin: null, ano: 0, mes: 0, inativos: true, data: '', tk: 0, pessoas: [], r: {}, corr: {}, existe: false, testeMes: false };
   const TESTE = 'Promotor de teste';
-  const PD_META = { 'Promotor': 30, 'Luminoso': 30, 'Tele BH': 45, 'Tele interno': 45, 'Promotor de teste': 30, 'Indicação': 30 };
-  const PD_ORDEM = ['Promotor', 'Tele BH', 'Tele interno', 'Luminoso', 'Indicação'];
-  /* Luminoso e Indicação não são pessoas: são canais de visita que existem em todas as clínicas (tabela planilha_canal) */
-  const CANAIS = [['can_L', 'Luminoso'], ['can_I', 'Indicação']];
-  const pdCanais = rows => { const m = {}; (rows || []).forEach(x => { m[x.canal] = x; }); return CANAIS.map(c => ({ id: c[0], nome: c[1], cargo: c[1], canal: c[1], ativo: true, u: null, rc: '', _r: m[c[1]] })); };
-  const PD_ROT = { 'Promotor': 'Promotores', 'Tele BH': 'Tele BH', 'Tele interno': 'Tele interno', 'Luminoso': 'Luminoso', 'Divulgador': 'Divulgadores', 'Indicação': 'Indicação' };
+  const PD_META = { 'Promotor': 30, 'Tele BH': 45, 'Tele interno': 45, 'Promotor de teste': 30 };
+  /* Fontes de visita (Luminoso, Indicação, Prospecta...) não são pessoas: existem em todas as clínicas e vêm do cadastro canais_visita (lançadas em planilha_canal) */
+  let CANAIS = [];   // [{ id, nome, meta, ativo }]
+  async function canaisCarrega(){ const r = await sb.from('canais_visita').select('*').order('ordem').order('nome'); if (r.error) return r.error; CANAIS = r.data; return null; }
+  const canalChave = c => 'can_'+c.id;
+  const metaDe = cg => PD_META[cg] != null ? PD_META[cg] : ((CANAIS.find(c => c.nome === cg) || {}).meta != null ? Number(CANAIS.find(c => c.nome === cg).meta) : 30);
+  const ordemGrupos = () => ['Promotor', 'Tele BH', 'Tele interno'].concat(CANAIS.map(c => c.nome));
+  const pdCanais = rows => { const m = {}; (rows || []).forEach(x => { m[x.canal] = x; }); return CANAIS.filter(c => c.ativo || m[c.nome]).map(c => ({ id: canalChave(c), nome: c.nome, cargo: c.nome, canal: c.nome, ativo: true, u: null, rc: '', _r: m[c.nome] })); };
+  const PD_ROT = { 'Promotor': 'Promotores', 'Tele BH': 'Tele BH', 'Tele interno': 'Tele interno', 'Divulgador': 'Divulgadores' };
   /* uma pessoa com mais de um cargo aparece em uma linha por cargo: a principal (id numérico) e uma por cargo extra (id "N_cX") */
   const pdChave = (uid, cargo) => cargo ? uid+'_c'+CARGOS.indexOf(cargo) : uid;
   async function pdExtras(){ const r = await sb.from('usuarios').select('id,cargos_extra').in('papel', ['promotor', 'gerente']); const m = {}; (r.data || []).forEach(u => { if ((u.cargos_extra || []).length) m[u.id] = u.cargos_extra; }); return m; }
@@ -1655,7 +1671,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   async function planCarregar(){
     pdMarcar(); $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
     $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
-    const e0 = await pdBase(); if (e0){ pdErro(e0); return; }
+    const e0 = await pdBase() || await canaisCarrega(); if (e0){ pdErro(e0); return; }
     if (!PD.clin){ pdVazio(); return; }
     const n = pdN(PD.ano, PD.mes), de = pdIso(PD.ano, PD.mes, 1), ate = pdIso(PD.ano, PD.mes, n), tk = ++PD.tk;
     const rs = await Promise.all([sb.rpc('equipe_clinica', { p_clinica: PD.clin, p_de: de, p_ate: ate }),
@@ -1666,10 +1682,10 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const er = [rs[0], rs[1], rs[2], rs[4]].map(r => r.error).find(Boolean); if (er){ pdErro(er); return; }
     const M = {}, lanc = {}, C = {};
     rs[1].data.forEach(r => { const d = Number(String(r.data_ref).slice(8)), k = pdChave(r.usuario_id, r.cargo); (M[k] = M[k] || {})[d] = [r.visitas, r.vendas]; lanc[d] = true; });
-    const cn = {}; CANAIS.forEach(c => { cn[c[1]] = c[0]; });
+    const cn = {}; CANAIS.forEach(c => { cn[c.nome] = canalChave(c); });
     rs[4].data.forEach(r => { const d = Number(String(r.data_ref).slice(8)), k = cn[r.canal]; (M[k] = M[k] || {})[d] = [r.visitas, r.vendas]; lanc[d] = true; });
     (rs[2].data || []).forEach(c => { C[c.usuario_id+'|'+Number(String(c.data_ref).slice(8))] = c; });
-    const pes = pdExpandir(rs[0].data, rs[3]).filter(p => p.ativo || M[p.id]).concat(pdCanais([]));
+    const pes = pdExpandir(rs[0].data, rs[3]).filter(p => p.ativo || M[p.id]).concat(pdCanais(rs[4].data));
     PD.mapa = { M, lanc, C, pes, n };
     planDesenhar();
   }
@@ -1678,9 +1694,9 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const { M, lanc, C, pes, n } = PD.mapa, hj = hoje(), ehHj = d => pdIso(PD.ano, PD.mes, d) === hj, SEM = ['D','S','T','Q','Q','S','S'];
     const div = pes.filter(p => p.cargo === 'Divulgador'), ou = pes.filter(p => p.cargo !== 'Divulgador');
     const ids = a => a.map(p => p.id), idsC = c => ids(pes.filter(p => p.cargo === c));
-    const tdiv = pdSoma(ids(div), M, n), rua = pdSoma(idsC('Promotor').concat(idsC('Luminoso'), idsC(TESTE), idsC('Indicação')), M, n), tele = pdSoma(idsC('Tele BH').concat(idsC('Tele interno')), M, n), todos = pdSoma(ids(ou), M, n);
+    const tdiv = pdSoma(ids(div), M, n), rua = pdSoma(idsC('Promotor').concat(idsC(TESTE), pes.filter(p => p.canal).map(p => p.id)), M, n), tele = pdSoma(idsC('Tele BH').concat(idsC('Tele interno')), M, n), todos = pdSoma(ids(ou), M, n);
     const mdiv = pdMetaDiv(pes, M, ids(div), n), rp = pdPct(rua.v, rua.s), tp = pdPct(tele.v, tele.s);
-    const cards = [['Eficiência da clínica', pdPct(todos.v, todos.s), mdiv, todos], ['Promotores, teste, Luminoso e Indicação', rp, 30, rua], ['Teles (BH e interno)', tp, 45, tele], ['Divulgadores', pdPct(tdiv.v, tdiv.s), mdiv, tdiv]];
+    const cards = [['Eficiência da clínica', pdPct(todos.v, todos.s), mdiv, todos], ['Promotores, teste e fontes de visita', rp, 30, rua], ['Teles (BH e interno)', tp, 45, tele], ['Divulgadores', pdPct(tdiv.v, tdiv.s), mdiv, tdiv]];
     const placar = '<div class="pd-placar">'+cards.map(c => '<div class="pd-pc"><div class="k"><span>'+c[0]+'</span>'+pdPill(c[1], c[2])+'</div><div class="v">'+pf1(c[1]).replace('%','')+'<small>%</small></div>'
       + '<div class="b" title="Escala de 0 a 60%"><i style="width:'+Math.min(100, (c[1] || 0) / 60 * 100)+'%"></i>'+(c[2] != null ? '<u style="left:calc('+Math.min(100, c[2] / 60 * 100)+'% - 1px)"></u>' : '')+'</div>'
       + '<div class="f">Meta '+(c[2] != null ? pf1(c[2]) : '—')+' · '+c[3].s+' vendas · '+c[3].v+' visitas</div></div>').join('')+'</div>';
@@ -1722,7 +1738,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
         if (tem) mt[d] = [v, s]; CT[d] = { visitas_planilha: v, vendas_planilha: s, visitas_corrida: v2, vendas_corrida: s2 }; } M.teste = mt; }
     h += grupo('Divulgadores', div, mdiv);
     vis(div).forEach(p => { h += linha(p, pdMetaDiv(pes, M, [p.id], n), false); });
-    PD_ORDEM.forEach(cg => { const a = pes.filter(p => p.cargo === cg); if (!a.length) return; h += grupo(PD_ROT[cg], a, PD_META[cg]); vis(a).forEach(p => { h += linha(p, PD_META[cg], true); }); });
+    ordemGrupos().forEach(cg => { const a = pes.filter(p => p.cargo === cg); if (!a.length) return; h += grupo(PD_ROT[cg] || cg, a, metaDe(cg)); vis(a).forEach(p => { h += linha(p, metaDe(cg), true); }); });
     if (teste.length){ h += linha({ id: 'teste', nome: 'Promotores de teste ('+teste.length+')', ativo: true }, 30, true);
       if (PD.testeMes) vis(teste).forEach(p => { h += linha(Object.assign({}, p, { sub: true }), 30, true); }); }
     const tot = (rot, arr) => { const t = pdSoma(ids(arr), M, n); let tds = '';
@@ -1748,7 +1764,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   async function diaCarregar(){
     pdMarcar(); $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
     $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
-    const e0 = await pdBase(); if (e0){ pdErro(e0); return; }
+    const e0 = await pdBase() || await canaisCarrega(); if (e0){ pdErro(e0); return; }
     if (!PD.clin){ pdVazio(); return; }
     const dt = PD.data, tk = ++PD.tk;
     const rs = await Promise.all([sb.rpc('equipe_clinica', { p_clinica: PD.clin, p_de: dt, p_ate: dt }),
@@ -2053,8 +2069,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 
   /* ---------- menu lateral e início (dashboard) ---------- */
   const TITULOS = { inicio: 'Início', corrida: 'Corrida', diario: 'Lançamento diário', planilha: 'Planilha do mês', ranking: 'Ranking de vendas', mensagens: 'Mensagens push', lancamentos: 'Lançamentos', relatorios: 'Relatórios', externo: 'Relatório NUV', agenda: 'Agenda das teles',
-    clinicas: 'Clínicas', tipos: 'Tipos de lançamento', premios: 'Prêmios', pessoas: 'Pessoas', campanhas: 'Campanhas' };
-  const CADASTROS = ['clinicas', 'tipos', 'premios', 'pessoas', 'campanhas'];
+    clinicas: 'Clínicas', tipos: 'Tipos de lançamento', canais: 'Fontes de visita', premios: 'Prêmios', pessoas: 'Pessoas', campanhas: 'Campanhas' };
+  const CADASTROS = ['clinicas', 'tipos', 'canais', 'premios', 'pessoas', 'campanhas'];
   const lerLS = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const gravarLS = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
   const GRUPOS = { cad: CADASTROS, camp: ['corrida', 'lancamentos'], vend: ['diario', 'planilha', 'ranking'] };
