@@ -581,6 +581,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.16.1', '2026-11-12', 'Agenda das teles: Visitas e Vendas do topo agora contam os atendidos e fechados da própria agenda (antes vinham da planilha diária e ficavam zeradas quando ela não estava preenchida).'],
     ['1.16.0', '2026-11-12', 'A gerente passa a ver a Agenda das teles (só as clínicas dela): abre o agendamento, marca Atendido (paciente compareceu) e Fechado ou Não fechou. Teles com Tele BH como cargo extra também aparecem no filtro.'],
     ['1.15.0', '2026-11-12', 'Agenda das teles: legenda das cores (agendado na cor da clínica, confirmado, atendido, fechado e não fechou) acima do calendário.'],
     ['1.14.0', '2026-11-12', 'Fontes de visita agora têm cadastro (Cadastros › Fontes de visita): Luminoso, Indicação e a nova Prospecta, com meta própria. O gestor inclui, renomeia ou desativa fontes sem mexer no sistema; elas valem para todas as clínicas.'],
@@ -2172,15 +2173,14 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     if (!$('#ag-tot')) return;
     $('#ag-tot').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
     let q = sb.from('agendamentos').select('*').is('excluido_em', null).gte('data_agendamento', AG.ini).lte('data_agendamento', AG.fim).order('data_agendamento').order('hora').limit(2000);
-    let pl = sb.from('planilha_diaria').select('visitas,vendas,clinica_id,usuario_id').neq('cargo', 'Divulgador').gte('data_ref', AG.ini).lte('data_ref', AG.fim).limit(5000);
-    if (AG.tele){ q = q.eq('tele_id', Number(AG.tele)); pl = pl.eq('usuario_id', Number(AG.tele)); } else pl = pl.in('usuario_id', AG.teles.map(t => t.id));
-    if (AG.clin){ q = q.eq('clinica_id', Number(AG.clin)); pl = pl.eq('clinica_id', Number(AG.clin)); }
-    const [r, rp] = await Promise.all([q, pl]);
+    if (AG.tele) q = q.eq('tele_id', Number(AG.tele));
+    if (AG.clin) q = q.eq('clinica_id', Number(AG.clin));
+    const r = await q;
     if (!$('#ag-tot')) return;
-    const er = r.error || rp.error;
+    const er = r.error;
     if (er){ $('#ag-tot').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
     AG.todos = r.data; AG.itens = AG.st ? r.data.filter(g => g.status === AG.st) : r.data;
-    const nAg = r.data.length, vis = rp.data.reduce((t, x) => t + (x.visitas || 0), 0), ven = rp.data.reduce((t, x) => t + (x.vendas || 0), 0);
+    const tt = agTotais(r.data), nAg = tt.n, vis = tt.aten, ven = tt.fech;
     const pct = (a, b) => b > 0 ? Math.round(a / b * 100)+'%' : '—';
     const tile = (rot, val, nota) => '<div class="ag-tl"><span>'+rot+'</span><b>'+val+'</b><small>'+(nota || '&nbsp;')+'</small></div>';
     $('#ag-tot').innerHTML = '<div class="card ag-sm"><h2>'+dBR(AG.ini)+' a '+dBR(AG.fim)+'</h2><div class="ag-tls">'
@@ -2188,7 +2188,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + tile('Visitas', vis, pct(vis, nAg)+' dos agendamentos')
       + tile('Vendas', ven, pct(ven, vis)+' das visitas')
       + tile('Agendamento → venda', pct(ven, nAg), 'vendas ÷ agendamentos')
-      + '</div><p class="sub" style="margin:6px 0 0;font-size:11.5px">Visitas e vendas: só das teles, pela planilha diária, no mesmo período e filtros.</p></div>';
+      + '</div><p class="sub" style="margin:6px 0 0;font-size:11.5px">Visitas = pacientes atendidos (vieram à clínica); vendas = agendamentos fechados. Contam os agendamentos do período e dos filtros.</p></div>';
     $('#ag-resumo').innerHTML = '<span>'+dBR(AG.ini).slice(0, 5)+' – '+dBR(AG.fim).slice(0, 5)+'</span><span>'+esc(AG.tele ? (AG.teles.find(t => String(t.id) === String(AG.tele)) || {}).nome || '' : 'Todas as teles')+'</span><span>'+esc(AG.clin ? (AG.clinicas.find(c => String(c.id) === String(AG.clin)) || {}).sigla || '' : 'Todas as clínicas')+'</span><b>'+nAg+' agend.</b><b>'+vis+' visitas</b><b>'+ven+' vendas</b><em>Mostrar</em>';
     agendaGrade(AG.primeira ? 'fade' : null); AG.primeira = true;
     agendaQuadro(); agendaLista();
