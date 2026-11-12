@@ -261,7 +261,7 @@ li:first-child>.ag-i{border-top:0}
   };
   const guarda = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k, v){ try { localStorage.setItem(k, v); } catch(e){} } };
 
-  const VERSAO = '2026-10-31 · avisos';
+  const VERSAO = '2026-11-12 · tele BH';
   if ('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => { reg.update(); }).catch(() => {});
     let recarregou = false;
@@ -345,6 +345,7 @@ li:first-child>.ag-i{border-top:0}
   /* ---------- início: números do mês e funções ---------- */
   const ehGestao = () => !!eu && (eu.papel === 'gestor' || eu.papel === 'assistente');
   const rotCargo = u => [u.cargo].concat(u.cargos_extra || []).filter(Boolean).join(' + ');
+  const souBH = () => !!eu && eu.papel === 'promotor' && [eu.cargo].concat(eu.cargos_extra || []).includes('Tele BH');   // Tele BH só marca e remarca: a confirmação e o resultado são da clínica
   const ehTele = () => !!eu && eu.papel === 'promotor' && [eu.cargo].concat(eu.cargos_extra || []).some(g => g === 'Tele BH' || g === 'Tele interno');
   const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
   const ymd = (a, m, d) => a+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
@@ -429,6 +430,7 @@ li:first-child>.ag-i{border-top:0}
   // resultado do atendimento (Fechado / Não fechou + motivo), a partir do dia do atendimento
   const motNC = () => (MOTIVOS.find(x => x.nome === 'Paciente não compareceu') || {}).id;
   function resultadoHtml(g){
+    if (souBH()) return g.status === 'nao_fechou' ? '<p class="meta"><b>Motivo:</b> '+esc(motivoTxt(g))+'</p>' : '';
     const des = txt => '<button type="button" class="link" data-rs-desfaz style="justify-self:start">'+txt+'</button>';
     if (g.status === 'fechado' || g.status === 'nao_fechou')
       return (g.status === 'nao_fechou' ? '<p class="meta"><b>Motivo:</b> '+esc(motivoTxt(g))+'</p>' : '')+'<div class="rs">'+des('Desfazer resultado')+'<div class="err" data-rs-err role="alert"></div></div>';
@@ -559,11 +561,11 @@ li:first-child>.ag-i{border-top:0}
     await motivosCarregar();
     const ps = await sb.from('agendamento_prints').select('*').eq('agendamento_id', id).order('criado_em');
     const urls = await Promise.all((ps.data || []).map(x => sb.storage.from('prints').createSignedUrl(x.path, 3600).then(r => r.data ? r.data.signedUrl : null)));
-    const comResultado = ['atendido', 'fechado', 'nao_fechou'].includes(g.status), editavel = (RETRO || g.data_agendamento >= hoje()) && !comResultado;
+    const comResultado = ['atendido', 'fechado', 'nao_fechou'].includes(g.status), editavel = (RETRO || g.data_agendamento >= hoje()) && !comResultado, podeConf = editavel && !souBH();
     const ov = document.createElement('div'); ov.className = 'sheet'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
     ov.innerHTML = '<div class="sh-c"><div class="line" style="justify-content:space-between"><h2 style="margin:0">'+esc(g.paciente)+'</h2><button type="button" class="sndbtn" data-x aria-label="Fechar">×</button></div>'
       + '<p class="meta">'+esc(fmtTelDigitos(g.telefone))+' · <span class="sigla">'+esc(AGP.sig[g.clinica_id] || '')+'</span> · '+stChip(g)+'</p>'
-      + (editavel ? (g.status === 'confirmado'
+      + (podeConf ? (g.status === 'confirmado'
           ? '<button type="button" class="link" id="e-desconf" style="justify-self:start">Desfazer confirmação</button>'
           : '<button type="button" class="btn verde block" id="e-conf">Confirmado</button>') : '')
       + resultadoHtml(g)

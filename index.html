@@ -605,6 +605,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.21.0', '2026-11-12', 'Agenda das teles: a gerência (e o gestor) pode corrigir o status de qualquer agendamento da sua clínica, por exemplo de Atendido para Não compareceu, ficando registrado no histórico. Tele BH não confirma mais presença nem marca atendimento, fechou ou não fechou: só marca e remarca a agenda.'],
     ['1.20.0', '2026-11-12', 'Agenda das teles: os totais por clínica, tele e motivo passam a ser acumulados (agendamentos, confirmaram, atendidos, fecharam, não fecharam e não compareceram) e o número de agendamentos não cai quando o status avança. Filtros do grid agora ficam alinhados sob o título de cada coluna, com novos filtros de tele e status.'],
     ['1.19.0', '2026-11-12', 'Divulgadoras e gerentes que divulgam também clínico: no cadastro da pessoa, a opção Também divulga clínico cria duas linhas na planilha com o mesmo nome, Nome (orto) e Nome (clínico), cada uma com suas visitas e vendas, ambas contadas como divulgação.'],
     ['1.18.1', '2026-11-12', 'Agenda das teles: clicar num botão da legenda de cima volta a descer a tela até a lista dos pacientes. Os botões da legenda de baixo só filtram, sem rolar.'],
@@ -2390,19 +2391,41 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const nomeT = Object.fromEntries(AG.teles.map(t => [t.id, t.nome])), c = AG.clinicas.find(x => x.id === g.clinica_id) || {};
     const quando = t => new Date(t).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
     const dh = o => o ? dBR(o.data)+(o.hora ? ' às '+hhm(o.hora) : '') : '';
-    const rot = l => l.acao === 'confirmar' ? (l.depois && l.depois.status === 'confirmado' ? 'Confirmado pelo paciente' : 'Confirmação desfeita') : l.acao === 'criar' ? 'Agendamento criado' : l.acao === 'alterar' ? 'Alterado de '+dh(l.antes)+' para '+dh(l.depois) : l.acao === 'conversa' ? 'Nova conversa incluída' : l.acao === 'resultado' ? (l.depois && l.depois.status === 'nao_fechou' ? 'Não fechou — '+((l.depois.motivo || '')+(l.depois.obs ? ' ('+l.depois.obs+')' : '')) : l.depois && l.depois.status === 'fechado' ? 'Fechou o contrato' : l.depois && l.depois.status === 'atendido' ? (l.antes && l.antes.status === 'atendido' ? 'Atendido' : l.antes && (l.antes.status === 'fechado' || l.antes.status === 'nao_fechou') ? 'Resultado desfeito (voltou a atendido)' : 'Paciente atendido') : 'Resultado desfeito') : 'Agendamento excluído';
+    const rot = l => l.acao === 'confirmar' ? (l.depois && l.depois.status === 'confirmado' ? 'Confirmado pelo paciente' : 'Confirmação desfeita') : l.acao === 'criar' ? 'Agendamento criado' : l.acao === 'alterar' ? 'Alterado de '+dh(l.antes)+' para '+dh(l.depois) : l.acao === 'conversa' ? 'Nova conversa incluída' : l.acao === 'resultado' ? (l.depois && l.depois.corrigido ? 'Status corrigido para '+(AG_ST[l.depois.rotulo] || l.depois.status)+(l.depois.rotulo === 'nao_fechou' ? ' — '+((l.depois.motivo || '')+(l.depois.obs ? ' ('+l.depois.obs+')' : '')) : '') : l.depois && l.depois.status === 'nao_fechou' ? 'Não fechou — '+((l.depois.motivo || '')+(l.depois.obs ? ' ('+l.depois.obs+')' : '')) : l.depois && l.depois.status === 'fechado' ? 'Fechou o contrato' : l.depois && l.depois.status === 'atendido' ? (l.antes && l.antes.status === 'atendido' ? 'Atendido' : l.antes && (l.antes.status === 'fechado' || l.antes.status === 'nao_fechou') ? 'Resultado desfeito (voltou a atendido)' : 'Paciente atendido') : 'Resultado desfeito') : 'Agendamento excluído';
     const m = document.createElement('div'); m.className = 'ag-modal'; m.setAttribute('role', 'dialog');
     m.innerHTML = '<div class="cx"><div class="line" style="justify-content:space-between"><b style="font-size:17px">'+esc(g.paciente)+'</b><button type="button" class="btn ghost" data-x>Fechar</button></div>'
       + '<p class="meta">'+esc(fmtTel(g.telefone))+' · '+esc(c.sigla || '')+' · '+dBR(g.data_agendamento)+(g.hora ? ' às '+hhm(g.hora) : '')+' · lançado por '+esc(nomeT[g.tele_id] || 'Tele')+' · '+agChip(agKey(g))+'</p>'
       + (g.status === 'nao_fechou' ? '<p class="meta"><b>Motivo:</b> '+esc(agMotivo(g))+'</p>' : '')
-      + agResultadoHtml(g)
+      + agResultadoHtml(g) + agCorrigirHtml(g)
       + (urls.filter(Boolean).length ? urls.filter(Boolean).map(u => '<img src="'+esc(u)+'" alt="Print da conversa">').join('') : '<div class="empty">Sem prints.</div>')
       + '<div><b>Histórico</b>'+((lg.data || []).length ? '<ul class="ag-log">'+lg.data.map(l => '<li><span>'+quando(l.quando)+'</span> '+esc(rot(l))+' <small>por '+esc(nomeT[l.usuario_id] || 'Tele')+'</small></li>').join('')+'</ul>' : '<p class="meta">Sem registros.</p>')+'</div></div>';
     m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-x]')) m.remove(); });
     document.body.appendChild(m);
-    agResultadoLiga(m, g);
+    agResultadoLiga(m, g); agCorrigirLiga(m, g);
   }
   const agMotivo = g => { const mo = AG.motivos.find(x => x.id === g.motivo_id); return (mo ? mo.nome : 'Motivo não informado')+(g.motivo_obs ? ' — '+g.motivo_obs : ''); };
+  const agPodeCorrigir = () => !!eu && (eu.papel === 'gestor' || eu.papel === 'gerente');
+  function agCorrigirHtml(g){
+    if (!agPodeCorrigir()) return '';
+    const cur = agKey(g);
+    return '<div class="ag-rs"><b>Corrigir status</b><p class="meta">Para ajustar um status marcado errado (ex.: atendido, mas o paciente não foi à clínica).</p><div class="form">'
+      + '<label class="field">Novo status<select data-cs>'+Object.keys(AG_ST).map(k => '<option value="'+k+'"'+(k === cur ? ' selected' : '')+'>'+AG_ST[k]+'</option>').join('')+'</select></label>'
+      + '<div class="form" data-cs-nf hidden><label class="field">Motivo<select data-cs-mot><option value="">Escolha...</option>'+AG.motivos.filter(x => x.nome !== 'Paciente não compareceu').map(x => '<option value="'+x.id+'" data-o="'+(x.exige_obs ? 1 : 0)+'"'+(g.motivo_id === x.id ? ' selected' : '')+'>'+esc(x.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="field">Observação <small>(obrigatória em alguns motivos)</small><textarea data-cs-obs rows="2" maxlength="300">'+esc(g.motivo_obs || '')+'</textarea></label></div>'
+      + '<button type="button" class="btn" data-cs-salvar>Salvar status</button></div><div class="err" data-cs-err role="alert"></div></div>';
+  }
+  function agCorrigirLiga(m, g){
+    const sel = m.querySelector('[data-cs]'); if (!sel) return;
+    const nf = m.querySelector('[data-cs-nf]'), erro = t => { m.querySelector('[data-cs-err]').textContent = t || ''; };
+    const mostra = () => { nf.hidden = sel.value !== 'nao_fechou'; }; sel.addEventListener('change', mostra); mostra();
+    m.querySelector('[data-cs-salvar]').addEventListener('click', async e => {
+      if (sel.value === agKey(g) && sel.value !== 'nao_fechou') return erro('Esse já é o status atual.');
+      const b = e.currentTarget; b.disabled = true; erro('');
+      const r = await sb.rpc('corrigir_status', { p_id: g.id, p_status: sel.value, p_motivo: sel.value === 'nao_fechou' ? (Number(m.querySelector('[data-cs-mot]').value) || null) : null, p_obs: sel.value === 'nao_fechou' ? (m.querySelector('[data-cs-obs]').value || null) : null });
+      b.disabled = false; if (r.error) return erro(msgErro(r.error));
+      m.remove(); agendaDados();
+    });
+  }
   const agMotNC = () => (AG.motivos.find(x => x.nome === 'Paciente não compareceu') || {}).id;
   function agResultadoHtml(g){
     const des = '<button type="button" class="btn ghost" data-desfaz>Desfazer</button>';
