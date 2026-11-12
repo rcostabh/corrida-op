@@ -67,7 +67,7 @@ input:focus,select:focus{outline:none;background:var(--surface);border-color:var
 .dia i.pt{background:var(--accent)}
 .dia i.pt.ok{background:#1f9d4c}
 .okc{color:#14753a;font-weight:700}
-.okc.fe{color:#0b6a2e}.nfc{color:#b3200f;font-weight:700}.atc{color:#075e6b;font-weight:700}
+.okc.fe{color:#0b6a2e}.nfc{color:#b3200f;font-weight:700}.ncc{color:#8a5a12;font-weight:700}.atc{color:#075e6b;font-weight:700}
 .rs{display:grid;gap:10px;border-top:1px solid var(--line);padding-top:12px}.rs .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}.rs .nfb{display:grid;gap:10px}.rs [hidden]{display:none}
 .btn.verde.fe{background:linear-gradient(180deg,#14a04d,#0b7f3a)}.btn.verm{background:linear-gradient(180deg,#e0473c,#c4271c);color:#fff}
 .btn.verde{background:linear-gradient(180deg,#2bb35e,#1f9d4c);color:#fff}
@@ -95,7 +95,7 @@ li:first-child>.ag-i{border-top:0}
 .gg-c{border:0;text-align:left;border-radius:8px;padding:5px 7px;display:grid;gap:0;background:color-mix(in srgb,var(--c) 18%,var(--surface));border-left:3px solid var(--c);color:var(--ink);font:500 12px var(--font);cursor:pointer}
 .gg-c.ok{background:color-mix(in srgb,#1f9d4c 16%,var(--surface));border-left-color:#1f9d4c}
 .gg-c.at{background:color-mix(in srgb,#0a7c8c 22%,var(--surface));border-left-color:#0a7c8c}
-.gg-c.fe{background:color-mix(in srgb,#0f8a3c 34%,var(--surface));border-left-color:#0f8a3c}.gg-c.nf{background:color-mix(in srgb,#d4271c 15%,var(--surface));border-left-color:#d4271c}
+.gg-c.fe{background:color-mix(in srgb,#0f8a3c 34%,var(--surface));border-left-color:#0f8a3c}.gg-c.nf{background:color-mix(in srgb,#d4271c 15%,var(--surface));border-left-color:#d4271c}.gg-c.nc{background:color-mix(in srgb,#b7791f 18%,var(--surface));border-left-color:#b7791f}
 .gg-c b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.gg-c small{color:var(--muted);font-size:10.5px}
 .ag-lg{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px;font-size:13px}
 .ag-lg span{color:var(--muted);font-weight:600;margin-right:4px}
@@ -418,7 +418,8 @@ li:first-child>.ag-i{border-top:0}
   const opHoras = (sel, dia) => { const l = horasDia(dia); if (dia && !l.length) return '<option value="">Sem atendimento aos domingos</option>'; return '<option value="">Escolha...</option>'+l.map(h => '<option value="'+h+'"'+(h === sel ? ' selected' : '')+'>'+h+'</option>').join(''); };
   const ligaHoras = (inpData, selHora) => { if (!inpData || !selHora) return; inpData.addEventListener('change', () => { const ant = selHora.value; selHora.innerHTML = opHoras(horasDia(inpData.value).includes(ant) ? ant : '', inpData.value); }); };
   const hh = h => h ? String(h).slice(0, 5) : '';
-  const stChip = g => g.status === 'confirmado' ? '<span class="okc">✓ Confirmado</span>' : g.status === 'atendido' ? '<span class="atc">● Atendido</span>' : g.status === 'fechado' ? '<span class="okc fe">★ Fechado</span>' : g.status === 'nao_fechou' ? '<span class="nfc">✕ Não fechou</span>' : 'Agendado';
+  const ehNC = g => g.status === 'nao_fechou' && (MOTIVOS.find(x => x.id === g.motivo_id) || {}).nome === 'Paciente não compareceu';
+  const stChip = g => ehNC(g) ? '<span class="ncc">⊘ Não compareceu</span>' : g.status === 'confirmado' ? '<span class="okc">✓ Confirmado</span>' : g.status === 'atendido' ? '<span class="atc">● Atendido</span>' : g.status === 'fechado' ? '<span class="okc fe">★ Fechado</span>' : g.status === 'nao_fechou' ? '<span class="nfc">✕ Não fechou</span>' : 'Agendado';
   // Lançamento retroativo: enquanto estiver liberado no banco (parâmetro), datas anteriores a hoje são aceitas
   let RETRO = false;
   async function retroCarregar(){ try { const r = await sb.rpc('agendamento_retroativo'); RETRO = !r.error && r.data === true; } catch (e) { RETRO = false; } }
@@ -520,7 +521,7 @@ li:first-child>.ag-i{border-top:0}
   const SEMANA = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   async function agendaCarregar(){
     if (!ehTele()){ mostrar('inicio'); return; }
-    await retroCarregar();
+    await retroCarregar(); await motivosCarregar();
     if (!AGP.sel){ AGP.sel = hoje(); AGP.ano = Number(AGP.sel.slice(0, 4)); AGP.mes = Number(AGP.sel.slice(5, 7)) - 1; }
     $('#main').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
     const ini = ymd(AGP.ano, AGP.mes, 1), fim = ymd(AGP.ano, AGP.mes, new Date(AGP.ano, AGP.mes + 1, 0).getDate());
@@ -625,6 +626,7 @@ li:first-child>.ag-i{border-top:0}
   const mesIniG = () => hoje().slice(0, 8)+'01';
   async function gAgendaCarregar(){
     if (!ehGestao()){ mostrar('inicio'); return; }
+    await motivosCarregar();
     if (!GA.ini){ GA.ini = mesIniG(); GA.fim = hoje(); GA.dia = hoje(); }
     $('#main').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
     const rs = await Promise.all([sb.from('usuarios').select('id,nome,cargo').in('cargo', ['Tele BH', 'Tele interno']).order('nome'), sb.from('clinicas').select('id,sigla,nome,cor,ativa').order('nome')]);
@@ -671,7 +673,7 @@ li:first-child>.ag-i{border-top:0}
     const horas = horasDia(GA.dia); if (!horas.length && !r.data.length) horas.push('09:00');
     r.data.forEach(g => { if (g.hora && !horas.includes(slotDe(g))) horas.push(slotDe(g)); }); horas.sort();
     const semHora = r.data.filter(g => !g.hora), nomeT = Object.fromEntries(GA.teles.map(t => [t.id, t.nome.split(' ')[0]]));
-    const card = g => '<button type="button" class="gg-c'+(g.status === 'confirmado' ? ' ok' : g.status === 'atendido' ? ' at' : g.status === 'fechado' ? ' fe' : g.status === 'nao_fechou' ? ' nf' : '')+'" data-g="'+g.id+'" style="--c:'+esc((GA.clinicas.find(c => c.id === g.clinica_id) || {}).cor || '#5b9bff')+'"><b>'+(g.status === 'confirmado' ? '✓ ' : g.status === 'atendido' ? '● ' : g.status === 'fechado' ? '★ ' : g.status === 'nao_fechou' ? '✕ ' : '')+(hh(g.hora) ? hh(g.hora)+' ' : '')+esc(g.paciente)+'</b><small>'+esc(nomeT[g.tele_id] || 'Tele')+'</small></button>';
+    const card = g => '<button type="button" class="gg-c'+(g.status === 'confirmado' ? ' ok' : g.status === 'atendido' ? ' at' : g.status === 'fechado' ? ' fe' : g.status === 'nao_fechou' ? (ehNC(g) ? ' nc' : ' nf') : '')+'" data-g="'+g.id+'" style="--c:'+esc((GA.clinicas.find(c => c.id === g.clinica_id) || {}).cor || '#5b9bff')+'"><b>'+(g.status === 'confirmado' ? '✓ ' : g.status === 'atendido' ? '● ' : g.status === 'fechado' ? '★ ' : g.status === 'nao_fechou' ? (ehNC(g) ? '⊘ ' : '✕ ') : '')+(hh(g.hora) ? hh(g.hora)+' ' : '')+esc(g.paciente)+'</b><small>'+esc(nomeT[g.tele_id] || 'Tele')+'</small></button>';
     const linhas = (semHora.length ? [['Sem hora', semHora]] : []).concat(horas.map(h => [h, r.data.filter(g => g.hora && slotDe(g) === h)]));
     const somaDia = n => { const x = new Date(GA.dia+'T12:00:00'); x.setDate(x.getDate() + n); return x.toLocaleDateString('sv-SE'); };
     alvo.innerHTML = '<div class="cal-top"><button type="button" class="sndbtn" id="gd-ant" aria-label="Dia anterior">‹</button><div style="text-align:center"><b>'+dBR(GA.dia)+(GA.dia === hoje() ? ' · hoje' : '')+'</b><div class="meta">'+r.data.length+' agendamento(s)</div></div><button type="button" class="sndbtn" id="gd-prox" aria-label="Próximo dia">›</button></div>'
