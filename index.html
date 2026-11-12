@@ -605,6 +605,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.22.0', '2026-11-12', 'Agenda das teles: botão Exportar Excel. A gerente escolhe separar por clínica, por tele ou não separar; resumo por dia, semana ou mês (agendamentos, confirmaram, atendidos, fecharam, não fecharam, não compareceram e percentuais); e a lista de nomes de quem ela quiser (quem fechou, quem não foi etc.), uma aba por clínica ou tele.'],
     ['1.21.1', '2026-11-12', 'Agenda das teles: clicar num botão da legenda limpa os filtros de status, motivo e busca do grid que estavam sobrando e escondiam os nomes; escolher um status no grid solta o botão da legenda. A mensagem de lista vazia ganhou o botão Limpar filtros do grid.'],
     ['1.21.0', '2026-11-12', 'Agenda das teles: a gerência (e o gestor) pode corrigir o status de qualquer agendamento da sua clínica, por exemplo de Atendido para Não compareceu, ficando registrado no histórico. Tele BH não confirma mais presença nem marca atendimento, fechou ou não fechou: só marca e remarca a agenda.'],
     ['1.20.0', '2026-11-12', 'Agenda das teles: os totais por clínica, tele e motivo passam a ser acumulados (agendamentos, confirmaram, atendidos, fecharam, não fecharam e não compareceram) e o número de agendamentos não cai quando o status avança. Filtros do grid agora ficam alinhados sob o título de cada coluna, com novos filtros de tele e status.'],
@@ -2368,14 +2369,14 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + '<th><select id="ag-gmo" aria-label="Filtrar motivo">'+motOpts+'</select></th>'
       + '<th>'+(AG.gq || AG.gcl || AG.gmo || AG.gtl || AG.gst ? '<button type="button" class="btn ghost" id="ag-glimpa">Limpar</button>' : '')+'</th></tr>';
     const foco = document.activeElement && document.activeElement.id === 'ag-gq';
-    alvo.innerHTML = '<div class="card ag-sm"><h2>'+(ct ? esc(ct[1])+' no período' : 'Agendamentos do período')+' <span class="chip" style="vertical-align:middle">'+lst.length+(lst.length !== base.length ? ' de '+base.length : '')+'</span></h2>'
+    alvo.innerHTML = '<div class="card ag-sm"><h2>'+(ct ? esc(ct[1])+' no período' : 'Agendamentos do período')+' <span class="chip" style="vertical-align:middle">'+lst.length+(lst.length !== base.length ? ' de '+base.length : '')+'</span> <button type="button" class="btn ghost sm" id="ag-xls" style="vertical-align:middle;margin-left:6px" title="Baixar planilha de Excel com os totais e os nomes">⬇ Exportar Excel</button></h2>'
       + agLegenda()
       + (lst.length ? '<div class="ag-gt"><table class="ag-g"><thead><tr>'+th('paciente', 'Paciente')+th('clinica', 'Clínica')+th('tel', 'Telefone')+th('data', 'Data e hora')+th('tele', 'Tele')+th('status', 'Status')+th('motivo', 'Motivo')+'<th style="cursor:default"></th></tr>'+filt+'</thead><tbody>'
         + lst.slice(0, 500).map(g => '<tr><td><b>'+esc(g.paciente)+'</b></td><td>'+esc(sig[g.clinica_id] || '')+'</td><td>'+esc(fmtTel(g.telefone))+'</td><td>'+dBR(g.data_agendamento)+(g.hora ? ' '+hhm(g.hora) : '')+'</td><td>'+esc(nomeT[g.tele_id] || 'Tele')+'</td><td>'+agChip(agKey(g))+'</td><td class="mot">'+(g.status === 'nao_fechou' && !agNC(g) ? esc(agMotivo(g)) : '')+'</td><td><button type="button" class="btn ghost" data-g="'+g.id+'">Abrir</button></td></tr>').join('')
         + '</tbody></table></div>'
         : '<div class="empty">Nenhum agendamento neste filtro.'+(AG.gq || AG.gcl || AG.gmo || AG.gtl || AG.gst ? ' <button type="button" class="btn ghost sm" id="ag-glimpa2">Limpar filtros do grid</button>' : '')+'</div>')
       + '</div>';
-    agLegAtualiza();
+    agLegAtualiza(); $('#ag-xls').addEventListener('click', agExportarAbrir);
     $$('#ag-lista [data-g]').forEach(b => b.addEventListener('click', () => agendaDetalhe(Number(b.dataset.g))));
     $$('#ag-lista th[data-o]').forEach(h => h.addEventListener('click', () => { const k = h.dataset.o; AG.ord = { k, d: AG.ord && AG.ord.k === k ? -AG.ord.d : 1 }; agendaLista(); }));
     const gq = $('#ag-gq'); if (gq){ gq.addEventListener('input', () => { AG.gq = gq.value; agendaLista(); const n = $('#ag-gq'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }); if (foco) gq.focus(); }
@@ -2426,6 +2427,66 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       b.disabled = false; if (r.error) return erro(msgErro(r.error));
       m.remove(); agendaDados();
     });
+  }
+  /* ---------- exportar para Excel (resumo por dia/semana/mês e lista de nomes, por clínica ou por tele) ---------- */
+  const AG_XL = { gr: 'dia', sep: 'clin', conteudo: ['resumo', 'lista'], cats: ['todos'] };
+  const agXlsLib = () => window.XLSX ? Promise.resolve() : new Promise((ok, er) => { const t = document.createElement('script'); t.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'; t.onload = ok; t.onerror = () => er(new Error('Não consegui carregar o gerador de Excel. Confira a internet e tente de novo.')); document.head.appendChild(t); });
+  function agExportarAbrir(){
+    const o = AG_XL, m = document.createElement('div'); m.className = 'ag-modal'; m.setAttribute('role', 'dialog');
+    const rd = (nome, v, t, at) => '<label class="chk"><input type="radio" name="x-'+nome+'" value="'+v+'"'+(at ? ' checked' : '')+'><span>'+t+'</span></label>';
+    const ck = (nome, v, t, at) => '<label class="chk"><input type="checkbox" name="x-'+nome+'" value="'+v+'"'+(at ? ' checked' : '')+'><span>'+t+'</span></label>';
+    const tele = AG.tele ? ((AG.teles.find(t => String(t.id) === String(AG.tele)) || {}).nome || '') : 'todas as teles', clin = AG.clin ? ((AG.clinicas.find(c => String(c.id) === String(AG.clin)) || {}).sigla || '') : 'todas as clínicas';
+    m.innerHTML = '<div class="cx"><div class="line" style="justify-content:space-between"><b style="font-size:17px">Exportar para Excel</b><button type="button" class="btn ghost" data-x>Fechar</button></div>'
+      + '<p class="meta">Período: <b>'+dBR(AG.ini)+' a '+dBR(AG.fim)+'</b> · '+esc(tele)+' · '+esc(clin)+'. Para mudar, ajuste as datas e os filtros no topo da tela.</p>'
+      + '<div class="field">Separar por<div class="mp-opts">'+rd('sep', 'clin', 'Clínica', o.sep === 'clin')+rd('sep', 'tele', 'Tele', o.sep === 'tele')+rd('sep', 'nada', 'Não separar', o.sep === 'nada')+'</div></div>'
+      + '<div class="field">Resumo agrupado por<div class="mp-opts">'+rd('gr', 'dia', 'Dia', o.gr === 'dia')+rd('gr', 'sem', 'Semana', o.gr === 'sem')+rd('gr', 'mes', 'Mês', o.gr === 'mes')+'</div></div>'
+      + '<div class="field">O que vai na planilha<div class="mp-opts">'+ck('cont', 'resumo', 'Resumo com os totais', o.conteudo.includes('resumo'))+ck('cont', 'lista', 'Lista de nomes', o.conteudo.includes('lista'))+'</div></div>'
+      + '<div class="field">Nomes de quem<small>(marque os grupos que quer listar; o resumo mostra todos)</small><div class="mp-opts">'+AG_CATS.map(c => ck('cat', c[0], c[3]+(c[0] === 'todos' ? 'Todos os agendamentos' : c[1]), o.cats.includes(c[0]))).join('')+'</div></div>'
+      + '<div class="err" id="x-err" role="alert"></div><div class="df"><button type="button" class="btn" id="x-baixar">Baixar planilha</button></div></div>';
+    m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-x]')) m.remove(); });
+    document.body.appendChild(m);
+    $('#x-baixar', m).addEventListener('click', async e => {
+      const v = n => (m.querySelector('input[name="x-'+n+'"]:checked') || {}).value, vs = n => Array.from(m.querySelectorAll('input[name="x-'+n+'"]:checked')).map(i => i.value);
+      o.sep = v('sep') || 'clin'; o.gr = v('gr') || 'dia'; o.conteudo = vs('cont'); o.cats = vs('cat');
+      const er = $('#x-err', m); er.textContent = '';
+      if (!o.conteudo.length) return er.textContent = 'Marque o resumo, a lista de nomes ou os dois.';
+      if (o.conteudo.includes('lista') && !o.cats.length) return er.textContent = 'Escolha de quem listar os nomes.';
+      const b = e.currentTarget; b.disabled = true; b.textContent = 'Gerando...';
+      try { await agXlsLib(); agXlsGerar(o); m.remove(); toast('Planilha baixada.'); } catch (x) { er.textContent = x.message || 'Não consegui gerar a planilha.'; b.disabled = false; b.textContent = 'Baixar planilha'; }
+    });
+  }
+  function agXlsGerar(o){
+    const X = window.XLSX, L = AG.todos || [], nomeT = Object.fromEntries(AG.teles.map(t => [t.id, t.nome])), sig = Object.fromEntries(AG.clinicas.map(c => [c.id, c.sigla])), nomeC = Object.fromEntries(AG.clinicas.map(c => [c.id, c.sigla+' · '+c.nome]));
+    const gDe = g => o.sep === 'clin' ? (nomeC[g.clinica_id] || 'Sem clínica') : o.sep === 'tele' ? (nomeT[g.tele_id] || 'Tele') : 'Todos';
+    const perChave = g => { const d = g.data_agendamento; if (o.gr === 'mes') return d.slice(0, 7); if (o.gr === 'dia') return d; const dt = new Date(d+'T12:00:00'); dt.setDate(dt.getDate() - ((dt.getDay() + 6) % 7)); return dt.toLocaleDateString('sv-SE'); };
+    const perTxt = k => { if (o.gr === 'mes') return k.slice(5)+'/'+k.slice(0, 4); if (o.gr === 'dia') return dBR(k); const f = new Date(k+'T12:00:00'); f.setDate(f.getDate() + 6); return dBR(k)+' a '+dBR(f.toLocaleDateString('sv-SE')); };
+    const cats = AG_CATS.filter(c => c[0] !== 'todos'), cmp = (a, b) => String(a).localeCompare(String(b), 'pt-BR');
+    const wb = X.utils.book_new(), nomes = new Set(), aba = n => { let b = String(n).replace(/[\\\/\?\*\[\]:]/g, '-').slice(0, 31) || 'Planilha', i = 2; while (nomes.has(b.toLowerCase())) b = b.slice(0, 28)+' '+(i++); nomes.add(b.toLowerCase()); return b; };
+    const colW = (ws, w) => { ws['!cols'] = w.map(x => ({ wch: x })); };
+    if (o.conteudo.includes('resumo')){
+      const cab = [o.sep === 'clin' ? 'Clínica' : o.sep === 'tele' ? 'Tele' : 'Grupo', o.gr === 'dia' ? 'Dia' : o.gr === 'sem' ? 'Semana' : 'Mês', 'Agendamentos'].concat(cats.map(c => c[1]), ['% compareceu', '% fechou']);
+      const lin = l => { const n = l.length, c = cats.map(x => l.filter(x[5]).length), aten = c[1], fech = c[2]; return [n].concat(c, [n ? aten / n : 0, aten ? fech / aten : 0]); };
+      const rows = [cab], grupos = {}; L.forEach(g => { (grupos[gDe(g)] = grupos[gDe(g)] || []).push(g); });
+      Object.keys(grupos).sort(cmp).forEach(gn => { const por = {}; grupos[gn].forEach(g => { (por[perChave(g)] = por[perChave(g)] || []).push(g); });
+        Object.keys(por).sort().forEach(k => rows.push([gn, perTxt(k)].concat(lin(por[k])))); rows.push([gn, 'TOTAL'].concat(lin(grupos[gn]))); });
+      if (Object.keys(grupos).length > 1) rows.push(['TOTAL GERAL', ''].concat(lin(L)));
+      const ws = X.utils.aoa_to_sheet(rows); colW(ws, [26, 24, 13, 11, 10, 10, 13, 17, 13, 10]);
+      for (let r = 1; r < rows.length; r++){ [cab.length - 2, cab.length - 1].forEach(c => { const a = ws[X.utils.encode_cell({ r, c })]; if (a) a.z = '0%'; }); }
+      ws['!autofilter'] = { ref: X.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rows.length - 1, c: cab.length - 1 } }) };
+      X.utils.book_append_sheet(wb, ws, aba('Resumo'));
+    }
+    if (o.conteudo.includes('lista')){
+      const sel = L.filter(g => o.cats.some(k => (AG_CATS.find(c => c[0] === k) || [])[5](g)));
+      const cab = ['Clínica', 'Tele', 'Paciente', 'Telefone', 'Data', 'Hora', 'Status', 'Motivo'];
+      const ord = (a, b) => cmp(a.data_agendamento+' '+(a.hora || ''), b.data_agendamento+' '+(b.hora || '')) || (a.id - b.id);
+      const linha = g => [sig[g.clinica_id] || '', nomeT[g.tele_id] || 'Tele', g.paciente || '', fmtTel(g.telefone), dBR(g.data_agendamento), hhm(g.hora), AG_ST[agKey(g)] || '', g.status === 'nao_fechou' ? agMotivo(g) : ''];
+      const grupos = {}; sel.forEach(g => { (grupos[o.sep === 'nada' ? 'Pacientes' : gDe(g)] = grupos[o.sep === 'nada' ? 'Pacientes' : gDe(g)] || []).push(g); });
+      const ks = Object.keys(grupos).sort(cmp); if (!ks.length) ks.push('Pacientes');
+      ks.forEach(k => { const rows = [cab].concat((grupos[k] || []).slice().sort(ord).map(linha)), ws = X.utils.aoa_to_sheet(rows); colW(ws, [8, 22, 30, 16, 11, 7, 16, 40]);
+        ws['!autofilter'] = { ref: X.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: Math.max(rows.length - 1, 1), c: cab.length - 1 } }) };
+        X.utils.book_append_sheet(wb, ws, aba(o.sep === 'clin' ? (k.split(' · ')[0] || k) : k)); });
+    }
+    X.writeFile(wb, 'agenda-teles_'+AG.ini+'_a_'+AG.fim+'.xlsx');
   }
   const agMotNC = () => (AG.motivos.find(x => x.nome === 'Paciente não compareceu') || {}).id;
   function agResultadoHtml(g){
