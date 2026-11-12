@@ -237,6 +237,14 @@ table.pd tr.tot td{font-weight:700}
 .ag-cl{display:flex;flex-wrap:wrap;gap:6px 8px;margin:0 0 10px}
 .ag-cl span{display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);border-radius:999px;padding:4px 11px 4px 9px;font:500 12px var(--font-body);color:var(--ink);border-left:4px solid var(--c)}
 .ag-cl b{font-weight:800}.ag-cl em{font-style:normal;color:var(--muted)}
+.ag-leg{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:0 0 10px;font:500 12px var(--font-body);color:var(--muted)}
+.ag-leg>b{font-weight:700;color:var(--ink);margin-right:2px}
+.ag-leg i{font-style:normal;display:inline-flex;align-items:center;gap:5px;border-radius:7px;padding:3px 9px 3px 7px;color:var(--ink);background:color-mix(in srgb,var(--c) 18%,var(--surface));border-left:3px solid var(--c)}
+.ag-leg i.ok{--c:#1f9d4c;background:color-mix(in srgb,#1f9d4c 16%,var(--surface))}
+.ag-leg i.at{--c:#0a7c8c;background:color-mix(in srgb,#0a7c8c 22%,var(--surface))}
+.ag-leg i.fe{--c:#0f8a3c;background:color-mix(in srgb,#0f8a3c 34%,var(--surface))}
+.ag-leg i.nf{--c:#d4271c;background:color-mix(in srgb,#d4271c 15%,var(--surface))}
+.ag-leg i.ag0{--c:var(--muted)}
 .ag-h .ag-ht{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--font-body);font-weight:600;font-size:calc(10.5px * var(--z,1));color:var(--ink)}
 .ag-tab{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 8px}
 .ag-tab button{border:0;background:var(--surface-2);color:var(--ink);font:600 12px var(--font-body);padding:6px 14px;border-radius:999px;cursor:pointer;min-height:30px}
@@ -573,6 +581,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.15.0', '2026-11-12', 'Agenda das teles: legenda das cores (agendado na cor da clínica, confirmado, atendido, fechado e não fechou) acima do calendário.'],
     ['1.14.0', '2026-11-12', 'Fontes de visita agora têm cadastro (Cadastros › Fontes de visita): Luminoso, Indicação e a nova Prospecta, com meta própria. O gestor inclui, renomeia ou desativa fontes sem mexer no sistema; elas valem para todas as clínicas.'],
     ['1.13.0', '2026-11-12', 'A gerente pode atuar também como divulgadora: em Pessoas (feito pelo gestor), a gerente ganha "Também atua como: Divulgador". Com isso ela aparece nos lançamentos de visita e venda, na planilha diária e nas campanhas, na clínica dela.'],
     ['1.12.0', '2026-11-12', 'Tele BH em mais de uma clínica: em Pessoas, a Tele marca as outras clínicas em que atende; ao lançar o agendamento ela escolhe a clínica e ele aparece para o gerente daquela clínica. Também vale quando Tele BH está em "Também atua como".'],
@@ -2107,6 +2116,14 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const agIco = st => st === 'confirmado' ? '✓ ' : st === 'atendido' ? '● ' : st === 'fechado' ? '★ ' : st === 'nao_fechou' ? '✕ ' : '';
   const agTotais = l => ({ n: l.length, conf: l.filter(g => g.status !== 'agendado').length, aten: l.filter(g => g.status === 'atendido' || g.status === 'fechado' || (g.status === 'nao_fechou' && (AG.motivos.find(x => x.id === g.motivo_id) || {}).nome !== 'Paciente não compareceu')).length, fech: l.filter(g => g.status === 'fechado').length });
   const agTxtTot = t => t.n+' agendamento'+(t.n === 1 ? '' : 's')+', '+t.conf+' confirmado'+(t.conf === 1 ? '' : 's')+', '+t.aten+' atendido'+(t.aten === 1 ? '' : 's')+', '+t.fech+' fechamento'+(t.fech === 1 ? '' : 's');
+  const agLegenda = () => {
+    return '<div class="ag-leg" role="group" aria-label="Legenda das cores"><b>Legenda</b>'
+      + '<i class="ag0" title="Marcado pela tele, ainda sem confirmação. A cor do cartão é a da clínica.">Agendado · cor da clínica</i>'
+      + '<i class="ok" title="Paciente confirmou a visita">✓ Confirmado</i>'
+      + '<i class="at" title="Paciente veio à clínica">● Atendido</i>'
+      + '<i class="fe" title="Atendido e fechou a venda">★ Fechado</i>'
+      + '<i class="nf" title="Atendido sem fechar, ou não compareceu">✕ Não fechou</i></div>';
+  };
   function agFaixa(its){
     const cs = AG.clinicas.filter(c => AG.clin ? String(c.id) === String(AG.clin) : (c.ativa || its.some(g => g.clinica_id === c.id)));
     return '<div class="ag-cl">'+cs.map(c => '<span style="--c:'+esc(c.cor || '#5b9bff')+'"><b>'+esc(c.sigla)+'</b> <em>'+esc(agTxtTot(agTotais(its.filter(g => g.clinica_id === c.id))))+'</em></span>').join('')+'</div>';
@@ -2136,7 +2153,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + '<div class="ag-nav"><button type="button" class="ag-ib" id="gd-ant" aria-label="Anterior">‹</button><b class="ag-per" id="ag-per"></b><button type="button" class="ag-ib" id="gd-prox" aria-label="Próximo">›</button><button type="button" class="btn ghost" id="gd-hoje">Hoje</button></div>'
       + '<div class="ag-tools"><div class="ag-zoom" role="group" aria-label="Zoom da agenda"><svg class="lupa" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><button type="button" class="ag-ib" id="ag-zm" aria-label="Diminuir zoom" title="Zoom out">−</button><output id="ag-zv" title="Voltar a 100%">100%</output><button type="button" class="ag-ib" id="ag-zp" aria-label="Aumentar zoom" title="Zoom in">+</button></div><button type="button" class="ag-ib" id="ag-recolher" aria-label="Recolher filtros e totais" title="Recolher filtros e totais"><svg viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></svg></button>'
       + '<button type="button" class="ag-ib" id="ag-cheia" aria-label="Esconder o menu lateral" title="Tela cheia: esconde o menu lateral (Esc volta)"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button></div></div>'
-      + '<div class="ag-palco" id="ag-palco"></div></div></div><div class="full" id="ag-quad"></div><div class="full" id="ag-lista"></div>';
+      + agLegenda() + '<div class="ag-palco" id="ag-palco"></div></div></div><div class="full" id="ag-quad"></div><div class="full" id="ag-lista"></div>';
     $('#v-app').classList.remove('sem-menu'); AG.fechado = false;
     $('#ag-recolher').addEventListener('click', () => agRecolher());
     $('#ag-resumo').addEventListener('click', () => agRecolher(false));
