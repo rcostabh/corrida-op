@@ -245,6 +245,13 @@ table.pd tr.tot td{font-weight:700}
 .ag-leg i.fe{--c:#0f8a3c;background:color-mix(in srgb,#0f8a3c 34%,var(--surface))}
 .ag-leg i.nf{--c:#d4271c;background:color-mix(in srgb,#d4271c 15%,var(--surface))}
 .ag-leg i.ag0{--c:var(--muted)}
+.ag-leg i.nc{--c:#b7791f;background:color-mix(in srgb,#b7791f 18%,var(--surface))}
+.ag-leg button.lg{font:inherit;color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:0;border-left:3px solid var(--c,var(--muted));border-radius:7px;padding:4px 10px 4px 8px;background:color-mix(in srgb,var(--c,var(--muted)) 16%,var(--surface))}
+.ag-leg button.lg b{font-weight:800;margin:0}
+.ag-leg button.lg[aria-pressed=true]{outline:2px solid var(--c,var(--muted));outline-offset:1px}
+.ag-leg button.lg.ok{--c:#1f9d4c}.ag-leg button.lg.at{--c:#0a7c8c}.ag-leg button.lg.fe{--c:#0f8a3c}.ag-leg button.lg.nf{--c:#d4271c}.ag-leg button.lg.nc{--c:#b7791f}
+.ag-c.nc{background:color-mix(in srgb,#b7791f 18%,var(--surface));border-left-color:#b7791f}.ag-c.nc b{color:#8a5a12}
+.ag-st.nc{background:color-mix(in srgb,#b7791f 22%,transparent);color:#8a5a12}
 .ag-h .ag-ht{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--font-body);font-weight:600;font-size:calc(10.5px * var(--z,1));color:var(--ink)}
 .ag-tab{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 8px}
 .ag-tab button{border:0;background:var(--surface-2);color:var(--ink);font:600 12px var(--font-body);padding:6px 14px;border-radius:999px;cursor:pointer;min-height:30px}
@@ -581,6 +588,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.17.0', '2026-11-12', 'Agenda das teles: a legenda virou botões com os totais do período (agendamentos, confirmaram, atendidos, fecharam, não fecharam e não compareceram). Clicar num botão lista os nomes. Novo status visual Não compareceu, separado do Não fechou.'],
     ['1.16.1', '2026-11-12', 'Agenda das teles: Visitas e Vendas do topo agora contam os atendidos e fechados da própria agenda (antes vinham da planilha diária e ficavam zeradas quando ela não estava preenchida).'],
     ['1.16.0', '2026-11-12', 'A gerente passa a ver a Agenda das teles (só as clínicas dela): abre o agendamento, marca Atendido (paciente compareceu) e Fechado ou Não fechou. Teles com Tele BH como cargo extra também aparecem no filtro.'],
     ['1.15.0', '2026-11-12', 'Agenda das teles: legenda das cores (agendado na cor da clínica, confirmado, atendido, fechado e não fechou) acima do calendário.'],
@@ -2112,19 +2120,26 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 
   /* ---------- agenda das teles: agendamentos lançados no app ---------- */
   const mesIni = () => hoje().slice(0, 8)+'01';
-  const AG = { ini: mesIni(), fim: hoje(), dia: hoje(), vis: 'dia', tk: 0, tele: '', clin: '', st: '', agrup: 'clin', teles: [], clinicas: [], motivos: [], todos: [] };
-  const AG_ST = { agendado: 'Agendado', confirmado: 'Confirmado', atendido: 'Atendido', fechado: 'Fechado', nao_fechou: 'Não fechou' };
-  const agStCls = st => st === 'confirmado' ? 'ok' : st === 'atendido' ? 'at' : st === 'fechado' ? 'fe' : st === 'nao_fechou' ? 'nf' : '';
-  const agIco = st => st === 'confirmado' ? '✓ ' : st === 'atendido' ? '● ' : st === 'fechado' ? '★ ' : st === 'nao_fechou' ? '✕ ' : '';
-  const agTotais = l => ({ n: l.length, conf: l.filter(g => g.status !== 'agendado').length, aten: l.filter(g => g.status === 'atendido' || g.status === 'fechado' || (g.status === 'nao_fechou' && (AG.motivos.find(x => x.id === g.motivo_id) || {}).nome !== 'Paciente não compareceu')).length, fech: l.filter(g => g.status === 'fechado').length });
+  const AG = { ini: mesIni(), fim: hoje(), dia: hoje(), vis: 'dia', tk: 0, tele: '', clin: '', st: '', cat: '', agrup: 'clin', teles: [], clinicas: [], motivos: [], todos: [] };
+  const AG_ST = { agendado: 'Agendado', confirmado: 'Confirmado', atendido: 'Atendido', fechado: 'Fechado', nao_fechou: 'Não fechou', nao_compareceu: 'Não compareceu' };
+  const agNC = g => g.status === 'nao_fechou' && (AG.motivos.find(x => x.id === g.motivo_id) || {}).nome === 'Paciente não compareceu';
+  const agKey = g => agNC(g) ? 'nao_compareceu' : g.status;
+  const agStCls = st => st === 'confirmado' ? 'ok' : st === 'atendido' ? 'at' : st === 'fechado' ? 'fe' : st === 'nao_fechou' ? 'nf' : st === 'nao_compareceu' ? 'nc' : '';
+  const agIco = st => st === 'confirmado' ? '✓ ' : st === 'atendido' ? '● ' : st === 'fechado' ? '★ ' : st === 'nao_fechou' ? '✕ ' : st === 'nao_compareceu' ? '⊘ ' : '';
+  const agTotais = l => ({ n: l.length, conf: l.filter(g => g.status !== 'agendado').length, aten: l.filter(g => g.status === 'atendido' || g.status === 'fechado' || (g.status === 'nao_fechou' && !agNC(g))).length, fech: l.filter(g => g.status === 'fechado').length });
   const agTxtTot = t => t.n+' agendamento'+(t.n === 1 ? '' : 's')+', '+t.conf+' confirmado'+(t.conf === 1 ? '' : 's')+', '+t.aten+' atendido'+(t.aten === 1 ? '' : 's')+', '+t.fech+' fechamento'+(t.fech === 1 ? '' : 's');
-  const agLegenda = () => {
-    return '<div class="ag-leg" role="group" aria-label="Legenda das cores"><b>Legenda</b>'
-      + '<i class="ag0" title="Marcado pela tele, ainda sem confirmação. A cor do cartão é a da clínica.">Agendado · cor da clínica</i>'
-      + '<i class="ok" title="Paciente confirmou a visita">✓ Confirmado</i>'
-      + '<i class="at" title="Paciente veio à clínica">● Atendido</i>'
-      + '<i class="fe" title="Atendido e fechou a venda">★ Fechado</i>'
-      + '<i class="nf" title="Atendido sem fechar, ou não compareceu">✕ Não fechou</i></div>';
+  const AG_CATS = [['todos', 'Agendamentos', 'ag0', '', 'Todos os agendamentos do período', g => true],
+    ['conf', 'Confirmaram', 'ok', '✓ ', 'Confirmaram a visita (inclui quem já tem resultado)', g => g.status !== 'agendado'],
+    ['aten', 'Atendidos', 'at', '● ', 'Vieram à clínica (atendidos, fechados e não fechados)', g => g.status === 'atendido' || g.status === 'fechado' || (g.status === 'nao_fechou' && !agNC(g))],
+    ['fech', 'Fecharam', 'fe', '★ ', 'Dos atendidos, fecharam a venda', g => g.status === 'fechado'],
+    ['nfech', 'Não fecharam', 'nf', '✕ ', 'Dos atendidos, não fecharam (com motivo)', g => g.status === 'nao_fechou' && !agNC(g)],
+    ['nc', 'Não compareceram', 'nc', '⊘ ', 'Agendados que não vieram à clínica', g => agNC(g)]];
+  const agLegenda = () => '<div class="ag-leg" id="ag-leg" role="group" aria-label="Legenda e totais"></div>';
+  const agLegAtualiza = () => {
+    const el = $('#ag-leg'); if (!el) return;
+    el.innerHTML = '<b>Legenda</b>'+AG_CATS.map(c => '<button type="button" class="lg '+c[2]+'" data-cat="'+c[0]+'" aria-pressed="'+(AG.cat === c[0])+'" title="'+esc(c[4])+'. Clique para listar os nomes.">'+c[3]+esc(c[1])+' <b>'+(AG.todos || []).filter(c[5]).length+'</b></button>').join('')
+      + '<i class="ag0" title="Cartão ainda sem confirmação: a cor é a da clínica">cor da clínica = só agendado</i>';
+    $$('#ag-leg [data-cat]').forEach(b => b.addEventListener('click', () => { AG.cat = AG.cat === b.dataset.cat ? '' : b.dataset.cat; agLegAtualiza(); agendaLista(); const a = $('#ag-lista'); if (a && AG.cat) a.scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
   };
   function agFaixa(its){
     const cs = AG.clinicas.filter(c => AG.clin ? String(c.id) === String(AG.clin) : (c.ativa || its.some(g => g.clinica_id === c.id)));
@@ -2179,7 +2194,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     if (!$('#ag-tot')) return;
     const er = r.error;
     if (er){ $('#ag-tot').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
-    AG.todos = r.data; AG.itens = AG.st ? r.data.filter(g => g.status === AG.st) : r.data;
+    AG.todos = r.data; AG.itens = AG.st ? r.data.filter(g => agKey(g) === AG.st) : r.data;
     const tt = agTotais(r.data), nAg = tt.n, vis = tt.aten, ven = tt.fech;
     const pct = (a, b) => b > 0 ? Math.round(a / b * 100)+'%' : '—';
     const tile = (rot, val, nota) => '<div class="ag-tl"><span>'+rot+'</span><b>'+val+'</b><small>'+(nota || '&nbsp;')+'</small></div>';
@@ -2191,7 +2206,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + '</div><p class="sub" style="margin:6px 0 0;font-size:11.5px">Visitas = pacientes atendidos (vieram à clínica); vendas = agendamentos fechados. Contam os agendamentos do período e dos filtros.</p></div>';
     $('#ag-resumo').innerHTML = '<span>'+dBR(AG.ini).slice(0, 5)+' – '+dBR(AG.fim).slice(0, 5)+'</span><span>'+esc(AG.tele ? (AG.teles.find(t => String(t.id) === String(AG.tele)) || {}).nome || '' : 'Todas as teles')+'</span><span>'+esc(AG.clin ? (AG.clinicas.find(c => String(c.id) === String(AG.clin)) || {}).sigla || '' : 'Todas as clínicas')+'</span><b>'+nAg+' agend.</b><b>'+vis+' visitas</b><b>'+ven+' vendas</b><em>Mostrar</em>';
     agendaGrade(AG.primeira ? 'fade' : null); AG.primeira = true;
-    agendaQuadro(); agendaLista();
+    agLegAtualiza(); agendaQuadro(); agendaLista();
   }
   /* ---- visões da agenda: dia, semana e mês, com transições ---- */
   const ymdD = d => d.toLocaleDateString('sv-SE');
@@ -2254,7 +2269,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   function agHtmlDia(its){
     const cols = AG.clinicas.filter(c => AG.clin ? String(c.id) === String(AG.clin) : (c.ativa || its.some(g => g.clinica_id === c.id))), nomeT = agNomeT();
     if (!cols.length) return '<div class="empty">Nenhuma clínica para mostrar.</div>';
-    let n = 0; const card = g => '<button type="button" class="ag-c '+agStCls(g.status)+'" data-g="'+g.id+'" style="--c:'+esc(agCor(g.clinica_id))+';--i:'+(n++)+'"><b>'+agIco(g.status)+(hhm(g.hora) ? hhm(g.hora)+' · ' : '')+esc(g.paciente)+'</b><small>'+esc(nomeT[g.tele_id] || 'Tele')+(g.status !== 'agendado' ? ' · '+AG_ST[g.status].toLowerCase() : '')+'</small></button>';
+    let n = 0; const card = g => '<button type="button" class="ag-c '+agStCls(agKey(g))+'" data-g="'+g.id+'" style="--c:'+esc(agCor(g.clinica_id))+';--i:'+(n++)+'"><b>'+agIco(agKey(g))+(hhm(g.hora) ? hhm(g.hora)+' · ' : '')+esc(g.paciente)+'</b><small>'+esc(nomeT[g.tele_id] || 'Tele')+(g.status !== 'agendado' ? ' · '+AG_ST[g.status].toLowerCase() : '')+'</small></button>';
     const semHora = its.filter(g => !g.hora), linhas = (semHora.length ? [['Sem horário', semHora]] : []).concat(agHoras(its, AG.dia).map(h => [h, its.filter(g => g.hora && agHorario(g.hora) === h)]));
     return '<div class="ag-gw"><div class="ag-g" style="grid-template-columns:52px repeat('+cols.length+', minmax(calc(118px * var(--z,1)), 1fr))"><div class="ag-h"></div>'
       + cols.map(c => '<div class="ag-h" style="--c:'+esc(c.cor || '#5b9bff')+'"><b>'+esc(c.sigla)+'</b><small>'+esc(c.nome)+'</small><span class="ag-ht">'+esc(agTxtTot(agTotais(its.filter(g => g.clinica_id === c.id))))+'</span></div>').join('')
@@ -2263,7 +2278,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   function agHtmlSemana(its){
     const ini = iniSemana(AG.dia), dias = []; for (let i = 0; i < 7; i++) dias.push(somaDias(ini, i));
     const nomeT = agNomeT(), sig = Object.fromEntries(AG.clinicas.map(c => [c.id, c.sigla])); let n = 0;
-    const card = g => '<button type="button" class="ag-c '+agStCls(g.status)+'" data-g="'+g.id+'" style="--c:'+esc(agCor(g.clinica_id))+';--i:'+(n++)+'"><b>'+agIco(g.status)+(hhm(g.hora) ? hhm(g.hora)+' · ' : '')+esc(g.paciente)+'</b><small>'+esc(sig[g.clinica_id] || '')+' · '+esc(nomeT[g.tele_id] || 'Tele')+'</small></button>';
+    const card = g => '<button type="button" class="ag-c '+agStCls(agKey(g))+'" data-g="'+g.id+'" style="--c:'+esc(agCor(g.clinica_id))+';--i:'+(n++)+'"><b>'+agIco(agKey(g))+(hhm(g.hora) ? hhm(g.hora)+' · ' : '')+esc(g.paciente)+'</b><small>'+esc(sig[g.clinica_id] || '')+' · '+esc(nomeT[g.tele_id] || 'Tele')+'</small></button>';
     const semHora = its.filter(g => !g.hora), linhas = (semHora.length ? [['Sem horário', null]] : []).concat(agHoras(its).map(h => [h, h]));
     return agFaixa(its)+'<div class="ag-gw"><div class="ag-g" style="grid-template-columns:52px repeat(7, minmax(calc(108px * var(--z,1)), 1fr))"><div class="ag-h"></div>'
       + dias.map((d, i) => '<div class="ag-h ag-hd'+(d === hoje() ? ' hoje' : '')+'"><b>'+DSEM[i]+'</b><small>'+dBR(d).slice(0, 5)+'</small></div>').join('')
@@ -2306,8 +2321,9 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   function agendaLista(){
     const alvo = $('#ag-lista'); if (!alvo) return;
     const nomeT = Object.fromEntries(AG.teles.map(t => [t.id, t.nome])), sig = Object.fromEntries(AG.clinicas.map(c => [c.id, c.sigla]));
-    alvo.innerHTML = '<div class="card"><h2>Agendamentos do período <span class="chip" style="vertical-align:middle">'+AG.itens.length+'</span></h2>'
-      + (AG.itens.length ? AG.itens.slice().reverse().slice(0, 300).map(g => '<div class="ag-r"><div><b>'+esc(g.paciente)+'</b> <span class="sigla">'+esc(sig[g.clinica_id] || '')+'</span> '+agChip(g.status)+'<p class="meta">'+esc(fmtTel(g.telefone))+' · '+dBR(g.data_agendamento)+(g.hora ? ' às '+hhm(g.hora) : '')+' · lançado por '+esc(nomeT[g.tele_id] || 'Tele')+(g.status === 'nao_fechou' ? ' · motivo: '+esc(agMotivo(g)) : '')+'</p></div>'
+    const ct = AG_CATS.find(c => c[0] === AG.cat), lst = ct ? AG.todos.filter(ct[5]) : AG.itens;
+    alvo.innerHTML = '<div class="card"><h2>'+(ct ? esc(ct[1])+' no período' : 'Agendamentos do período')+' <span class="chip" style="vertical-align:middle">'+lst.length+'</span></h2>'
+      + (lst.length ? lst.slice().reverse().slice(0, 300).map(g => '<div class="ag-r"><div><b>'+esc(g.paciente)+'</b> <span class="sigla">'+esc(sig[g.clinica_id] || '')+'</span> '+agChip(agKey(g))+'<p class="meta">'+esc(fmtTel(g.telefone))+' · '+dBR(g.data_agendamento)+(g.hora ? ' às '+hhm(g.hora) : '')+' · lançado por '+esc(nomeT[g.tele_id] || 'Tele')+(g.status === 'nao_fechou' ? ' · motivo: '+esc(agMotivo(g)) : '')+'</p></div>'
           + '<button type="button" class="btn ghost" data-g="'+g.id+'">Abrir</button></div>').join('')
         : '<div class="empty">Nenhum agendamento neste filtro.</div>')
       + '</div>';
@@ -2323,7 +2339,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const rot = l => l.acao === 'confirmar' ? (l.depois && l.depois.status === 'confirmado' ? 'Confirmado pelo paciente' : 'Confirmação desfeita') : l.acao === 'criar' ? 'Agendamento criado' : l.acao === 'alterar' ? 'Alterado de '+dh(l.antes)+' para '+dh(l.depois) : l.acao === 'conversa' ? 'Nova conversa incluída' : l.acao === 'resultado' ? (l.depois && l.depois.status === 'nao_fechou' ? 'Não fechou — '+((l.depois.motivo || '')+(l.depois.obs ? ' ('+l.depois.obs+')' : '')) : l.depois && l.depois.status === 'fechado' ? 'Fechou o contrato' : l.depois && l.depois.status === 'atendido' ? (l.antes && l.antes.status === 'atendido' ? 'Atendido' : l.antes && (l.antes.status === 'fechado' || l.antes.status === 'nao_fechou') ? 'Resultado desfeito (voltou a atendido)' : 'Paciente atendido') : 'Resultado desfeito') : 'Agendamento excluído';
     const m = document.createElement('div'); m.className = 'ag-modal'; m.setAttribute('role', 'dialog');
     m.innerHTML = '<div class="cx"><div class="line" style="justify-content:space-between"><b style="font-size:17px">'+esc(g.paciente)+'</b><button type="button" class="btn ghost" data-x>Fechar</button></div>'
-      + '<p class="meta">'+esc(fmtTel(g.telefone))+' · '+esc(c.sigla || '')+' · '+dBR(g.data_agendamento)+(g.hora ? ' às '+hhm(g.hora) : '')+' · lançado por '+esc(nomeT[g.tele_id] || 'Tele')+' · '+agChip(g.status)+'</p>'
+      + '<p class="meta">'+esc(fmtTel(g.telefone))+' · '+esc(c.sigla || '')+' · '+dBR(g.data_agendamento)+(g.hora ? ' às '+hhm(g.hora) : '')+' · lançado por '+esc(nomeT[g.tele_id] || 'Tele')+' · '+agChip(agKey(g))+'</p>'
       + (g.status === 'nao_fechou' ? '<p class="meta"><b>Motivo:</b> '+esc(agMotivo(g))+'</p>' : '')
       + agResultadoHtml(g)
       + (urls.filter(Boolean).length ? urls.filter(Boolean).map(u => '<img src="'+esc(u)+'" alt="Print da conversa">').join('') : '<div class="empty">Sem prints.</div>')
