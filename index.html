@@ -605,6 +605,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.21.1', '2026-11-12', 'Agenda das teles: clicar num botão da legenda limpa os filtros de status, motivo e busca do grid que estavam sobrando e escondiam os nomes; escolher um status no grid solta o botão da legenda. A mensagem de lista vazia ganhou o botão Limpar filtros do grid.'],
     ['1.21.0', '2026-11-12', 'Agenda das teles: a gerência (e o gestor) pode corrigir o status de qualquer agendamento da sua clínica, por exemplo de Atendido para Não compareceu, ficando registrado no histórico. Tele BH não confirma mais presença nem marca atendimento, fechou ou não fechou: só marca e remarca a agenda.'],
     ['1.20.0', '2026-11-12', 'Agenda das teles: os totais por clínica, tele e motivo passam a ser acumulados (agendamentos, confirmaram, atendidos, fecharam, não fecharam e não compareceram) e o número de agendamentos não cai quando o status avança. Filtros do grid agora ficam alinhados sob o título de cada coluna, com novos filtros de tele e status.'],
     ['1.19.0', '2026-11-12', 'Divulgadoras e gerentes que divulgam também clínico: no cadastro da pessoa, a opção Também divulga clínico cria duas linhas na planilha com o mesmo nome, Nome (orto) e Nome (clínico), cada uma com suas visitas e vendas, ambas contadas como divulgação.'],
@@ -2169,7 +2170,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const html = '<b>Legenda</b>'+AG_CATS.map(c => '<button type="button" class="lg '+c[2]+'" data-cat="'+c[0]+'" aria-pressed="'+(AG.cat === c[0])+'" title="'+esc(c[4])+'. Clique para listar os nomes.">'+c[3]+esc(c[1])+' <b>'+(AG.todos || []).filter(c[5]).length+'</b></button>').join('')
       + '<i class="ag0" title="Cartão ainda sem confirmação: a cor é a da clínica">cor da clínica = só agendado</i>';
     els.forEach(el => { el.innerHTML = html; });
-    $$('.ag-leg [data-cat]').forEach(b => b.addEventListener('click', () => { const topo = !b.closest('#ag-lista'); AG.cat = AG.cat === b.dataset.cat ? '' : b.dataset.cat; agLegAtualiza(); agendaLista(); const al = $('#ag-lista'); if (topo && AG.cat && al) al.scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
+    $$('.ag-leg [data-cat]').forEach(b => b.addEventListener('click', () => { const topo = !b.closest('#ag-lista'); AG.cat = AG.cat === b.dataset.cat ? '' : b.dataset.cat; AG.gst = ''; AG.gmo = ''; AG.gq = ''; agLegAtualiza(); agendaLista(); const al = $('#ag-lista'); if (topo && AG.cat && al) al.scrollIntoView({ behavior: 'smooth', block: 'start' }); }));
   };
   function agFaixa(its){
     const cs = AG.clinicas.filter(c => AG.clin ? String(c.id) === String(AG.clin) : (c.ativa || its.some(g => g.clinica_id === c.id)));
@@ -2372,7 +2373,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + (lst.length ? '<div class="ag-gt"><table class="ag-g"><thead><tr>'+th('paciente', 'Paciente')+th('clinica', 'Clínica')+th('tel', 'Telefone')+th('data', 'Data e hora')+th('tele', 'Tele')+th('status', 'Status')+th('motivo', 'Motivo')+'<th style="cursor:default"></th></tr>'+filt+'</thead><tbody>'
         + lst.slice(0, 500).map(g => '<tr><td><b>'+esc(g.paciente)+'</b></td><td>'+esc(sig[g.clinica_id] || '')+'</td><td>'+esc(fmtTel(g.telefone))+'</td><td>'+dBR(g.data_agendamento)+(g.hora ? ' '+hhm(g.hora) : '')+'</td><td>'+esc(nomeT[g.tele_id] || 'Tele')+'</td><td>'+agChip(agKey(g))+'</td><td class="mot">'+(g.status === 'nao_fechou' && !agNC(g) ? esc(agMotivo(g)) : '')+'</td><td><button type="button" class="btn ghost" data-g="'+g.id+'">Abrir</button></td></tr>').join('')
         + '</tbody></table></div>'
-        : '<div class="empty">Nenhum agendamento neste filtro.</div>')
+        : '<div class="empty">Nenhum agendamento neste filtro.'+(AG.gq || AG.gcl || AG.gmo || AG.gtl || AG.gst ? ' <button type="button" class="btn ghost sm" id="ag-glimpa2">Limpar filtros do grid</button>' : '')+'</div>')
       + '</div>';
     agLegAtualiza();
     $$('#ag-lista [data-g]').forEach(b => b.addEventListener('click', () => agendaDetalhe(Number(b.dataset.g))));
@@ -2381,8 +2382,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     $('#ag-gcl').addEventListener('change', e => { AG.gcl = e.target.value; agendaLista(); });
     $('#ag-gmo').addEventListener('change', e => { AG.gmo = e.target.value; agendaLista(); });
     $('#ag-gtl').addEventListener('change', e => { AG.gtl = e.target.value; agendaLista(); });
-    $('#ag-gst').addEventListener('change', e => { AG.gst = e.target.value; agendaLista(); });
-    const lm = $('#ag-glimpa'); if (lm) lm.addEventListener('click', () => { AG.gq = ''; AG.gcl = ''; AG.gmo = ''; AG.gtl = ''; AG.gst = ''; agendaLista(); });
+    $('#ag-gst').addEventListener('change', e => { AG.gst = e.target.value; if (AG.gst) AG.cat = ''; agendaLista(); });
+    ['ag-glimpa', 'ag-glimpa2'].forEach(id => { const lm = $('#'+id); if (lm) lm.addEventListener('click', () => { AG.gq = ''; AG.gcl = ''; AG.gmo = ''; AG.gtl = ''; AG.gst = ''; agendaLista(); }); });
   }
   async function agendaDetalhe(id){
     const g = (AG.dia_itens || []).concat(AG.itens || []).find(x => x.id === id); if (!g) return;
