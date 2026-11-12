@@ -716,8 +716,21 @@ li:first-child>.ag-i{border-top:0}
     $('#h-av').innerHTML = avatar(eu);
     view('app'); desenharAbas(); mostrar(ehGestao() ? (aba === 'perfil' ? 'perfil' : 'agenda') : aba === 'lancar' && eu.papel !== 'gerente' ? 'inicio' : ((aba === 'agendar' || aba === 'agenda') && !ehTele() ? 'inicio' : aba)); pushManter();
     contarAvisos();
-    clearInterval(timer); timer = setInterval(() => { if (!document.hidden && $('#v-app').hidden === false){ if (aba === 'corrida') corridaAtualizar(); contarAvisos(); } }, 15000);
+    clearInterval(timer); timer = setInterval(() => { if (!document.hidden && $('#v-app').hidden === false){ if (aba === 'corrida') corridaAtualizar(); contarAvisos(); conferirEu(); } }, 15000);
   }
+  /* o app fica aberto no celular por dias: confere de vez em quando se o gestor mudou o cargo, o papel ou o acesso da pessoa */
+  let confEu = 0;
+  async function conferirEu(){
+    if (!eu || $('#v-app').hidden !== false || Date.now() - confEu < 20000) return; confEu = Date.now();
+    const { data, error } = await sb.from('usuarios').select('*').eq('id', eu.id).maybeSingle();
+    if (error || !data) return;
+    if (!data.ativo){ clearInterval(timer); await sb.auth.signOut(); eu = null; view('login'); $('#l-err').textContent = 'Seu acesso está desativado. Fale com o gestor.'; return; }
+    const mudou = data.cargo !== eu.cargo || data.papel !== eu.papel || JSON.stringify(data.cargos_extra || []) !== JSON.stringify(eu.cargos_extra || []);
+    eu = data;
+    if (mudou){ const v = await sb.from('vinculos_clinica').select('*').eq('usuario_id', eu.id); minhasClin = (v.data || []).filter(x => !x.fim).map(x => x.clinica_id); abrirApp(); toast('Seu cargo foi atualizado.'); }
+  }
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) conferirEu(); });
+  window.addEventListener('focus', () => conferirEu());
   function desenharAbas(){
     const abas = ehGestao() ? [['agenda','Agenda'],['perfil','Perfil']] : [['inicio','Início'],['corrida','Corrida']].concat(eu.papel === 'gerente' ? [['lancar','Lançar']] : [], [['avisos','Avisos'],['perfil','Perfil']]);
     $('#tabs').innerHTML = abas.map(a => '<button type="button" data-aba="'+a[0]+'" aria-current="'+((a[0]===aba||(a[0]==='inicio'&&(aba==='agendar'||aba==='agenda')))?'page':'false')+'">'+ICONES[a[0]]+'<span>'+a[1]+'</span>'+(a[0]==='avisos'&&naoLidas?'<span class="n">'+naoLidas+'</span>':'')+'</button>').join('');
