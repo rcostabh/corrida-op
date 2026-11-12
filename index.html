@@ -324,6 +324,8 @@ table.pd tr.tot td{font-weight:700}
 table.ag-g{width:100%;border-collapse:collapse;font-size:11.5px}
 table.ag-g th{position:sticky;top:0;background:var(--surface-2);text-align:left;font-weight:700;font-size:10.5px;color:var(--muted);padding:4px 7px;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none}
 table.ag-g th:hover{color:var(--ink)}
+table.ag-g tr.fl th{position:static;cursor:default;padding:2px 4px;background:var(--surface)}
+table.ag-g tr.fl input,table.ag-g tr.fl select{width:100%;min-width:0;box-sizing:border-box;min-height:24px;font-size:11px;padding:1px 6px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-family:inherit}
 table.ag-g th[aria-sort] {color:var(--ink)}
 table.ag-g td{padding:3px 7px;border-bottom:1px solid var(--line);white-space:nowrap;line-height:1.25}
 table.ag-g tbody tr:hover{background:var(--surface-2)}
@@ -603,6 +605,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.20.0', '2026-11-12', 'Agenda das teles: os totais por clínica, tele e motivo passam a ser acumulados (agendamentos, confirmaram, atendidos, fecharam, não fecharam e não compareceram) e o número de agendamentos não cai quando o status avança. Filtros do grid agora ficam alinhados sob o título de cada coluna, com novos filtros de tele e status.'],
     ['1.19.0', '2026-11-12', 'Divulgadoras e gerentes que divulgam também clínico: no cadastro da pessoa, a opção Também divulga clínico cria duas linhas na planilha com o mesmo nome, Nome (orto) e Nome (clínico), cada uma com suas visitas e vendas, ambas contadas como divulgação.'],
     ['1.18.1', '2026-11-12', 'Agenda das teles: clicar num botão da legenda de cima volta a descer a tela até a lista dos pacientes. Os botões da legenda de baixo só filtram, sem rolar.'],
     ['1.18.0', '2026-11-12', 'Agenda das teles: cartões de totais 40% mais baixos; a lista de agendamentos virou grid fino, com a legenda de status repetida acima, busca por nome ou telefone, filtros de clínica e motivo e ordenação ao clicar no título de cada coluna.'],
@@ -2144,16 +2147,17 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 
   /* ---------- agenda das teles: agendamentos lançados no app ---------- */
   const mesIni = () => hoje().slice(0, 8)+'01';
-  const AG = { ini: mesIni(), fim: hoje(), dia: hoje(), vis: 'dia', tk: 0, tele: '', clin: '', st: '', cat: '', gq: '', gcl: '', gmo: '', ord: { k: 'data', d: -1 }, agrup: 'clin', teles: [], clinicas: [], motivos: [], todos: [] };
+  const AG = { ini: mesIni(), fim: hoje(), dia: hoje(), vis: 'dia', tk: 0, tele: '', clin: '', st: '', cat: '', gq: '', gcl: '', gmo: '', gtl: '', gst: '', ord: { k: 'data', d: -1 }, agrup: 'clin', teles: [], clinicas: [], motivos: [], todos: [] };
   const AG_ST = { agendado: 'Agendado', confirmado: 'Confirmado', atendido: 'Atendido', fechado: 'Fechado', nao_fechou: 'Não fechou', nao_compareceu: 'Não compareceu' };
   const agNC = g => g.status === 'nao_fechou' && (AG.motivos.find(x => x.id === g.motivo_id) || {}).nome === 'Paciente não compareceu';
   const agKey = g => agNC(g) ? 'nao_compareceu' : g.status;
   const agStCls = st => st === 'confirmado' ? 'ok' : st === 'atendido' ? 'at' : st === 'fechado' ? 'fe' : st === 'nao_fechou' ? 'nf' : st === 'nao_compareceu' ? 'nc' : '';
   const agIco = st => st === 'confirmado' ? '✓ ' : st === 'atendido' ? '● ' : st === 'fechado' ? '★ ' : st === 'nao_fechou' ? '✕ ' : st === 'nao_compareceu' ? '⊘ ' : '';
-  const agTotais = l => ({ n: l.length, conf: l.filter(g => g.status !== 'agendado').length, aten: l.filter(g => g.status === 'atendido' || g.status === 'fechado' || (g.status === 'nao_fechou' && !agNC(g))).length, fech: l.filter(g => g.status === 'fechado').length });
+  const agConf = g => !!g.confirmado_em || g.status === 'confirmado' || g.status === 'atendido' || g.status === 'fechado' || (g.status === 'nao_fechou' && !agNC(g));
+  const agTotais = l => ({ n: l.length, conf: l.filter(agConf).length, aten: l.filter(g => g.status === 'atendido' || g.status === 'fechado' || (g.status === 'nao_fechou' && !agNC(g))).length, fech: l.filter(g => g.status === 'fechado').length });
   const agTxtTot = t => t.n+' agendamento'+(t.n === 1 ? '' : 's')+', '+t.conf+' confirmado'+(t.conf === 1 ? '' : 's')+', '+t.aten+' atendido'+(t.aten === 1 ? '' : 's')+', '+t.fech+' fechamento'+(t.fech === 1 ? '' : 's');
   const AG_CATS = [['todos', 'Agendamentos', 'ag0', '', 'Todos os agendamentos do período', g => true],
-    ['conf', 'Confirmaram', 'ok', '✓ ', 'Confirmaram a visita (inclui quem já tem resultado)', g => g.status !== 'agendado'],
+    ['conf', 'Confirmaram', 'ok', '✓ ', 'Confirmaram a visita (inclui quem já tem resultado)', g => agConf(g)],
     ['aten', 'Atendidos', 'at', '● ', 'Vieram à clínica (atendidos, fechados e não fechados)', g => g.status === 'atendido' || g.status === 'fechado' || (g.status === 'nao_fechou' && !agNC(g))],
     ['fech', 'Fecharam', 'fe', '★ ', 'Dos atendidos, fecharam a venda', g => g.status === 'fechado'],
     ['nfech', 'Não fecharam', 'nf', '✕ ', 'Dos atendidos, não fecharam (com motivo)', g => g.status === 'nao_fechou' && !agNC(g)],
@@ -2349,19 +2353,22 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const nomeT = Object.fromEntries(AG.teles.map(t => [t.id, t.nome])), sig = Object.fromEntries(AG.clinicas.map(c => [c.id, c.sigla]));
     const ct = AG_CATS.find(c => c[0] === AG.cat), base = ct ? AG.todos.filter(ct[5]) : AG.itens;
     const q = (AG.gq || '').trim().toLowerCase(), qd = soDigitos(AG.gq || '');
-    let lst = base.filter(g => (!AG.gcl || String(g.clinica_id) === AG.gcl) && (!AG.gmo || (AG.gmo === 'nc' ? agNC(g) : String(g.motivo_id) === AG.gmo && !agNC(g))) && (!q || String(g.paciente || '').toLowerCase().includes(q) || (qd && soDigitos(g.telefone).includes(qd)) || String(nomeT[g.tele_id] || '').toLowerCase().includes(q)));
+    let lst = base.filter(g => (!AG.gcl || String(g.clinica_id) === AG.gcl) && (!AG.gtl || String(g.tele_id) === AG.gtl) && (!AG.gst || agKey(g) === AG.gst) && (!AG.gmo || (AG.gmo === 'nc' ? agNC(g) : String(g.motivo_id) === AG.gmo && !agNC(g))) && (!q || String(g.paciente || '').toLowerCase().includes(q) || (qd && soDigitos(g.telefone).includes(qd)) || String(nomeT[g.tele_id] || '').toLowerCase().includes(q)));
     const o = AG.ord || { k: 'data', d: -1 }, f = agOrdV[o.k] || agOrdV.data;
     lst = lst.slice().sort((a, b) => o.d * String(f(a)).localeCompare(String(f(b)), 'pt-BR', { numeric: true, sensitivity: 'base' }) || (b.id - a.id));
     const th = (k, t) => '<th data-o="'+k+'"'+(o.k === k ? ' aria-sort="'+(o.d > 0 ? 'ascending' : 'descending')+'"' : '')+' title="Ordenar por '+t.toLowerCase()+'">'+t+(o.k === k ? (o.d > 0 ? ' ▲' : ' ▼') : '')+'</th>';
     const motOpts = '<option value="">Todos</option><option value="nc"'+(AG.gmo === 'nc' ? ' selected' : '')+'>Paciente não compareceu</option>'+AG.motivos.filter(x => x.nome !== 'Paciente não compareceu').map(x => '<option value="'+x.id+'"'+(String(x.id) === AG.gmo ? ' selected' : '')+'>'+esc(x.nome)+'</option>').join('');
+    const optT = AG.teles.map(t => '<option value="'+t.id+'"'+(String(t.id) === AG.gtl ? ' selected' : '')+'>'+esc(t.nome)+'</option>').join(''), optS = Object.keys(AG_ST).map(k => '<option value="'+k+'"'+(AG.gst === k ? ' selected' : '')+'>'+AG_ST[k]+'</option>').join('');
+    const filt = '<tr class="fl"><th><input id="ag-gq" type="search" placeholder="Nome ou telefone" value="'+esc(AG.gq || '')+'" autocomplete="off" aria-label="Buscar por nome ou telefone"></th>'
+      + '<th><select id="ag-gcl" aria-label="Filtrar clínica"><option value="">Todas</option>'+AG.clinicas.map(c => '<option value="'+c.id+'"'+(String(c.id) === AG.gcl ? ' selected' : '')+'>'+esc(c.sigla)+'</option>').join('')+'</select></th><th></th><th></th>'
+      + '<th><select id="ag-gtl" aria-label="Filtrar tele"><option value="">Todas</option>'+optT+'</select></th>'
+      + '<th><select id="ag-gst" aria-label="Filtrar status"><option value="">Todos</option>'+optS+'</select></th>'
+      + '<th><select id="ag-gmo" aria-label="Filtrar motivo">'+motOpts+'</select></th>'
+      + '<th>'+(AG.gq || AG.gcl || AG.gmo || AG.gtl || AG.gst ? '<button type="button" class="btn ghost" id="ag-glimpa">Limpar</button>' : '')+'</th></tr>';
     const foco = document.activeElement && document.activeElement.id === 'ag-gq';
     alvo.innerHTML = '<div class="card ag-sm"><h2>'+(ct ? esc(ct[1])+' no período' : 'Agendamentos do período')+' <span class="chip" style="vertical-align:middle">'+lst.length+(lst.length !== base.length ? ' de '+base.length : '')+'</span></h2>'
       + agLegenda()
-      + '<div class="ag-gf"><label for="ag-gq">Buscar<input id="ag-gq" type="search" placeholder="Nome, telefone ou tele" value="'+esc(AG.gq || '')+'" autocomplete="off"></label>'
-      + '<label for="ag-gcl">Clínica<select id="ag-gcl"><option value="">Todas</option>'+AG.clinicas.map(c => '<option value="'+c.id+'"'+(String(c.id) === AG.gcl ? ' selected' : '')+'>'+esc(c.sigla)+'</option>').join('')+'</select></label>'
-      + '<label for="ag-gmo">Motivo<select id="ag-gmo">'+motOpts+'</select></label>'
-      + (AG.gq || AG.gcl || AG.gmo ? '<button type="button" class="btn ghost" id="ag-glimpa">Limpar</button>' : '')+'</div>'
-      + (lst.length ? '<div class="ag-gt"><table class="ag-g"><thead><tr>'+th('paciente', 'Paciente')+th('clinica', 'Clínica')+th('tel', 'Telefone')+th('data', 'Data e hora')+th('tele', 'Tele')+th('status', 'Status')+th('motivo', 'Motivo')+'<th style="cursor:default"></th></tr></thead><tbody>'
+      + (lst.length ? '<div class="ag-gt"><table class="ag-g"><thead><tr>'+th('paciente', 'Paciente')+th('clinica', 'Clínica')+th('tel', 'Telefone')+th('data', 'Data e hora')+th('tele', 'Tele')+th('status', 'Status')+th('motivo', 'Motivo')+'<th style="cursor:default"></th></tr>'+filt+'</thead><tbody>'
         + lst.slice(0, 500).map(g => '<tr><td><b>'+esc(g.paciente)+'</b></td><td>'+esc(sig[g.clinica_id] || '')+'</td><td>'+esc(fmtTel(g.telefone))+'</td><td>'+dBR(g.data_agendamento)+(g.hora ? ' '+hhm(g.hora) : '')+'</td><td>'+esc(nomeT[g.tele_id] || 'Tele')+'</td><td>'+agChip(agKey(g))+'</td><td class="mot">'+(g.status === 'nao_fechou' && !agNC(g) ? esc(agMotivo(g)) : '')+'</td><td><button type="button" class="btn ghost" data-g="'+g.id+'">Abrir</button></td></tr>').join('')
         + '</tbody></table></div>'
         : '<div class="empty">Nenhum agendamento neste filtro.</div>')
@@ -2372,7 +2379,9 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const gq = $('#ag-gq'); if (gq){ gq.addEventListener('input', () => { AG.gq = gq.value; agendaLista(); const n = $('#ag-gq'); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }); if (foco) gq.focus(); }
     $('#ag-gcl').addEventListener('change', e => { AG.gcl = e.target.value; agendaLista(); });
     $('#ag-gmo').addEventListener('change', e => { AG.gmo = e.target.value; agendaLista(); });
-    const lm = $('#ag-glimpa'); if (lm) lm.addEventListener('click', () => { AG.gq = ''; AG.gcl = ''; AG.gmo = ''; agendaLista(); });
+    $('#ag-gtl').addEventListener('change', e => { AG.gtl = e.target.value; agendaLista(); });
+    $('#ag-gst').addEventListener('change', e => { AG.gst = e.target.value; agendaLista(); });
+    const lm = $('#ag-glimpa'); if (lm) lm.addEventListener('click', () => { AG.gq = ''; AG.gcl = ''; AG.gmo = ''; AG.gtl = ''; AG.gst = ''; agendaLista(); });
   }
   async function agendaDetalhe(id){
     const g = (AG.dia_itens || []).concat(AG.itens || []).find(x => x.id === id); if (!g) return;
@@ -2427,9 +2436,9 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   /* ---- totalizadores por clínica / tele / motivos ---- */
   function agendaQuadro(){
     const alvo = $('#ag-quad'); if (!alvo) return;
-    const L = AG.itens, cols = [['agendado', 'Agendado'], ['confirmado', 'Confirmado'], ['atendido', 'Atendido'], ['fechado', 'Fechado'], ['nao_fechou', 'Não fechou']];
+    const L = AG.itens, cols = AG_CATS.filter(c => c[0] !== 'todos').map(c => [c[0], c[1], c[5]]);
     const pct = (a, b) => b > 0 ? Math.round(a / b * 100)+'%' : '—';
-    const linha = (nome, l) => { const c = {}; cols.forEach(x => { c[x[0]] = l.filter(g => g.status === x[0]).length; }); return '<tr><td>'+esc(nome)+'</td><td>'+l.length+'</td>'+cols.map(x => '<td>'+c[x[0]]+'</td>').join('')+'<td>'+pct(c.fechado, c.fechado + c.nao_fechou)+'</td></tr>'; };
+    const linha = (nome, l) => { const c = {}; cols.forEach(x => { c[x[0]] = l.filter(x[2]).length; }); return '<tr><td>'+esc(nome)+'</td><td>'+l.length+'</td>'+cols.map(x => '<td>'+c[x[0]]+'</td>').join('')+'<td>'+pct(c.fech, c.aten)+'</td></tr>'; };
     let corpo = '';
     if (AG.agrup === 'mot'){
       const nf = L.filter(g => g.status === 'nao_fechou'), por = {}; nf.forEach(g => { const k = g.motivo_id || 0; por[k] = (por[k] || 0) + 1; });
@@ -2438,7 +2447,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     } else {
       const grupos = AG.agrup === 'tele' ? AG.teles.map(t => [t.nome, L.filter(g => g.tele_id === t.id)]) : AG.clinicas.map(c => [c.sigla+' · '+c.nome, L.filter(g => g.clinica_id === c.id)]);
       const lin = grupos.filter(x => x[1].length);
-      corpo = lin.length ? '<div class="ag-tbw"><table class="ag-tb"><thead><tr><th>'+(AG.agrup === 'tele' ? 'Tele' : 'Clínica')+'</th><th>Total</th>'+cols.map(x => '<th>'+x[1]+'</th>').join('')+'<th>% fechou</th></tr></thead><tbody>'+lin.map(x => linha(x[0], x[1])).join('')+'</tbody><tfoot>'+linha('Total', L).replace(/<td>Total<\/td>/, '<td>Total</td>')+'</tfoot></table></div>' : '<div class="empty">Sem agendamentos neste filtro.</div>';
+      corpo = lin.length ? '<div class="ag-tbw"><table class="ag-tb"><thead><tr><th>'+(AG.agrup === 'tele' ? 'Tele' : 'Clínica')+'</th><th>Total</th>'+cols.map(x => '<th>'+x[1]+'</th>').join('')+'<th title="Fecharam ÷ atendidos">% fechou</th></tr></thead><tbody>'+lin.map(x => linha(x[0], x[1])).join('')+'</tbody><tfoot>'+linha('Total', L).replace(/<td>Total<\/td>/, '<td>Total</td>')+'</tfoot></table></div>' : '<div class="empty">Sem agendamentos neste filtro.</div>';
     }
     alvo.innerHTML = '<div class="card ag-sm"><h2>Totais do período</h2><div class="ag-tab" role="group" aria-label="Agrupar por"><button type="button" data-a="clin" aria-pressed="'+(AG.agrup === 'clin')+'">Por clínica</button><button type="button" data-a="tele" aria-pressed="'+(AG.agrup === 'tele')+'">Por tele</button><button type="button" data-a="mot" aria-pressed="'+(AG.agrup === 'mot')+'">Motivos de não fechar</button></div>'+corpo+'</div>';
     $$('#ag-quad [data-a]').forEach(b => b.addEventListener('click', () => { AG.agrup = b.dataset.a; agendaQuadro(); }));
