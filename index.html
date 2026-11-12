@@ -603,6 +603,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.19.0', '2026-11-12', 'Divulgadoras e gerentes que divulgam também clínico: no cadastro da pessoa, a opção Também divulga clínico cria duas linhas na planilha com o mesmo nome, Nome (orto) e Nome (clínico), cada uma com suas visitas e vendas, ambas contadas como divulgação.'],
     ['1.18.1', '2026-11-12', 'Agenda das teles: clicar num botão da legenda de cima volta a descer a tela até a lista dos pacientes. Os botões da legenda de baixo só filtram, sem rolar.'],
     ['1.18.0', '2026-11-12', 'Agenda das teles: cartões de totais 40% mais baixos; a lista de agendamentos virou grid fino, com a legenda de status repetida acima, busca por nome ou telefone, filtros de clínica e motivo e ordenação ao clicar no título de cada coluna.'],
     ['1.17.0', '2026-11-12', 'Agenda das teles: a legenda virou botões com os totais do período (agendamentos, confirmaram, atendidos, fecharam, não fecharam e não compareceram). Clicar num botão lista os nomes. Novo status visual Não compareceu, separado do Não fechou.'],
@@ -806,6 +807,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   /* ---------- pessoas (gerentes e promotores) ---------- */
   let pessoas = [], vincs = [], clin = [], papelForm = 'promotor';
   const CARGOS = ['Promotor','Tele BH','Tele interno','Divulgador','Promotor de teste'];
+  /* divulgação de clínico: linha extra na planilha (cargo guardado em cargos_extra), do mesmo grupo dos Divulgadores */
+  const DIV_CLIN = 'Divulgador clínico', ehDiv = c => c === 'Divulgador' || c === DIV_CLIN;
   const soDigitos = v => String(v||'').replace(/\D/g,'');
   const fmtTel = v => { const d = soDigitos(v); return d.length === 11 ? '('+d.slice(0,2)+') '+d.slice(2,7)+'-'+d.slice(7) : d.length === 10 ? '('+d.slice(0,2)+') '+d.slice(2,6)+'-'+d.slice(6) : d; };
   const ehPart = u => u.papel === 'promotor' || (u.papel === 'gerente' && (u.cargos_extra || []).includes('Divulgador'));
@@ -862,6 +865,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + (gestorVe() ? '<div class="field" id="w-outras" hidden>Também atende nas clínicas <small>(Tele: ao lançar um agendamento ela escolhe a clínica, e ele aparece na lista dessa clínica para o gerente)</small><div class="mp-opts" id="p-outras">'+clin.filter(c => c.ativa || outrasAtual.includes(c.id)).map(c => '<label class="chk" data-oc="'+c.id+'"><input type="checkbox" data-o="'+c.id+'"'+(outrasAtual.includes(c.id) ? ' checked' : '')+'><span>'+esc(c.sigla)+' · '+esc(c.nome)+'</span></label>').join('')+'</div></div>' : '')
       + '<label class="field" for="p-cargo" id="w-cargo"'+(papelForm==='promotor'?'':' hidden')+'>Cargo<select id="p-cargo"><option value="">Escolha...</option>'+CARGOS.map(g => '<option'+(atual&&atual.cargo===g?' selected':'')+'>'+g+'</option>').join('')+'</select></label>'
       + '<div class="field" id="w-extra"'+(papelForm==='promotor'||papelForm==='gerente'?'':' hidden')+'>Também atua como <small>(opcional; a pessoa ganha uma linha própria para cada cargo na planilha)</small><div class="mp-opts" id="p-extra">'+(papelForm==='gerente'?['Divulgador']:CARGOS).map(g => '<label class="chk" data-xg="'+esc(g)+'"><input type="checkbox" data-x="'+esc(g)+'"'+(atual && (atual.cargos_extra || []).includes(g) ? ' checked' : '')+'><span>'+esc(g)+'</span></label>').join('')+'</div></div>'
+      + '<label class="chk" id="w-dcl" for="p-dcl" hidden><input id="p-dcl" type="checkbox"'+(atual && (atual.cargos_extra || []).includes(DIV_CLIN) ? ' checked' : '')+'><span>Também divulga clínico <small>(a pessoa ganha duas linhas na planilha: "Nome (orto)" e "Nome (clínico)")</small></span></label>'
       + (atual ? '<label class="chk" for="p-ativo"><input id="p-ativo" type="checkbox"'+(atual.ativo?' checked':'')+'><span>Pessoa ativa</span></label>' : '')
       + '<div class="err" id="p-err" role="alert"></div>'
       + '<div class="btns"><button class="btn" type="submit" id="p-btn">'+(atual?'Salvar':'Enviar convite')+'</button>'
@@ -880,7 +884,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       if (r.erro){ $('#p-err').textContent = r.erro; return; }
       toast('Convite enviado para '+em+'.'); pessoasCarregar();
     });
-    const extraSync = () => { const c = $('#p-cargo').value; $$('#p-extra label').forEach(l => { const igual = l.dataset.xg === c; l.hidden = igual; if (igual) l.querySelector('input').checked = false; }); };
+    const extraSync = () => { const c = $('#p-cargo').value; $$('#p-extra label').forEach(l => { const igual = l.dataset.xg === c; l.hidden = igual; if (igual) l.querySelector('input').checked = false; }); dclSync(); };
+    const dclSync = () => { const w = $('#w-dcl'); if (!w) return; const ex = $$('#p-extra input:checked').some(i => i.dataset.x === 'Divulgador'), ok = (papelForm === 'promotor' && ($('#p-cargo').value === 'Divulgador' || ex)) || (papelForm === 'gerente' && ex); w.hidden = !ok; if (!ok) $('#p-dcl').checked = false; };
     const outrasSync = () => {
       const w = $('#w-outras'); if (!w) return;
       const tele = papelForm === 'promotor' && (ehTeleCargo($('#p-cargo').value) || $$('#p-extra input:checked').some(i => ehTeleCargo(i.dataset.x)));
@@ -889,7 +894,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       $$('#p-outras label').forEach(l => { const igual = l.dataset.oc === prim; l.hidden = igual; if (igual) l.querySelector('input').checked = false; });
     };
     $('#p-cargo').addEventListener('change', () => { extraSync(); outrasSync(); });
-    $('#p-extra').addEventListener('change', outrasSync); $('#p-clin').addEventListener('change', outrasSync);
+    $('#p-extra').addEventListener('change', () => { dclSync(); outrasSync(); }); $('#p-clin').addEventListener('change', outrasSync);
     extraSync(); outrasSync();
     const pessoasDesenharExtra = () => {
       const marc = new Set($$('#p-extra input:checked').map(i => i.dataset.x));
@@ -923,6 +928,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       telefone: soDigitos($('#p-tel').value), clinica_id: Number($('#p-clin').value) || null, cargo: $('#p-cargo').value, cargos_extra: $$('#p-extra input:checked').map(i => i.dataset.x), inicio: ($('#p-desde').value || hoje()) };
     if (d.papel !== 'promotor'){ d.cargo = null; d.cargos_extra = d.papel === 'gerente' ? d.cargos_extra.filter(c => c === 'Divulgador') : []; }
     d.cargos_extra = d.cargos_extra.filter(c => c !== d.cargo);
+    if ($('#p-dcl') && $('#p-dcl').checked && (d.papel === 'promotor' || d.papel === 'gerente') && (d.cargo === 'Divulgador' || d.cargos_extra.includes('Divulgador'))) d.cargos_extra.push(DIV_CLIN);
     const teleOk = d.papel === 'promotor' && (ehTeleCargo(d.cargo) || d.cargos_extra.some(ehTeleCargo));
     d.outras = (teleOk && $('#p-outras')) ? $$('#p-outras input:checked').map(i => Number(i.dataset.o)).filter(id => id !== d.clinica_id) : [];
     const outrasIns = async uid => { let er = null; for (const cid of d.outras){ const r = await sb.from('vinculos_clinica').insert({ usuario_id: uid, clinica_id: cid, inicio: d.inicio }); if (r.error) er = r.error; } return er; };
@@ -1654,9 +1660,10 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const pdCanais = rows => { const m = {}; (rows || []).forEach(x => { m[x.canal] = x; }); return CANAIS.filter(c => c.ativo || m[c.nome]).map(c => ({ id: canalChave(c), nome: c.nome, cargo: c.nome, canal: c.nome, ativo: true, u: null, rc: '', _r: m[c.nome] })); };
   const PD_ROT = { 'Promotor': 'Promotores', 'Tele BH': 'Tele BH', 'Tele interno': 'Tele interno', 'Divulgador': 'Divulgadores' };
   /* uma pessoa com mais de um cargo aparece em uma linha por cargo: a principal (id numérico) e uma por cargo extra (id "N_cX") */
-  const pdChave = (uid, cargo) => cargo ? uid+'_c'+CARGOS.indexOf(cargo) : uid;
+  const pdChave = (uid, cargo) => cargo ? uid+'_c'+CARGOS.concat([DIV_CLIN]).indexOf(cargo) : uid;
   async function pdExtras(){ const r = await sb.from('usuarios').select('id,cargos_extra').in('papel', ['promotor', 'gerente']); const m = {}; (r.data || []).forEach(u => { if ((u.cargos_extra || []).length) m[u.id] = u.cargos_extra; }); return m; }
-  const pdExpandir = (lista, extras) => { const o = []; lista.forEach(p => { if (p.cargo) o.push(Object.assign({}, p, { u: p.id, rc: '' })); (extras[p.id] || []).forEach(c => o.push(Object.assign({}, p, { id: pdChave(p.id, c), u: p.id, rc: c, cargo: c }))); }); return o; };
+  const pdExpandir = (lista, extras) => { const o = []; lista.forEach(p => { const ex = extras[p.id] || [], duas = ex.includes(DIV_CLIN), rot = c => duas ? (c === DIV_CLIN ? ' (clínico)' : c === 'Divulgador' ? ' (orto)' : '') : '';
+      if (p.cargo) o.push(Object.assign({}, p, { u: p.id, rc: '', nome: p.nome+rot(p.cargo) })); ex.forEach(c => o.push(Object.assign({}, p, { id: pdChave(p.id, c), u: p.id, rc: c, cargo: c, nome: p.nome+rot(c) }))); }); return o; };
   const pd2 = n => String(n).padStart(2, '0');
   const pdIso = (a, m, d) => a+'-'+pd2(m + 1)+'-'+pd2(d);
   const pdN = (a, m) => new Date(a, m + 1, 0).getDate();
@@ -1688,7 +1695,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   /* meta do divulgador num dia: média das metas por tipo de visita (rua 30%, tele 45%) */
   function pdMetaDia(pes, M, d){
     let rua = 0, tele = 0;
-    pes.forEach(p => { if (p.cargo === 'Divulgador') return; const v = ((M[p.id] || {})[d] || [0, 0])[0]; if (p.cargo === 'Tele BH' || p.cargo === 'Tele interno') tele += v; else rua += v; });
+    pes.forEach(p => { if (ehDiv(p.cargo)) return; const v = ((M[p.id] || {})[d] || [0, 0])[0]; if (p.cargo === 'Tele BH' || p.cargo === 'Tele interno') tele += v; else rua += v; });
     return rua + tele > 0 ? (rua * 30 + tele * 45) / (rua + tele) : null;
   }
   function pdMetaDiv(pes, M, ids, n){
@@ -1728,7 +1735,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 
   function planDesenhar(){
     const { M, lanc, C, pes, n } = PD.mapa, hj = hoje(), ehHj = d => pdIso(PD.ano, PD.mes, d) === hj, SEM = ['D','S','T','Q','Q','S','S'];
-    const div = pes.filter(p => p.cargo === 'Divulgador'), ou = pes.filter(p => p.cargo !== 'Divulgador');
+    const div = pes.filter(p => ehDiv(p.cargo)), ou = pes.filter(p => !ehDiv(p.cargo));
     const ids = a => a.map(p => p.id), idsC = c => ids(pes.filter(p => p.cargo === c));
     const tdiv = pdSoma(ids(div), M, n), rua = pdSoma(idsC('Promotor').concat(idsC(TESTE), pes.filter(p => p.canal).map(p => p.id)), M, n), tele = pdSoma(idsC('Tele BH').concat(idsC('Tele interno')), M, n), todos = pdSoma(ids(ou), M, n);
     const mdiv = pdMetaDiv(pes, M, ids(div), n), rp = pdPct(rua.v, rua.s), tp = pdPct(tele.v, tele.s);
@@ -1746,7 +1753,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       : '<span class="pl ok">Sem divergências</span> Planilha e corrida mostram os mesmos números neste mês.')+'</div>';
 
     const exd = {}; for (let d = 1; d <= n; d++){ if (!lanc[d]) continue; let a0 = 0, a1 = 0, b0 = 0, b1 = 0;
-      pes.forEach(p => { const x = (M[p.id] || {})[d]; if (!x) return; if (p.cargo === 'Divulgador'){ b0 += x[0]; b1 += x[1]; } else { a0 += x[0]; a1 += x[1]; } });
+      pes.forEach(p => { const x = (M[p.id] || {})[d]; if (!x) return; if (ehDiv(p.cargo)){ b0 += x[0]; b1 += x[1]; } else { a0 += x[0]; a1 += x[1]; } });
       if (a0 !== b0 || a1 !== b1) exd[d] = 'Divulgadores: '+b0+' vis. / '+b1+' ven. · Promotores e teles: '+a0+' vis. / '+a1+' ven.'; }
     const nex = Object.keys(exd).length;
     const aviso2 = '<div class="pd-card pd-div">'+(nex ? '<details><summary><span class="pl no ex"><b>!</b> '+nex+' dia'+(nex === 1 ? '' : 's')+' com totais diferentes</span> Divulgadores e promotores/teles deveriam somar o mesmo. Corrija pelo Lançamento diário.</summary><ul>'
@@ -1828,7 +1835,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 
   function diaDesenhar(){
     const hj = hoje();
-    const div = PD.pessoas.filter(p => p.cargo === 'Divulgador'), ou = PD.pessoas.filter(p => p.cargo !== 'Divulgador');
+    const div = PD.pessoas.filter(p => ehDiv(p.cargo)), ou = PD.pessoas.filter(p => !ehDiv(p.cargo));
     const nomeDia = new Date(PD.data+'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
     const cab = comCorr => '<div class="pd-row h'+(comCorr ? '' : ' dv2')+'"><span>Pessoa</span><span>Visitas</span><span>Vendas</span>'+(comCorr ? '<span>Corrida</span>' : '')+'</div>';
     $('#area').innerHTML = '<div class="pd-card" style="padding:16px 18px"><div class="pd-bar"><div><h2 style="margin:0">Lançamento diário</h2><p class="sub" style="margin:2px 0 0">'+esc(nomeDia)+(PD.existe ? ' · já lançado' : '')+'</p></div>'
@@ -1857,7 +1864,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   }
 
   function diaConf(){
-    const div = PD.pessoas.filter(p => p.cargo === 'Divulgador'), ou = PD.pessoas.filter(p => p.cargo !== 'Divulgador');
+    const div = PD.pessoas.filter(p => ehDiv(p.cargo)), ou = PD.pessoas.filter(p => !ehDiv(p.cargo));
     const S = a => a.reduce((t, p) => [t[0] + PD.r[p.id][0], t[1] + PD.r[p.id][1]], [0, 0]), a = S(ou), b = S(div);
     ou.forEach(p => { if (p.canal) return; const el = $('#pd-c-'+p.id), c = PD.corr[p.u] || [0, 0], r = PD.r[p.id], ok = c[0] === r[0] && c[1] === r[1];
       if (el) el.innerHTML = ok ? (c[0] || c[1] ? '<span class="pl ok">Bate</span>' : '<span class="pl nd">—</span>') : '<span class="pl no" title="Lançado na corrida">'+c[0]+' vis. / '+c[1]+' ven.</span>'; });
@@ -2502,7 +2509,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const cargo = {}; rs[1].data.forEach(u => { cargo[u.id] = u.cargo; });
     const base = {}; rs[0].data.filter(c => c.ativa !== false).forEach(c => { base[c.id] = { c, v: 0, s: 0, d: {} }; });
     rs[2].data.forEach(r => {
-      const cg = r.cargo || cargo[r.usuario_id]; if (!cg || cg === 'Divulgador') return;
+      const cg = r.cargo || cargo[r.usuario_id]; if (!cg || ehDiv(cg)) return;
       const o = base[r.clinica_id]; if (!o) return; const d = Number(String(r.data_ref).slice(8));
       o.v += r.visitas; o.s += r.vendas; (o.d[d] = o.d[d] || [0, 0]); o.d[d][0] += r.visitas; o.d[d][1] += r.vendas;
     });
