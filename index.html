@@ -618,7 +618,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
-    ['1.27.0', '2026-11-13', 'Agenda das teles: o card de totais ganha a Projeção de vendas, calculada pelas vendas atuais e pelos dias úteis (seg–sex) já trabalhados, projetando até o fim do mês.'],
+    ['1.28.0', '2026-11-13', 'Projeção de vendas passa a contar sábados e a descontar os feriados nacionais. O painel do mapa também mostra a projeção do mês (total, por região, por clínica e por tipo).'],
+    ['1.27.0', '2026-11-13', 'Agenda das teles: o card de totais ganha a Projeção de vendas, calculada pelas vendas atuais e pelos dias úteis (seg–sáb, sem feriados nacionais) já trabalhados, projetando até o fim do mês.'],
     ['1.26.0', '2026-11-13', 'Agenda das teles: os cards de filtros e de totais ganham um botão pequeno no canto superior direito para minimizar e dar mais espaço à agenda. Ao abrir a tela, ficam sempre maximizados.'],
     ['1.25.0', '2026-11-13', 'Mapa: todas as gerentes veem as clínicas de todas as regiões, com os números das outras para comparação. Ranking de vendas ganha as abas Promotores, Divulgadores (orto e clínico) e Clínicas, esta com a foto e o nome da gerente de cada clínica.'],
     ['1.24.0', '2026-11-13', 'Mapa: ao clicar ou selecionar clínicas, o painel lateral separa visitas e vendas por tipo (Promotor, Tele BH, Tele interno e as fontes de visita como Luminoso, Indicação e Prospecta), com o % de fechamento de cada um.'],
@@ -2194,6 +2195,29 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 
   /* ---------- agenda das teles: agendamentos lançados no app ---------- */
   const mesIni = () => hoje().slice(0, 8)+'01';
+  // Dias úteis = segunda a sábado, menos os feriados nacionais (fixos; Sexta-feira Santa pela data da Páscoa)
+  const FERIADOS_C = {};
+  function feriadosBR(ano){
+    if (FERIADOS_C[ano]) return FERIADOS_C[ano];
+    const a = ano % 19, b = Math.floor(ano / 100), c = ano % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451), mes = Math.floor((h + l - 7 * m + 114) / 31), dia = (h + l - 7 * m + 114) % 31 + 1;
+    const sx = new Date(ano, mes - 1, dia - 2, 12), iso = x => x.getFullYear()+'-'+String(x.getMonth() + 1).padStart(2, '0')+'-'+String(x.getDate()).padStart(2, '0');
+    const set = new Set(['01-01', '04-21', '05-01', '09-07', '10-12', '11-02', '11-15', '12-25'].concat(ano >= 2024 ? ['11-20'] : []).map(x => ano+'-'+x)); set.add(iso(sx));
+    return (FERIADOS_C[ano] = set);
+  }
+  function diasUteis(ini, fim){
+    let n = 0;
+    for (let d = new Date(ini+'T12:00:00'), e = new Date(fim+'T12:00:00'); d <= e; d.setDate(d.getDate() + 1)){
+      if (d.getDay() === 0) continue;
+      const iso = d.getFullYear()+'-'+String(d.getMonth() + 1).padStart(2, '0')+'-'+String(d.getDate()).padStart(2, '0');
+      if (!feriadosBR(d.getFullYear()).has(iso)) n++;
+    }
+    return n;
+  }
+  // Projeção: vendas ÷ dias úteis já trabalhados × dias úteis até fimProj. Devolve { proj, dec, tot } (proj null se ainda não começou)
+  function projecao(ven, ini, fimAte, fimProj){
+    const hj = hoje(), dec = ini > hj ? 0 : diasUteis(ini, fimAte < hj ? fimAte : hj), tot = diasUteis(ini, fimProj);
+    return { proj: dec > 0 ? Math.round(ven / dec * tot) : null, dec, tot };
+  }
   const AG = { ini: mesIni(), fim: hoje(), dia: hoje(), vis: 'dia', tk: 0, tele: '', clin: '', st: '', cat: '', gq: '', gcl: '', gmo: '', gtl: '', gst: '', ord: { k: 'data', d: -1 }, agrup: 'clin', teles: [], clinicas: [], motivos: [], todos: [] };
   const AG_ST = { agendado: 'Agendado', confirmado: 'Confirmado', atendido: 'Atendido', fechado: 'Fechado', nao_fechou: 'Não fechou', nao_compareceu: 'Não compareceu' };
   const agNC = g => g.status === 'nao_fechou' && (AG.motivos.find(x => x.id === g.motivo_id) || {}).nome === 'Paciente não compareceu';
@@ -2275,9 +2299,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     AG.todos = r.data; AG.itens = AG.st ? r.data.filter(g => agKey(g) === AG.st) : r.data;
     const tt = agTotais(r.data), nAg = tt.n, vis = tt.aten, ven = tt.fech;
     const pct = (a, b) => b > 0 ? Math.round(a / b * 100)+'%' : '—';
-    const duteis = (a, b) => { let n = 0; for (let d = new Date(a+'T12:00:00'), e = new Date(b+'T12:00:00'); d <= e; d.setDate(d.getDate()+1)) if (d.getDay() % 6) n++; return n; };
-    const hj = hoje(), fimP = AG.fim >= hj && AG.fim.slice(0, 7) === hj.slice(0, 7) ? new Date(Number(hj.slice(0, 4)), Number(hj.slice(5, 7)), 0, 12).toISOString().slice(0, 10) : AG.fim, uTot = duteis(AG.ini, fimP), uDec = AG.ini > hj ? 0 : duteis(AG.ini, AG.fim < hj ? AG.fim : hj);
-    const proj = uDec > 0 ? Math.round(ven / uDec * uTot) : null;
+    const hj = hoje(), fimP = AG.fim >= hj && AG.fim.slice(0, 7) === hj.slice(0, 7) ? new Date(Number(hj.slice(0, 4)), Number(hj.slice(5, 7)), 0, 12).toISOString().slice(0, 10) : AG.fim, pj = projecao(ven, AG.ini, AG.fim, fimP), uTot = pj.tot, uDec = pj.dec, proj = pj.proj;
     const tile = (rot, val, nota) => '<div class="ag-tl"><span>'+rot+'</span><b>'+val+'</b><small>'+(nota || '&nbsp;')+'</small></div>';
     $('#ag-tot').innerHTML = '<div class="card ag-sm'+(AG.minT ? ' min' : '')+'" id="ag-ct"><button type="button" class="ag-min" data-min="t" aria-expanded="'+(AG.minT ? 'false' : 'true')+'" aria-label="Minimizar totais" title="Minimizar"><svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg></button><h2>'+dBR(AG.ini)+' a '+dBR(AG.fim)+'</h2><div class="ag-tls">'
       + tile('Agendamentos', nAg, r.data.filter(g => g.status !== 'agendado').length+' confirmados ou com resultado')
@@ -2285,7 +2307,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + tile('Vendas', ven, pct(ven, vis)+' das visitas')
       + tile('Projeção de vendas', proj === null ? '—' : proj, proj === null ? 'período ainda não começou' : uDec+' de '+uTot+' dias úteis · '+(uDec ? (ven / uDec).toFixed(1).replace('.', ',') : 0)+'/dia')
       + tile('Agendamento → venda', pct(ven, nAg), 'vendas ÷ agendamentos')
-      + '</div><p class="sub ag-nota">Visitas = pacientes atendidos (vieram à clínica); vendas = agendamentos fechados. Contam os agendamentos do período e dos filtros. Projeção = vendas ÷ dias úteis já trabalhados × dias úteis até o fim do mês (seg–sex, sem descontar feriados).</p></div>'; agMin('t', !!AG.minT);
+      + '</div><p class="sub ag-nota">Visitas = pacientes atendidos (vieram à clínica); vendas = agendamentos fechados. Contam os agendamentos do período e dos filtros. Projeção = vendas ÷ dias úteis já trabalhados × dias úteis até o fim do mês (seg–sáb, sem feriados nacionais).</p></div>'; agMin('t', !!AG.minT);
     $('#ag-resumo').innerHTML = '<span>'+dBR(AG.ini).slice(0, 5)+' – '+dBR(AG.fim).slice(0, 5)+'</span><span>'+esc(AG.tele ? (AG.teles.find(t => String(t.id) === String(AG.tele)) || {}).nome || '' : 'Todas as teles')+'</span><span>'+esc(AG.clin ? (AG.clinicas.find(c => String(c.id) === String(AG.clin)) || {}).sigla || '' : 'Todas as clínicas')+'</span><b>'+nAg+' agend.</b><b>'+vis+' visitas</b><b>'+ven+' vendas</b><em>Mostrar</em>';
     agendaGrade(AG.primeira ? 'fade' : null); AG.primeira = true;
     agendaQuadro(); agendaLista();
@@ -2813,18 +2835,22 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const titulo = !f ? 'Minas Gerais' : f.rotulo, sub = !f ? 'Todas as clínicas' : (f.tipo === 'regiao' ? 'Região em foco' : (f.ids.size === 1 ? 'Clínica em foco' : 'Clínicas selecionadas'));
     const tp = {}; em.forEach(o => Object.keys(o.t || {}).forEach(k => { const x = tp[k] = tp[k] || [0, 0]; x[0] += o.t[k][0]; x[1] += o.t[k][1]; }));
     const ordem = ordemGrupos(), tks = Object.keys(tp).sort((a, b) => { const ia = ordem.indexOf(a), ib = ordem.indexOf(b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b); });
-    const tipos = tks.length ? '<h3>Por tipo</h3><ul class="ds-li">'+tks.map(k => '<li><div class="ti"><span class="n"><b>'+esc(k)+'</b></span><span class="v">'+tp[k][0]+' vis · '+tp[k][1]+' ven</span><span class="p">'+pf0(pdPct(tp[k][0], tp[k][1]))+'</span></div></li>').join('')+'</ul>' : '';
+    const tipos = tks.length ? '<h3>Por tipo</h3><ul class="ds-li">'+tks.map(k => '<li><div class="ti"><span class="n"><b>'+esc(k)+'</b></span><span class="v">'+tp[k][0]+' vis · '+tp[k][1]+' ven'+pjx(tp[k][1])+'</span><span class="p">'+pf0(pdPct(tp[k][0], tp[k][1]))+'</span></div></li>').join('')+'</ul>' : '';
     let lista = '';
     if (!f){
       const gr = {}; DS.base.forEach(o => { if (o.x == null || !o.reg) return; const g = gr[o.reg] = gr[o.reg] || { v: 0, s: 0, n: 0 }; g.v += o.v; g.s += o.s; g.n++; });
       const rows = Object.keys(gr).map(k => { const r = (DS.regs || []).find(x => x.key === k); return { k, nome: nomeCurto(r && r.nome), n: gr[k].n, v: gr[k].v, s: gr[k].s, pct: pdPct(gr[k].v, gr[k].s) }; }).sort((a, b) => b.v - a.v);
-      lista = rows.length ? '<h3>Por região</h3><ul class="ds-li">'+rows.map(r => '<li><button type="button" data-lreg="'+esc(r.k)+'"><span class="n"><b>'+esc(r.nome)+'</b><small>'+r.n+' clínica'+(r.n === 1 ? '' : 's')+'</small></span><span class="v">'+r.v+' vis · '+r.s+' ven</span><span class="p">'+pf0(r.pct)+'</span></button></li>').join('')+'</ul>' : '';
+      lista = rows.length ? '<h3>Por região</h3><ul class="ds-li">'+rows.map(r => '<li><button type="button" data-lreg="'+esc(r.k)+'"><span class="n"><b>'+esc(r.nome)+'</b><small>'+r.n+' clínica'+(r.n === 1 ? '' : 's')+'</small></span><span class="v">'+r.v+' vis · '+r.s+' ven'+pjx(r.s)+'</span><span class="p">'+pf0(r.pct)+'</span></button></li>').join('')+'</ul>' : '';
     } else if (em.length > 1 || f.tipo === 'regiao'){
       const rows = em.slice().sort((a, b) => b.v - a.v);
-      lista = '<h3>Clínicas</h3><ul class="ds-li">'+rows.map(o => '<li><button type="button" data-lcli="'+o.c.id+'"><span class="n"><b>'+esc(o.c.sigla)+'</b><small>'+esc(o.c.cidade || o.c.nome)+'</small></span><span class="v">'+o.v+' vis · '+o.s+' ven</span><span class="p">'+pf0(pdPct(o.v, o.s))+'</span></button></li>').join('')+'</ul>';
+      lista = '<h3>Clínicas</h3><ul class="ds-li">'+rows.map(o => '<li><button type="button" data-lcli="'+o.c.id+'"><span class="n"><b>'+esc(o.c.sigla)+'</b><small>'+esc(o.c.cidade || o.c.nome)+'</small></span><span class="v">'+o.v+' vis · '+o.s+' ven'+pjx(o.s)+'</span><span class="p">'+pf0(pdPct(o.v, o.s))+'</span></button></li>').join('')+'</ul>';
     }
+    const mi = DS.ano+'-'+String(DS.mes + 1).padStart(2, '0')+'-01', mf = DS.ano+'-'+String(DS.mes + 1).padStart(2, '0')+'-'+String(new Date(DS.ano, DS.mes + 1, 0).getDate()).padStart(2, '0');
+    const pjm = n => { const r = projecao(n, mi, mf, mf); return r.proj; }, pjx = n => { const r = pjm(n); return r === null ? '' : ' · proj. '+r; };
+    const pjT = projecao(S, mi, mf, mf);
     el.innerHTML = '<div class="ds-tot"><span class="eyebrow">'+esc(sub)+'</span><h3 class="ds-tt">'+esc(titulo)+'</h3>'
       + '<div class="ds-tg"><div><span>Visitas</span><b>'+V.toLocaleString('pt-BR')+'</b></div><div><span>Vendas</span><b>'+S.toLocaleString('pt-BR')+'</b></div></div>'
+      + (pjT.proj === null ? '' : '<div class="ds-pc"><span>Projeção de vendas no mês</span><b>'+pjT.proj.toLocaleString('pt-BR')+'</b><small>'+pjT.dec+' de '+pjT.tot+' dias úteis</small></div>')
       + '<div class="ds-pc"><span>% de fechamento</span><b>'+pf1(pc)+'</b></div><small>'+em.length+' clínica'+(em.length === 1 ? '' : 's')+' · '+esc(new Date(DS.ano, DS.mes, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }))+'</small></div>'+tipos+lista;
   }
   document.addEventListener('click', e => {
