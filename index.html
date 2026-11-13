@@ -310,7 +310,7 @@ table.pd tr.tot td{font-weight:700}
 .ag-sm .ag-tl b{font-size:15px;line-height:1.1}
 .ag-sm .ag-tl small{font-size:9.5px;line-height:1.2}
 .ag-sm .ag-nota{margin:2px 0 0;font-size:9.5px}
-.ag-tls{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:10px}
+.ag-tls{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:10px}
 @media (max-width:760px){.ag-tls{grid-template-columns:1fr 1fr}}
 .ag-tl{background:var(--surface-2);border-radius:18px;padding:16px;display:grid;gap:2px;min-width:0}
 .ag-tl span{font-weight:600;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
@@ -618,6 +618,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.27.0', '2026-11-13', 'Agenda das teles: o card de totais ganha a Projeção de vendas, calculada pelas vendas atuais e pelos dias úteis (seg–sex) já trabalhados, projetando até o fim do mês.'],
     ['1.26.0', '2026-11-13', 'Agenda das teles: os cards de filtros e de totais ganham um botão pequeno no canto superior direito para minimizar e dar mais espaço à agenda. Ao abrir a tela, ficam sempre maximizados.'],
     ['1.25.0', '2026-11-13', 'Mapa: todas as gerentes veem as clínicas de todas as regiões, com os números das outras para comparação. Ranking de vendas ganha as abas Promotores, Divulgadores (orto e clínico) e Clínicas, esta com a foto e o nome da gerente de cada clínica.'],
     ['1.24.0', '2026-11-13', 'Mapa: ao clicar ou selecionar clínicas, o painel lateral separa visitas e vendas por tipo (Promotor, Tele BH, Tele interno e as fontes de visita como Luminoso, Indicação e Prospecta), com o % de fechamento de cada um.'],
@@ -2274,13 +2275,17 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     AG.todos = r.data; AG.itens = AG.st ? r.data.filter(g => agKey(g) === AG.st) : r.data;
     const tt = agTotais(r.data), nAg = tt.n, vis = tt.aten, ven = tt.fech;
     const pct = (a, b) => b > 0 ? Math.round(a / b * 100)+'%' : '—';
+    const duteis = (a, b) => { let n = 0; for (let d = new Date(a+'T12:00:00'), e = new Date(b+'T12:00:00'); d <= e; d.setDate(d.getDate()+1)) if (d.getDay() % 6) n++; return n; };
+    const hj = hoje(), fimP = AG.fim >= hj && AG.fim.slice(0, 7) === hj.slice(0, 7) ? new Date(Number(hj.slice(0, 4)), Number(hj.slice(5, 7)), 0, 12).toISOString().slice(0, 10) : AG.fim, uTot = duteis(AG.ini, fimP), uDec = AG.ini > hj ? 0 : duteis(AG.ini, AG.fim < hj ? AG.fim : hj);
+    const proj = uDec > 0 ? Math.round(ven / uDec * uTot) : null;
     const tile = (rot, val, nota) => '<div class="ag-tl"><span>'+rot+'</span><b>'+val+'</b><small>'+(nota || '&nbsp;')+'</small></div>';
     $('#ag-tot').innerHTML = '<div class="card ag-sm'+(AG.minT ? ' min' : '')+'" id="ag-ct"><button type="button" class="ag-min" data-min="t" aria-expanded="'+(AG.minT ? 'false' : 'true')+'" aria-label="Minimizar totais" title="Minimizar"><svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg></button><h2>'+dBR(AG.ini)+' a '+dBR(AG.fim)+'</h2><div class="ag-tls">'
       + tile('Agendamentos', nAg, r.data.filter(g => g.status !== 'agendado').length+' confirmados ou com resultado')
       + tile('Visitas', vis, pct(vis, nAg)+' dos agendamentos')
       + tile('Vendas', ven, pct(ven, vis)+' das visitas')
+      + tile('Projeção de vendas', proj === null ? '—' : proj, proj === null ? 'período ainda não começou' : uDec+' de '+uTot+' dias úteis · '+(uDec ? (ven / uDec).toFixed(1).replace('.', ',') : 0)+'/dia')
       + tile('Agendamento → venda', pct(ven, nAg), 'vendas ÷ agendamentos')
-      + '</div><p class="sub ag-nota">Visitas = pacientes atendidos (vieram à clínica); vendas = agendamentos fechados. Contam os agendamentos do período e dos filtros.</p></div>'; agMin('t', !!AG.minT);
+      + '</div><p class="sub ag-nota">Visitas = pacientes atendidos (vieram à clínica); vendas = agendamentos fechados. Contam os agendamentos do período e dos filtros. Projeção = vendas ÷ dias úteis já trabalhados × dias úteis até o fim do mês (seg–sex, sem descontar feriados).</p></div>'; agMin('t', !!AG.minT);
     $('#ag-resumo').innerHTML = '<span>'+dBR(AG.ini).slice(0, 5)+' – '+dBR(AG.fim).slice(0, 5)+'</span><span>'+esc(AG.tele ? (AG.teles.find(t => String(t.id) === String(AG.tele)) || {}).nome || '' : 'Todas as teles')+'</span><span>'+esc(AG.clin ? (AG.clinicas.find(c => String(c.id) === String(AG.clin)) || {}).sigla || '' : 'Todas as clínicas')+'</span><b>'+nAg+' agend.</b><b>'+vis+' visitas</b><b>'+ven+' vendas</b><em>Mostrar</em>';
     agendaGrade(AG.primeira ? 'fade' : null); AG.primeira = true;
     agendaQuadro(); agendaLista();
