@@ -484,6 +484,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 .ds-li{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:2px;max-height:300px;overflow-y:auto}
 .ds-li button{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px 10px;align-items:center;width:100%;text-align:left;border:0;background:transparent;color:var(--ink);font:500 13px var(--font-body);padding:8px 8px;border-radius:10px;cursor:pointer}
 .ds-li button:hover{background:var(--surface-2)}
+.ds-li .ti{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px 10px;align-items:center;font:500 13px var(--font-body);padding:7px 8px;border-radius:10px}
+.ds-li .ti:nth-child(odd){background:color-mix(in srgb,var(--surface-2) 60%,transparent)}
 .ds-li .n{min-width:0;display:grid}
 .ds-li .n b{font-weight:650;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ds-li .n small{color:var(--muted);font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -605,6 +607,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.24.0', '2026-11-13', 'Mapa: ao clicar ou selecionar clínicas, o painel lateral separa visitas e vendas por tipo (Promotor, Tele BH, Tele interno e as fontes de visita como Luminoso, Indicação e Prospecta), com o % de fechamento de cada um.'],
     ['1.23.1', '2026-11-13', 'Mapa: ao arrastar para selecionar clínicas, o retângulo pontilhado volta a aparecer, igual ao mapa do Orto+.'],
     ['1.23.0', '2026-11-12', 'Pessoas: a foto de cada pessoa aparece na lista e no cadastro, para identificação, e quem ainda não tem foto ganha o aviso "Sem foto". No aplicativo, a foto passou a ser obrigatória para todos: a pessoa só entra depois de tirar a foto na hora ou escolher da galeria.'],
     ['1.22.2', '2026-11-12', 'Agenda: quem não compareceu aparece como Não compareceu no cartão da agenda (antes aparecia Não fechou), no site e no app das teles.'],
@@ -2603,14 +2606,15 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const n = pdN(DS.ano, DS.mes), de = pdIso(DS.ano, DS.mes, 1), ate = pdIso(DS.ano, DS.mes, n), tk = ++DS.tk;
     DS.geoErro = '';
     const geoP = Promise.all([mgContorno(), mgMunicipios()]).catch(e => { DS.geoErro = (e && e.message) || 'erro'; return null; });
-    const rs = await Promise.all([soMinhasClin(sb.from('clinicas').select('*').order('nome')), sb.from('usuarios').select('id,cargo'), buscarPlanilha(de, ate), geoP]);
+    const rs = await Promise.all([soMinhasClin(sb.from('clinicas').select('*').order('nome')), sb.from('usuarios').select('id,cargo'), buscarPlanilha(de, ate), geoP, canaisCarrega()]);
     if (tk !== DS.tk || recurso !== 'inicio') return;
     const er = rs.slice(0, 3).map(r => r.error).find(Boolean); if (er){ pdErro(er); return; }
     const cargo = {}; rs[1].data.forEach(u => { cargo[u.id] = u.cargo; });
-    const base = {}; rs[0].data.filter(c => c.ativa !== false).forEach(c => { base[c.id] = { c, v: 0, s: 0, d: {} }; });
+    const base = {}; rs[0].data.filter(c => c.ativa !== false).forEach(c => { base[c.id] = { c, v: 0, s: 0, d: {}, t: {} }; });
     rs[2].data.forEach(r => {
       const cg = r.cargo || cargo[r.usuario_id]; if (!cg || ehDiv(cg)) return;
       const o = base[r.clinica_id]; if (!o) return; const d = Number(String(r.data_ref).slice(8));
+      (o.t[cg] = o.t[cg] || [0, 0]); o.t[cg][0] += r.visitas; o.t[cg][1] += r.vendas;
       o.v += r.visitas; o.s += r.vendas; (o.d[d] = o.d[d] || [0, 0]); o.d[d][0] += r.visitas; o.d[d][1] += r.vendas;
     });
     DS.base = Object.values(base); DS.n = n; DS.filtro = null; DS.geo = rs[3] ? { reg: rs[3][0] } : null;
@@ -2759,6 +2763,9 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const el = $('#ds-lado'); if (!el) return; const f = DS.filtro;
     const em = DS.base.filter(o => !f || f.ids.has(o.c.id)), V = em.reduce((t, o) => t + o.v, 0), S = em.reduce((t, o) => t + o.s, 0), pc = pdPct(V, S);
     const titulo = !f ? 'Minas Gerais' : f.rotulo, sub = !f ? 'Todas as clínicas' : (f.tipo === 'regiao' ? 'Região em foco' : (f.ids.size === 1 ? 'Clínica em foco' : 'Clínicas selecionadas'));
+    const tp = {}; em.forEach(o => Object.keys(o.t || {}).forEach(k => { const x = tp[k] = tp[k] || [0, 0]; x[0] += o.t[k][0]; x[1] += o.t[k][1]; }));
+    const ordem = ordemGrupos(), tks = Object.keys(tp).sort((a, b) => { const ia = ordem.indexOf(a), ib = ordem.indexOf(b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b); });
+    const tipos = tks.length ? '<h3>Por tipo</h3><ul class="ds-li">'+tks.map(k => '<li><div class="ti"><span class="n"><b>'+esc(k)+'</b></span><span class="v">'+tp[k][0]+' vis · '+tp[k][1]+' ven</span><span class="p">'+pf0(pdPct(tp[k][0], tp[k][1]))+'</span></div></li>').join('')+'</ul>' : '';
     let lista = '';
     if (!f){
       const gr = {}; DS.base.forEach(o => { if (o.x == null || !o.reg) return; const g = gr[o.reg] = gr[o.reg] || { v: 0, s: 0, n: 0 }; g.v += o.v; g.s += o.s; g.n++; });
@@ -2770,7 +2777,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     }
     el.innerHTML = '<div class="ds-tot"><span class="eyebrow">'+esc(sub)+'</span><h3 class="ds-tt">'+esc(titulo)+'</h3>'
       + '<div class="ds-tg"><div><span>Visitas</span><b>'+V.toLocaleString('pt-BR')+'</b></div><div><span>Vendas</span><b>'+S.toLocaleString('pt-BR')+'</b></div></div>'
-      + '<div class="ds-pc"><span>% de fechamento</span><b>'+pf1(pc)+'</b></div><small>'+em.length+' clínica'+(em.length === 1 ? '' : 's')+' · '+esc(new Date(DS.ano, DS.mes, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }))+'</small></div>'+lista;
+      + '<div class="ds-pc"><span>% de fechamento</span><b>'+pf1(pc)+'</b></div><small>'+em.length+' clínica'+(em.length === 1 ? '' : 's')+' · '+esc(new Date(DS.ano, DS.mes, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }))+'</small></div>'+tipos+lista;
   }
   document.addEventListener('click', e => {
     const b = e.target.closest && e.target.closest('#ds-lado button'); if (!b) return;
