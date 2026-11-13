@@ -618,6 +618,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.28.1', '2026-11-13', 'Correção: o painel lateral do mapa voltou a aparecer (erro na projeção de vendas introduzido na 1.28.0).'],
     ['1.28.0', '2026-11-13', 'Projeção de vendas passa a contar sábados e a descontar os feriados nacionais. O painel do mapa também mostra a projeção do mês (total, por região, por clínica e por tipo).'],
     ['1.27.0', '2026-11-13', 'Agenda das teles: o card de totais ganha a Projeção de vendas, calculada pelas vendas atuais e pelos dias úteis (seg–sáb, sem feriados nacionais) já trabalhados, projetando até o fim do mês.'],
     ['1.26.0', '2026-11-13', 'Agenda das teles: os cards de filtros e de totais ganham um botão pequeno no canto superior direito para minimizar e dar mais espaço à agenda. Ao abrir a tela, ficam sempre maximizados.'],
@@ -2832,6 +2833,9 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   function ladoDesenhar(){
     const el = $('#ds-lado'); if (!el) return; const f = DS.filtro;
     const em = DS.base.filter(o => !f || f.ids.has(o.c.id)), V = em.reduce((t, o) => t + o.v, 0), S = em.reduce((t, o) => t + o.s, 0), pc = pdPct(V, S);
+    const mi = DS.ano+'-'+String(DS.mes + 1).padStart(2, '0')+'-01', mf = DS.ano+'-'+String(DS.mes + 1).padStart(2, '0')+'-'+String(new Date(DS.ano, DS.mes + 1, 0).getDate()).padStart(2, '0');
+    const pjm = n => { const r = projecao(n, mi, mf, mf); return r.proj; }, pjx = n => { const r = pjm(n); return r === null ? '' : ' · proj. '+r; };
+    const pjT = projecao(S, mi, mf, mf);
     const titulo = !f ? 'Minas Gerais' : f.rotulo, sub = !f ? 'Todas as clínicas' : (f.tipo === 'regiao' ? 'Região em foco' : (f.ids.size === 1 ? 'Clínica em foco' : 'Clínicas selecionadas'));
     const tp = {}; em.forEach(o => Object.keys(o.t || {}).forEach(k => { const x = tp[k] = tp[k] || [0, 0]; x[0] += o.t[k][0]; x[1] += o.t[k][1]; }));
     const ordem = ordemGrupos(), tks = Object.keys(tp).sort((a, b) => { const ia = ordem.indexOf(a), ib = ordem.indexOf(b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b); });
@@ -2845,9 +2849,6 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       const rows = em.slice().sort((a, b) => b.v - a.v);
       lista = '<h3>Clínicas</h3><ul class="ds-li">'+rows.map(o => '<li><button type="button" data-lcli="'+o.c.id+'"><span class="n"><b>'+esc(o.c.sigla)+'</b><small>'+esc(o.c.cidade || o.c.nome)+'</small></span><span class="v">'+o.v+' vis · '+o.s+' ven'+pjx(o.s)+'</span><span class="p">'+pf0(pdPct(o.v, o.s))+'</span></button></li>').join('')+'</ul>';
     }
-    const mi = DS.ano+'-'+String(DS.mes + 1).padStart(2, '0')+'-01', mf = DS.ano+'-'+String(DS.mes + 1).padStart(2, '0')+'-'+String(new Date(DS.ano, DS.mes + 1, 0).getDate()).padStart(2, '0');
-    const pjm = n => { const r = projecao(n, mi, mf, mf); return r.proj; }, pjx = n => { const r = pjm(n); return r === null ? '' : ' · proj. '+r; };
-    const pjT = projecao(S, mi, mf, mf);
     el.innerHTML = '<div class="ds-tot"><span class="eyebrow">'+esc(sub)+'</span><h3 class="ds-tt">'+esc(titulo)+'</h3>'
       + '<div class="ds-tg"><div><span>Visitas</span><b>'+V.toLocaleString('pt-BR')+'</b></div><div><span>Vendas</span><b>'+S.toLocaleString('pt-BR')+'</b></div></div>'
       + (pjT.proj === null ? '' : '<div class="ds-pc"><span>Projeção de vendas no mês</span><b>'+pjT.proj.toLocaleString('pt-BR')+'</b><small>'+pjT.dec+' de '+pjT.tot+' dias úteis</small></div>')
