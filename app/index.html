@@ -261,7 +261,7 @@ li:first-child>.ag-i{border-top:0}
   };
   const guarda = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k, v){ try { localStorage.setItem(k, v); } catch(e){} } };
 
-  const VERSAO = '2026-11-13 · Tele BH confirma';
+  const VERSAO = '2026-11-13 · remarcar volta p/ agendado';
   if ('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => { reg.update(); }).catch(() => {});
     let recarregou = false;
@@ -345,7 +345,7 @@ li:first-child>.ag-i{border-top:0}
   /* ---------- início: números do mês e funções ---------- */
   const ehGestao = () => !!eu && (eu.papel === 'gestor' || eu.papel === 'assistente');
   const rotCargo = u => [u.cargo].concat(u.cargos_extra || []).filter(Boolean).join(' + ');
-  const souBH = () => !!eu && eu.papel === 'promotor' && [eu.cargo].concat(eu.cargos_extra || []).includes('Tele BH');   // Tele BH marca, remarca e só pode mudar o status para Confirmado (sem desfazer); o resultado é da clínica
+  const souBH = () => !!eu && eu.papel === 'promotor' && [eu.cargo].concat(eu.cargos_extra || []).includes('Tele BH');   // Tele BH marca, remarca e só pode mudar o status para Confirmado (sem desfazer; remarcar volta para Agendado); o resultado é da clínica
   const fotoObrig = () => !!eu;   // todos só entram no app depois de colocar a foto (tirada na hora ou da galeria)
   const ehTele = () => !!eu && eu.papel === 'promotor' && [eu.cargo].concat(eu.cargos_extra || []).some(g => g === 'Tele BH' || g === 'Tele interno');
   const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
@@ -570,7 +570,7 @@ li:first-child>.ag-i{border-top:0}
       + (podeConf ? (g.status === 'confirmado'
           ? '<button type="button" class="link" id="e-desconf" style="justify-self:start">Desfazer confirmação</button>'
           : '<button type="button" class="btn verde block" id="e-conf">Confirmado</button>')
-        : (souBH() && g.status === 'confirmado' ? '<p class="meta"><b>Confirmado.</b> Para mudar, remarque o agendamento.</p>' : ''))
+        : (souBH() && g.status === 'confirmado' ? '<p class="meta"><b>Confirmado.</b> Ao remarcar, volta para Agendado.</p>' : ''))
       + resultadoHtml(g)
       + '<div class="form"><div class="g2"><label class="field" for="e-data">Data<input id="e-data" type="date"'+(RETRO ? '' : ' min="'+hoje()+'"')+' value="'+esc(g.data_agendamento)+'"'+(editavel ? '' : ' disabled')+'></label>'
       + '<label class="field" for="e-hora">Horário<select id="e-hora"'+(editavel ? '' : ' disabled')+'>'+opHoras(hh(g.hora), g.data_agendamento)+'</select></label></div>'
@@ -599,9 +599,15 @@ li:first-child>.ag-i{border-top:0}
       const d = $('#e-data', ov).value, h = $('#e-hora', ov).value;
       if (!d || passado(d)) return erro('A data do agendamento não pode ser anterior a hoje.');
       if (!h) return erro(horasDia(d).length ? 'Escolha o horário.' : 'Não há atendimento aos domingos.');
-      salvar.disabled = true; const r = await sb.rpc('alterar_agendamento', { p_id: id, p_data: d, p_hora: h }); salvar.disabled = false;
-      if (r.error) return erro(msgErro(r.error));
-      toast('Agendamento alterado.'); AGP.sel = d; AGP.ano = Number(d.slice(0, 4)); AGP.mes = Number(d.slice(5, 7)) - 1; refaz();
+      const remarcou = d !== g.data_agendamento || h !== hh(g.hora), voltaAgendado = remarcou && g.status === 'confirmado';   // remarcar desfaz a confirmação: o novo horário precisa ser confirmado de novo
+      salvar.disabled = true; const r = await sb.rpc('alterar_agendamento', { p_id: id, p_data: d, p_hora: h });
+      if (r.error){ salvar.disabled = false; return erro(msgErro(r.error)); }
+      if (voltaAgendado){
+        const c = await sb.rpc('confirmar_agendamento', { p_id: id, p_confirmar: false });
+        if (c.error){ salvar.disabled = false; return erro('Data alterada, mas não foi possível voltar para Agendado: '+msgErro(c.error)); }
+      }
+      salvar.disabled = false;
+      toast(voltaAgendado ? 'Agendamento remarcado. Voltou para Agendado.' : 'Agendamento alterado.'); AGP.sel = d; AGP.ano = Number(d.slice(0, 4)); AGP.mes = Number(d.slice(5, 7)) - 1; refaz();
     });
     $('#e-img', ov).addEventListener('change', async e => {
       const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return; erro('');
