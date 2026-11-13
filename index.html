@@ -300,7 +300,22 @@ table.pd tr.tot td{font-weight:700}
 .nuv-dias .dia small{font-size:10px;color:var(--muted)}.nuv-dias .dia em{font-style:normal;font-size:10px;font-weight:700}
 .nuv-tw{overflow:auto;max-height:560px}
 .nuv-tw th{position:sticky;top:0;background:var(--surface);cursor:pointer;user-select:none}
-.nuv-tw td,.nuv-tw th{white-space:nowrap;padding:5px 10px}
+.nuv-tw{border:1px solid var(--line);border-radius:10px}
+.nuv-tw table{margin:0;font-size:12.5px}
+.nuv-tw table.tab td,.nuv-tw table.tab th{white-space:nowrap;padding:3px 8px;line-height:1.3}
+.nuv-tw td.n,.nuv-tw th.n{text-align:right;font-variant-numeric:tabular-nums}
+.nuv-tw tbody tr:hover td{background:rgba(127,127,127,.12)}
+.nuv-tw .th{display:inline-flex;align-items:center;gap:4px}
+.nuv-tw .fx{border:0;background:transparent;color:var(--muted);cursor:pointer;padding:2px 3px;border-radius:5px;line-height:0}
+.nuv-tw .fx:hover{background:rgba(127,127,127,.18)}.nuv-tw .fx.on{color:var(--accent);background:var(--accent-soft)}
+.nuv-tw tfoot td{position:sticky;bottom:0;background:var(--surface);font-weight:700;border-top:1px solid var(--line)}
+.nuv-pop{position:fixed;z-index:60;width:260px;max-width:calc(100vw - 16px);background:var(--surface);color:var(--ink);border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.28);padding:10px;display:grid;gap:8px}
+.nuv-pop input[type=search]{width:100%}
+.nuv-pa{display:flex;justify-content:space-between}
+.nuv-pl{max-height:220px;overflow:auto;display:grid;gap:2px}
+.nuv-pl label{display:flex;gap:8px;align-items:center;font-size:13px;padding:2px 4px;border-radius:6px;cursor:pointer}
+.nuv-pl label:hover{background:var(--surface-2)}
+.nuv-pf{display:flex;justify-content:flex-end;gap:8px}
 
 .ag-sm{padding:8px 14px}
 .ag-sm{position:relative}
@@ -633,6 +648,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.31.0', '2026-11-13', 'Assinaturas NUV no grid padrão: funil de filtro em cada coluna (com busca e marcar todos), linhas baixas, cabeçalho fixo e rodapé com os totais.'],
     ['1.30.0', '2026-11-13', 'Relatório NUV ganha a aba Assinaturas: tabela com filtros de período, clínica e busca, contadores por clínica e por dia. O gestor carrega o CSV exportado do relatório; cada gerente vê só as assinaturas da própria clínica (pelo voucher).'],
     ['1.29.0', '2026-11-13', 'Relatório NUV por clínica: cada clínica ganha o seu link (Cadastros › Clínicas) e a gerente vê o relatório da própria clínica. O relatório geral fica só para o gestor.'],
     ['1.28.1', '2026-11-13', 'Correção: o painel lateral do mapa voltou a aparecer (erro na projeção de vendas introduzido na 1.28.0).'],
@@ -2916,7 +2932,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   /* ---------- relatório externo (Looker Studio) dentro do painel ---------- */
   const LOOKER_LINK = 'https://datastudio.google.com/reporting/51710f3a-35d4-49ec-9c0f-37022a0c752c/page/p_td0t1ca4id';
   const lookerEmbed = u => u.replace(/^https:\/\/(datastudio|lookerstudio)\.google\.com\/reporting\//, 'https://lookerstudio.google.com/embed/reporting/');
-  const NUV = { aba: 'rel', dados: null, ord: { k: 'data', d: -1 }, cli: '', q: '', de: '', ate: '', tk: 0 };
+  const NUV = { aba: 'rel', f: {}, dados: null, ord: { k: 'data', d: -1 }, cli: '', q: '', de: '', ate: '', tk: 0 };
   function externoRelatorio(ops, box){
     if (!ops.length){
       box.innerHTML = '<div class="card"><h2 style="margin:0">Relatório NUV</h2><p class="sub">'+(eu.papel === 'gerente' || modoVisao === 'gerente' ? 'O relatório da sua clínica ainda não foi cadastrado. Fale com o gestor.' : 'Nenhuma clínica tem link cadastrado ainda. Cadastre em Cadastros › Clínicas.')+'</p></div>'; return;
@@ -2936,7 +2952,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const geral = eu.papel === 'gestor' && modoVisao !== 'gerente';
     const ops = (geral ? [{ rot: 'Geral · todas as clínicas', link: LOOKER_LINK }] : [])
       .concat((r.data || []).filter(c => c.ativa !== false && c.link_nuv).map(c => ({ rot: c.sigla+' · '+c.nome, link: c.link_nuv })));
-    NUV.aba = 'rel'; NUV.dados = null; NUV.cli = ''; NUV.q = ''; NUV.de = ''; NUV.ate = '';
+    NUV.aba = 'rel'; NUV.f = {}; NUV.dados = null; NUV.q = ''; NUV.de = ''; NUV.ate = '';
     $('#area').innerHTML = '<div class="full"><div class="seg nuv-abas" role="tablist" aria-label="Relatório NUV"><button type="button" role="tab" data-nab="rel">Relatório</button><button type="button" role="tab" data-nab="ass">Assinaturas</button></div></div><div class="full" id="nuv-corpo"></div>';
     const mostra = a => {
       NUV.aba = a; $$('[data-nab]').forEach(b => { b.setAttribute('aria-pressed', b.dataset.nab === a); b.setAttribute('aria-selected', b.dataset.nab === a); });
@@ -2988,9 +3004,33 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     }
     return { dados: tudo };
   }
+  const nuvVal = (r, c) => c === 'data_assinatura' ? (r.data_assinatura ? dBR(r.data_assinatura) : '—') : (c === 'envelope' && String(r.envelope).startsWith('sem-envelope') ? '—' : (r[c] == null || r[c] === '' ? '—' : String(r[c])));
+  const NUV_FUNIL = '<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M3 4h18l-7 8.5V20l-4-2v-5.5z"/></svg>';
+  function nuvPopFecha(){ const o = $('#nuv-pop'); if (o) o.remove(); document.removeEventListener('mousedown', nuvPopFora, true); }
+  function nuvPopFora(e){ const o = $('#nuv-pop'); if (o && !o.contains(e.target) && !e.target.closest('[data-nf]')) nuvPopFecha(); }
+  function nuvPop(col, btn){
+    nuvPopFecha(); const N = NUV;
+    const vals = [...new Set((N.dados || []).map(r => nuvVal(r, col)))].sort((a, b) => a.localeCompare(b, 'pt-BR', { numeric: true }));
+    const sel = N.f[col] ? new Set(N.f[col]) : new Set(vals);
+    const o = document.createElement('div'); o.id = 'nuv-pop'; o.className = 'nuv-pop'; o.setAttribute('role', 'dialog'); o.setAttribute('aria-label', 'Filtrar coluna');
+    o.innerHTML = '<input type="search" id="nuv-pq" placeholder="Buscar valor" aria-label="Buscar valor"><div class="nuv-pa"><button type="button" class="link" id="nuv-pt">Marcar todos</button><button type="button" class="link" id="nuv-pn">Limpar</button></div><div class="nuv-pl" id="nuv-pl"></div><div class="nuv-pf"><button type="button" class="btn ghost sm" id="nuv-pc">Cancelar</button><button type="button" class="btn sm" id="nuv-po">Aplicar</button></div>';
+    document.body.appendChild(o);
+    const lista = () => { const t = $('#nuv-pq').value.trim().toLowerCase(); $('#nuv-pl').innerHTML = vals.filter(v => !t || v.toLowerCase().includes(t)).map(v => '<label><input type="checkbox" value="'+esc(v)+'"'+(sel.has(v) ? ' checked' : '')+'><span>'+esc(v)+'</span></label>').join('') || '<p class="sub" style="margin:6px">Nenhum valor.</p>'; };
+    lista();
+    $('#nuv-pq').addEventListener('input', lista);
+    $('#nuv-pl').addEventListener('change', e => { const c = e.target; if (c.type === 'checkbox'){ if (c.checked) sel.add(c.value); else sel.delete(c.value); } });
+    $('#nuv-pt').addEventListener('click', () => { vals.forEach(v => sel.add(v)); lista(); });
+    $('#nuv-pn').addEventListener('click', () => { sel.clear(); lista(); });
+    $('#nuv-pc').addEventListener('click', nuvPopFecha);
+    $('#nuv-po').addEventListener('click', () => { N.f[col] = sel.size === vals.length ? null : sel; nuvPopFecha(); nuvDesenha(); });
+    const r = btn.getBoundingClientRect(), w = o.offsetWidth, h = o.offsetHeight;
+    o.style.left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8))+'px';
+    o.style.top = Math.max(8, Math.min(r.bottom + 4, window.innerHeight - h - 8))+'px';
+    document.addEventListener('mousedown', nuvPopFora, true); $('#nuv-pq').focus();
+  }
   function nuvFiltrado(){
     const N = NUV, q = N.q.trim().toLowerCase(), k = N.ord.k;
-    const l = (N.dados || []).filter(r => (!N.de || (r.data_assinatura && r.data_assinatura >= N.de)) && (!N.ate || (r.data_assinatura && r.data_assinatura <= N.ate)) && (!N.cli || r.sigla === N.cli) && (!q || (r.nome+' '+r.uc+' '+r.envelope).toLowerCase().includes(q)));
+    const l = (N.dados || []).filter(r => (!N.de || (r.data_assinatura && r.data_assinatura >= N.de)) && (!N.ate || (r.data_assinatura && r.data_assinatura <= N.ate)) && (!q || (r.nome+' '+r.uc+' '+r.envelope).toLowerCase().includes(q)) && Object.keys(N.f).every(c => !N.f[c] || N.f[c].has(nuvVal(r, c))));
     l.sort((x, y) => { const a = x[k] == null ? '' : x[k], b = y[k] == null ? '' : y[k]; return (a > b ? 1 : a < b ? -1 : 0) * N.ord.d; });
     return l;
   }
@@ -2998,13 +3038,16 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const N = NUV, l = nuvFiltrado(), por = {}, dd = {};
     l.forEach(r => { por[r.sigla] = (por[r.sigla] || 0) + 1; if (r.data_assinatura) dd[r.data_assinatura] = (dd[r.data_assinatura] || 0) + 1; });
     const cs = Object.keys(por).sort((a, b) => por[b] - por[a]), dk = Object.keys(dd).sort(), mx = Math.max(1, ...dk.map(k => dd[k]));
-    $('#nuv-kp').innerHTML = '<div><span>Total no filtro</span><b>'+l.length+'</b></div>'+cs.map(c => '<div class="'+(N.cli === c ? 'on' : '')+'"><button type="button" data-ncli="'+esc(c)+'"><span>'+esc(c)+'</span><b>'+por[c]+'</b></button></div>').join('');
+    $('#nuv-kp').innerHTML = '<div><span>Total no filtro</span><b>'+l.length+'</b></div>'+cs.map(c => '<div class="'+(N.f.sigla && N.f.sigla.size === 1 && N.f.sigla.has(c) ? 'on' : '')+'"><button type="button" data-ncli="'+esc(c)+'"><span>'+esc(c)+'</span><b>'+por[c]+'</b></button></div>').join('');
     $('#nuv-dias').innerHTML = dk.length ? dk.map(k => '<div class="dia" title="'+dBR(k)+': '+dd[k]+'"><em>'+dd[k]+'</em><i style="height:'+Math.max(4, Math.round(dd[k] / mx * 54))+'px"></i><small>'+k.slice(8)+'/'+k.slice(5, 7)+'</small></div>').join('') : '<span class="sub">Sem datas no filtro.</span>';
     const cols = [['nome', 'Cliente'], ['uc', 'N° UC'], ['envelope', 'Envelope Docusign'], ['sigla', 'Clínica'], ['data_assinatura', 'Assinatura']];
-    $('#nuv-th').innerHTML = '<th class="n">#</th>'+cols.map(c => '<th data-nk="'+c[0]+'">'+c[1]+(N.ord.k === c[0] ? (N.ord.d > 0 ? ' ▲' : ' ▼') : '')+'</th>').join('');
+    $('#nuv-th').innerHTML = '<th class="n">#</th>'+cols.map(c => '<th><span class="th"><span data-nk="'+c[0]+'" class="nk">'+c[1]+(N.ord.k === c[0] ? (N.ord.d > 0 ? ' ▲' : ' ▼') : '')+'</span><button type="button" class="fx'+(N.f[c[0]] ? ' on' : '')+'" data-nf="'+c[0]+'" aria-label="Filtrar '+c[1]+'" aria-haspopup="dialog">'+NUV_FUNIL+'</button></span></th>').join('');
     $('#nuv-tb').innerHTML = l.length ? l.map((r, i) => '<tr><td class="n">'+(i + 1)+'</td><td><b>'+esc(r.nome)+'</b></td><td>'+esc(r.uc)+'</td><td class="mut">'+esc(String(r.envelope).startsWith('sem-envelope') ? '' : r.envelope)+'</td><td><span class="chip">'+esc(r.sigla)+'</span></td><td>'+(r.data_assinatura ? dBR(r.data_assinatura) : '—')+'</td></tr>').join('')
       : '<tr><td colspan="6" class="empty">'+((N.dados || []).length ? 'Nenhuma assinatura com esses filtros.' : 'Ainda não há assinaturas carregadas.')+'</td></tr>';
-    $('#nuv-rod').textContent = l.length+' de '+(N.dados || []).length+' assinaturas.'; N.vis = l;
+    const bc = $('#nuv-cli'); if (bc){ const sg = N.f.sigla ? [...N.f.sigla].sort() : []; bc.textContent = !N.f.sigla ? 'Todas' : (sg.length ? (sg.length > 3 ? sg.length+' clínicas' : sg.join(', ')) : 'Nenhuma'); bc.classList.toggle('on', !!N.f.sigla); }
+    const filtrando = Object.keys(N.f).some(c => N.f[c]) || N.q || N.de || N.ate;
+    $('#nuv-tf').innerHTML = '<td colspan="6">Totais · '+l.length+(l.length === 1 ? ' linha' : ' linhas')+(filtrando ? ' de '+(N.dados || []).length : '')+'</td>';
+    $('#nuv-rod').textContent = ''; N.vis = l;
   }
   async function nuvAssinaturas(){
     const box = $('#nuv-corpo'), N = NUV, tk = ++N.tk, gestor = eu.papel === 'gestor' && modoVisao !== 'gerente';
@@ -3012,23 +3055,22 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const r = await nuvLer(); if (tk !== N.tk || N.aba !== 'ass') return;
     if (r.erro){ box.innerHTML = '<div class="card"><div class="err">'+esc(msgErro(r.erro))+'</div></div>'; return; }
     N.dados = r.dados;
-    const siglas = [...new Set(N.dados.map(x => x.sigla))].sort();
-    box.innerHTML = '<div class="card ag-sm"><div class="vr-bar">'
+        box.innerHTML = '<div class="card ag-sm"><div class="vr-bar">'
       + '<label class="field" for="nuv-de">Assinatura de<input id="nuv-de" type="date" value="'+esc(N.de)+'"></label>'
       + '<label class="field" for="nuv-ate">até<input id="nuv-ate" type="date" value="'+esc(N.ate)+'"></label>'
-      + '<label class="field" for="nuv-cli">Clínica<select id="nuv-cli"><option value="">Todas</option>'+siglas.map(s => '<option value="'+esc(s)+'"'+(s === N.cli ? ' selected' : '')+'>'+esc(s)+'</option>').join('')+'</select></label>'
+      + '<div class="field"><span>Clínicas</span><button type="button" class="btn ghost" id="nuv-cli" aria-haspopup="dialog"></button></div>'
       + '<label class="field" for="nuv-q">Buscar<input id="nuv-q" type="search" placeholder="Nome, UC ou envelope" value="'+esc(N.q)+'"></label>'
       + '<button type="button" class="btn ghost" id="nuv-lim">Limpar</button>'
       + (gestor ? '<button type="button" class="btn" id="nuv-csv">Carregar CSV</button><input id="nuv-arq" type="file" accept=".csv,text/csv,text/plain" hidden>' : '')
       + '<button type="button" class="btn ghost" id="nuv-cop">Copiar tabela</button></div><div class="err" id="nuv-err" role="alert"></div></div>'
       + '<div class="card"><div class="nuv-kp" id="nuv-kp"></div></div>'
       + '<div class="card"><h2 style="margin:0 0 8px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)">Assinaturas por dia</h2><div class="nuv-dias" id="nuv-dias"></div></div>'
-      + '<div class="card"><div class="nuv-tw"><table class="tab"><thead><tr id="nuv-th"></tr></thead><tbody id="nuv-tb"></tbody></table></div><p class="sub" id="nuv-rod" style="margin:8px 0 0"></p></div>';
-    const redesenha = () => { N.de = $('#nuv-de').value; N.ate = $('#nuv-ate').value; N.cli = $('#nuv-cli').value; N.q = $('#nuv-q').value; nuvDesenha(); };
-    ['nuv-de', 'nuv-ate', 'nuv-q'].forEach(i => $('#'+i).addEventListener('input', redesenha)); $('#nuv-cli').addEventListener('change', redesenha);
-    $('#nuv-lim').addEventListener('click', () => { N.de = N.ate = N.cli = N.q = ''; $('#nuv-de').value = $('#nuv-ate').value = $('#nuv-q').value = ''; $('#nuv-cli').value = ''; nuvDesenha(); });
-    $('#nuv-kp').addEventListener('click', e => { const b = e.target.closest('[data-ncli]'); if (!b) return; N.cli = N.cli === b.dataset.ncli ? '' : b.dataset.ncli; $('#nuv-cli').value = N.cli; nuvDesenha(); });
-    $('#nuv-th').addEventListener('click', e => { const t = e.target.closest('[data-nk]'); if (!t) return; const k = t.dataset.nk; N.ord = N.ord.k === k ? { k, d: -N.ord.d } : { k, d: 1 }; nuvDesenha(); });
+      + '<div class="card"><div class="nuv-tw"><table class="tab"><thead><tr id="nuv-th"></tr></thead><tbody id="nuv-tb"></tbody><tfoot><tr id="nuv-tf"></tr></tfoot></table></div><p class="sub" id="nuv-rod" style="margin:0"></p></div>';
+    const redesenha = () => { N.de = $('#nuv-de').value; N.ate = $('#nuv-ate').value; N.q = $('#nuv-q').value; nuvDesenha(); };
+    ['nuv-de', 'nuv-ate', 'nuv-q'].forEach(i => $('#'+i).addEventListener('input', redesenha)); $('#nuv-cli').addEventListener('click', () => nuvPop('sigla', $('#nuv-cli')));
+    $('#nuv-lim').addEventListener('click', () => { N.de = N.ate = N.q = ''; N.f = {}; $('#nuv-de').value = $('#nuv-ate').value = $('#nuv-q').value = ''; nuvDesenha(); });
+    $('#nuv-kp').addEventListener('click', e => { const b = e.target.closest('[data-ncli]'); if (!b) return; const c = b.dataset.ncli; N.f.sigla = N.f.sigla && N.f.sigla.size === 1 && N.f.sigla.has(c) ? null : new Set([c]); nuvDesenha(); });
+    $('#nuv-th').addEventListener('click', e => { const f = e.target.closest('[data-nf]'); if (f){ nuvPop(f.dataset.nf, f); return; } const t = e.target.closest('[data-nk]'); if (!t) return; const k = t.dataset.nk; N.ord = N.ord.k === k ? { k, d: -N.ord.d } : { k, d: 1 }; nuvDesenha(); });
     $('#nuv-cop').addEventListener('click', async () => {
       const t = ['Cliente', 'N° UC', 'Envelope', 'Clínica', 'Assinatura'].join('\t')+'\n'+(N.vis || []).map(r => [r.nome, r.uc, r.envelope, r.sigla, r.data_assinatura ? dBR(r.data_assinatura) : ''].join('\t')).join('\n');
       try { await navigator.clipboard.writeText(t); toast('Tabela copiada.'); } catch (x) { toast('Não consegui copiar neste navegador.'); }
