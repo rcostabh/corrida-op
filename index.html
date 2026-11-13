@@ -287,6 +287,21 @@ table.pd tr.tot td{font-weight:700}
 .ag-mc i.mais{--c:var(--muted);background:transparent;border-left:0;color:var(--muted)}
 @media (max-width:760px){.ag-nav{order:3;flex-basis:100%}.ag-md,.ag-mv{min-height:70px}.ag-mc i{font-size:10px}}
 @media (prefers-reduced-motion:reduce){.ag-palco.entrando,.ag-palco.entrando .ag-c,.ag-palco.entrando .ag-md{animation:none}.ag-palco.saindo,.ag-top,.ag-resumo,.topo,.side,.principal{transition:none}}
+.nuv-abas{margin-bottom:14px}
+.nuv-kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.nuv-kp div{background:var(--accent-soft);border-radius:12px;padding:10px 12px}
+.nuv-kp div.on{outline:2px solid var(--accent)}
+.nuv-kp button{all:unset;cursor:pointer;display:block;width:100%}
+.nuv-kp span{display:block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.nuv-kp b{display:block;font-size:26px;line-height:1.15;font-variant-numeric:tabular-nums}
+.nuv-dias{display:flex;gap:4px;align-items:flex-end;height:90px;overflow-x:auto}
+.nuv-dias .dia{flex:0 0 22px;display:grid;gap:3px;justify-items:center;align-content:end;height:100%}
+.nuv-dias .dia i{display:block;width:100%;background:var(--accent);border-radius:4px 4px 0 0;min-height:2px}
+.nuv-dias .dia small{font-size:10px;color:var(--muted)}.nuv-dias .dia em{font-style:normal;font-size:10px;font-weight:700}
+.nuv-tw{overflow:auto;max-height:560px}
+.nuv-tw th{position:sticky;top:0;background:var(--surface);cursor:pointer;user-select:none}
+.nuv-tw td,.nuv-tw th{white-space:nowrap;padding:5px 10px}
+
 .ag-sm{padding:8px 14px}
 .ag-sm{position:relative}
 .ag-min{position:absolute;z-index:2;top:5px;right:6px;width:22px;height:22px;display:grid;place-items:center;border:0;border-radius:6px;background:transparent;color:var(--muted);cursor:pointer;padding:0}
@@ -618,6 +633,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.30.0', '2026-11-13', 'Relatório NUV ganha a aba Assinaturas: tabela com filtros de período, clínica e busca, contadores por clínica e por dia. O gestor carrega o CSV exportado do relatório; cada gerente vê só as assinaturas da própria clínica (pelo voucher).'],
     ['1.29.0', '2026-11-13', 'Relatório NUV por clínica: cada clínica ganha o seu link (Cadastros › Clínicas) e a gerente vê o relatório da própria clínica. O relatório geral fica só para o gestor.'],
     ['1.28.1', '2026-11-13', 'Correção: o painel lateral do mapa voltou a aparecer (erro na projeção de vendas introduzido na 1.28.0).'],
     ['1.28.0', '2026-11-13', 'Projeção de vendas passa a contar sábados e a descontar os feriados nacionais. O painel do mapa também mostra a projeção do mês (total, por região, por clínica e por tipo).'],
@@ -2900,6 +2916,18 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   /* ---------- relatório externo (Looker Studio) dentro do painel ---------- */
   const LOOKER_LINK = 'https://datastudio.google.com/reporting/51710f3a-35d4-49ec-9c0f-37022a0c752c/page/p_td0t1ca4id';
   const lookerEmbed = u => u.replace(/^https:\/\/(datastudio|lookerstudio)\.google\.com\/reporting\//, 'https://lookerstudio.google.com/embed/reporting/');
+  const NUV = { aba: 'rel', dados: null, ord: { k: 'data', d: -1 }, cli: '', q: '', de: '', ate: '', tk: 0 };
+  function externoRelatorio(ops, box){
+    if (!ops.length){
+      box.innerHTML = '<div class="card"><h2 style="margin:0">Relatório NUV</h2><p class="sub">'+(eu.papel === 'gerente' || modoVisao === 'gerente' ? 'O relatório da sua clínica ainda não foi cadastrado. Fale com o gestor.' : 'Nenhuma clínica tem link cadastrado ainda. Cadastre em Cadastros › Clínicas.')+'</p></div>'; return;
+    }
+    box.innerHTML = '<div class="card" style="padding:14px 16px"><div class="pd-bar"><div><h2 style="margin:0">Relatório NUV</h2><p class="sub" style="margin:2px 0 0">Relatório do Looker Studio, aberto aqui dentro. Precisa estar com o login do Google que tem acesso a ele.</p></div>'
+      + '<div class="grp">'+(ops.length > 1 ? '<select id="ext-sel" aria-label="Relatório">'+ops.map((o, i) => '<option value="'+i+'">'+esc(o.rot)+'</option>').join('')+'</select>' : '<span class="chip">'+esc(ops[0].rot)+'</span>')
+      + '<a class="btn ghost sm" id="ext-abre" href="'+esc(ops[0].link)+'" target="_blank" rel="noopener">Abrir em outra aba</a></div></div>'
+      + '<div class="ds-ext"><iframe id="ext-frame" title="Relatório NUV" src="'+esc(lookerEmbed(ops[0].link))+'" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>'
+      + '<p class="sub" style="margin:10px 0 0">Se a área acima aparecer em branco ou pedir login, abra em outra aba. Para aparecer aqui, no Looker Studio use <b>Compartilhar › Incorporar relatório › Ativar incorporação</b>.</p></div>';
+    if ($('#ext-sel')) $('#ext-sel').addEventListener('change', e => { const o = ops[Number(e.target.value)]; $('#ext-frame').src = lookerEmbed(o.link); $('#ext-abre').href = o.link; });
+  }
   async function externoCarregar(){
     marcarMenu(); $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
     $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
@@ -2908,18 +2936,117 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const geral = eu.papel === 'gestor' && modoVisao !== 'gerente';
     const ops = (geral ? [{ rot: 'Geral · todas as clínicas', link: LOOKER_LINK }] : [])
       .concat((r.data || []).filter(c => c.ativa !== false && c.link_nuv).map(c => ({ rot: c.sigla+' · '+c.nome, link: c.link_nuv })));
-    if (!ops.length){
-      $('#area').innerHTML = '<div class="card"><h2 style="margin:0">Relatório NUV</h2><p class="sub">'+(eu.papel === 'gerente' || modoVisao === 'gerente' ? 'O relatório da sua clínica ainda não foi cadastrado. Fale com o gestor.' : 'Nenhuma clínica tem link cadastrado ainda. Cadastre em Cadastros › Clínicas.')+'</p></div>'; return;
-    }
-    const pinta = i => {
-      const o = ops[i]; $('#ext-frame').src = lookerEmbed(o.link); $('#ext-abre').href = o.link;
+    NUV.aba = 'rel'; NUV.dados = null; NUV.cli = ''; NUV.q = ''; NUV.de = ''; NUV.ate = '';
+    $('#area').innerHTML = '<div class="full"><div class="seg nuv-abas" role="tablist" aria-label="Relatório NUV"><button type="button" role="tab" data-nab="rel">Relatório</button><button type="button" role="tab" data-nab="ass">Assinaturas</button></div></div><div class="full" id="nuv-corpo"></div>';
+    const mostra = a => {
+      NUV.aba = a; $$('[data-nab]').forEach(b => { b.setAttribute('aria-pressed', b.dataset.nab === a); b.setAttribute('aria-selected', b.dataset.nab === a); });
+      if (a === 'rel') externoRelatorio(ops, $('#nuv-corpo')); else nuvAssinaturas();
     };
-    $('#area').innerHTML = '<div class="card" style="padding:14px 16px"><div class="pd-bar"><div><h2 style="margin:0">Relatório NUV</h2><p class="sub" style="margin:2px 0 0">Relatório do Looker Studio, aberto aqui dentro. Precisa estar com o login do Google que tem acesso a ele.</p></div>'
-      + '<div class="grp">'+(ops.length > 1 ? '<select id="ext-sel" aria-label="Relatório">'+ops.map((o, i) => '<option value="'+i+'">'+esc(o.rot)+'</option>').join('')+'</select>' : '<span class="chip">'+esc(ops[0].rot)+'</span>')
-      + '<a class="btn ghost sm" id="ext-abre" href="'+esc(ops[0].link)+'" target="_blank" rel="noopener">Abrir em outra aba</a></div></div>'
-      + '<div class="ds-ext"><iframe id="ext-frame" title="Relatório NUV" src="'+esc(lookerEmbed(ops[0].link))+'" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>'
-      + '<p class="sub" style="margin:10px 0 0">Se a área acima aparecer em branco ou pedir login, abra em outra aba. Para aparecer aqui, no Looker Studio use <b>Compartilhar › Incorporar relatório › Ativar incorporação</b>.</p></div>';
-    if ($('#ext-sel')) $('#ext-sel').addEventListener('change', e => pinta(Number(e.target.value)));
+    $$('[data-nab]').forEach(b => b.addEventListener('click', () => mostra(b.dataset.nab)));
+    mostra('rel');
+  }
+
+  /* ---------- Assinaturas NUV (tabela própria, vinda do CSV do relatório) ---------- */
+  const nuvSigla = v => String(v || '').toUpperCase().replace(/NUV$/, '').trim() || '—';
+  const NUV_MES = { jan: 0, fev: 1, mar: 2, abr: 3, mai: 4, jun: 5, jul: 6, ago: 7, set: 8, out: 9, nov: 10, dez: 11 };
+  function nuvData(t){
+    t = String(t || '').trim(); let m;
+    if ((m = /^(\d{4})-(\d{2})-(\d{2})/.exec(t))) return m[1]+'-'+m[2]+'-'+m[3];
+    if ((m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(t))) return m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2);
+    if ((m = /^(\d{1,2})\s+de\s+([a-zç]{3})[a-z.]*\s+de\s+(\d{4})/i.exec(t))){ const k = NUV_MES[m[2].toLowerCase()]; if (k != null) return m[3]+'-'+('0'+(k + 1)).slice(-2)+'-'+('0'+m[1]).slice(-2); }
+    return null;
+  }
+  function nuvCsv(txt){
+    const lin1 = txt.split('\n')[0], sep = (lin1.match(/;/g) || []).length > (lin1.match(/,/g) || []).length ? ';' : ',';
+    const rows = []; let row = [], cur = '', q = false;
+    for (let i = 0; i < txt.length; i++){ const c = txt[i];
+      if (q){ if (c === '"'){ if (txt[i + 1] === '"'){ cur += '"'; i++; } else q = false; } else cur += c; }
+      else if (c === '"') q = true; else if (c === sep){ row.push(cur); cur = ''; }
+      else if (c === '\n' || c === '\r'){ if (c === '\r' && txt[i + 1] === '\n') i++; row.push(cur); cur = ''; if (row.length > 1 || row[0] !== '') rows.push(row); row = []; }
+      else cur += c; }
+    row.push(cur); if (row.length > 1 || row[0] !== '') rows.push(row); return rows;
+  }
+  const nuvNorm = s => String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '');
+  function nuvLinhas(txt){
+    const rs = nuvCsv(txt.replace(/^﻿/, '')); if (rs.length < 2) return { erro: 'O arquivo está vazio.' };
+    const h = rs[0].map(nuvNorm), ix = nomes => h.findIndex(x => nomes.includes(x));
+    const a = { nome: ix(['fullname', 'nome', 'cliente']), uc: ix(['nuc', 'uc', 'numerouc']), env: ix(['envelopedocusign', 'envelope']), v: ix(['voucher']), d: ix(['dataassinatura', 'assinatura', 'data']) };
+    if (a.nome < 0 || a.v < 0 || a.d < 0) return { erro: 'Não achei as colunas fullName, voucher e data_assinatura no cabeçalho do CSV.' };
+    const mapa = {};
+    rs.slice(1).forEach(r => {
+      const nome = (r[a.nome] || '').trim(), voucher = (r[a.v] || '').trim(), uc = a.uc >= 0 ? (r[a.uc] || '').trim() : '', d = nuvData(r[a.d]);
+      if (!nome && !voucher) return;
+      const env = (a.env >= 0 ? (r[a.env] || '').trim() : '') || ('sem-envelope-'+uc+'-'+(d || ''));
+      mapa[env] = { nome, uc, envelope: env, voucher, sigla: nuvSigla(voucher), data_assinatura: d };
+    });
+    return { linhas: Object.values(mapa) };
+  }
+  async function nuvLer(){
+    const tudo = []; for (let i = 0; ; i += 1000){
+      const r = await sb.from('assinaturas_nuv').select('nome,uc,envelope,voucher,sigla,data_assinatura').order('data_assinatura', { ascending: false }).range(i, i + 999);
+      if (r.error) return { erro: r.error }; tudo.push(...(r.data || [])); if ((r.data || []).length < 1000) break;
+    }
+    return { dados: tudo };
+  }
+  function nuvFiltrado(){
+    const N = NUV, q = N.q.trim().toLowerCase(), k = N.ord.k;
+    const l = (N.dados || []).filter(r => (!N.de || (r.data_assinatura && r.data_assinatura >= N.de)) && (!N.ate || (r.data_assinatura && r.data_assinatura <= N.ate)) && (!N.cli || r.sigla === N.cli) && (!q || (r.nome+' '+r.uc+' '+r.envelope).toLowerCase().includes(q)));
+    l.sort((x, y) => { const a = x[k] == null ? '' : x[k], b = y[k] == null ? '' : y[k]; return (a > b ? 1 : a < b ? -1 : 0) * N.ord.d; });
+    return l;
+  }
+  function nuvDesenha(){
+    const N = NUV, l = nuvFiltrado(), por = {}, dd = {};
+    l.forEach(r => { por[r.sigla] = (por[r.sigla] || 0) + 1; if (r.data_assinatura) dd[r.data_assinatura] = (dd[r.data_assinatura] || 0) + 1; });
+    const cs = Object.keys(por).sort((a, b) => por[b] - por[a]), dk = Object.keys(dd).sort(), mx = Math.max(1, ...dk.map(k => dd[k]));
+    $('#nuv-kp').innerHTML = '<div><span>Total no filtro</span><b>'+l.length+'</b></div>'+cs.map(c => '<div class="'+(N.cli === c ? 'on' : '')+'"><button type="button" data-ncli="'+esc(c)+'"><span>'+esc(c)+'</span><b>'+por[c]+'</b></button></div>').join('');
+    $('#nuv-dias').innerHTML = dk.length ? dk.map(k => '<div class="dia" title="'+dBR(k)+': '+dd[k]+'"><em>'+dd[k]+'</em><i style="height:'+Math.max(4, Math.round(dd[k] / mx * 54))+'px"></i><small>'+k.slice(8)+'/'+k.slice(5, 7)+'</small></div>').join('') : '<span class="sub">Sem datas no filtro.</span>';
+    const cols = [['nome', 'Cliente'], ['uc', 'N° UC'], ['envelope', 'Envelope Docusign'], ['sigla', 'Clínica'], ['data_assinatura', 'Assinatura']];
+    $('#nuv-th').innerHTML = '<th class="n">#</th>'+cols.map(c => '<th data-nk="'+c[0]+'">'+c[1]+(N.ord.k === c[0] ? (N.ord.d > 0 ? ' ▲' : ' ▼') : '')+'</th>').join('');
+    $('#nuv-tb').innerHTML = l.length ? l.map((r, i) => '<tr><td class="n">'+(i + 1)+'</td><td><b>'+esc(r.nome)+'</b></td><td>'+esc(r.uc)+'</td><td class="mut">'+esc(String(r.envelope).startsWith('sem-envelope') ? '' : r.envelope)+'</td><td><span class="chip">'+esc(r.sigla)+'</span></td><td>'+(r.data_assinatura ? dBR(r.data_assinatura) : '—')+'</td></tr>').join('')
+      : '<tr><td colspan="6" class="empty">'+((N.dados || []).length ? 'Nenhuma assinatura com esses filtros.' : 'Ainda não há assinaturas carregadas.')+'</td></tr>';
+    $('#nuv-rod').textContent = l.length+' de '+(N.dados || []).length+' assinaturas.'; N.vis = l;
+  }
+  async function nuvAssinaturas(){
+    const box = $('#nuv-corpo'), N = NUV, tk = ++N.tk, gestor = eu.papel === 'gestor' && modoVisao !== 'gerente';
+    box.innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const r = await nuvLer(); if (tk !== N.tk || N.aba !== 'ass') return;
+    if (r.erro){ box.innerHTML = '<div class="card"><div class="err">'+esc(msgErro(r.erro))+'</div></div>'; return; }
+    N.dados = r.dados;
+    const siglas = [...new Set(N.dados.map(x => x.sigla))].sort();
+    box.innerHTML = '<div class="card ag-sm"><div class="vr-bar">'
+      + '<label class="field" for="nuv-de">Assinatura de<input id="nuv-de" type="date" value="'+esc(N.de)+'"></label>'
+      + '<label class="field" for="nuv-ate">até<input id="nuv-ate" type="date" value="'+esc(N.ate)+'"></label>'
+      + '<label class="field" for="nuv-cli">Clínica<select id="nuv-cli"><option value="">Todas</option>'+siglas.map(s => '<option value="'+esc(s)+'"'+(s === N.cli ? ' selected' : '')+'>'+esc(s)+'</option>').join('')+'</select></label>'
+      + '<label class="field" for="nuv-q">Buscar<input id="nuv-q" type="search" placeholder="Nome, UC ou envelope" value="'+esc(N.q)+'"></label>'
+      + '<button type="button" class="btn ghost" id="nuv-lim">Limpar</button>'
+      + (gestor ? '<button type="button" class="btn" id="nuv-csv">Carregar CSV</button><input id="nuv-arq" type="file" accept=".csv,text/csv,text/plain" hidden>' : '')
+      + '<button type="button" class="btn ghost" id="nuv-cop">Copiar tabela</button></div><div class="err" id="nuv-err" role="alert"></div></div>'
+      + '<div class="card"><div class="nuv-kp" id="nuv-kp"></div></div>'
+      + '<div class="card"><h2 style="margin:0 0 8px;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)">Assinaturas por dia</h2><div class="nuv-dias" id="nuv-dias"></div></div>'
+      + '<div class="card"><div class="nuv-tw"><table class="tab"><thead><tr id="nuv-th"></tr></thead><tbody id="nuv-tb"></tbody></table></div><p class="sub" id="nuv-rod" style="margin:8px 0 0"></p></div>';
+    const redesenha = () => { N.de = $('#nuv-de').value; N.ate = $('#nuv-ate').value; N.cli = $('#nuv-cli').value; N.q = $('#nuv-q').value; nuvDesenha(); };
+    ['nuv-de', 'nuv-ate', 'nuv-q'].forEach(i => $('#'+i).addEventListener('input', redesenha)); $('#nuv-cli').addEventListener('change', redesenha);
+    $('#nuv-lim').addEventListener('click', () => { N.de = N.ate = N.cli = N.q = ''; $('#nuv-de').value = $('#nuv-ate').value = $('#nuv-q').value = ''; $('#nuv-cli').value = ''; nuvDesenha(); });
+    $('#nuv-kp').addEventListener('click', e => { const b = e.target.closest('[data-ncli]'); if (!b) return; N.cli = N.cli === b.dataset.ncli ? '' : b.dataset.ncli; $('#nuv-cli').value = N.cli; nuvDesenha(); });
+    $('#nuv-th').addEventListener('click', e => { const t = e.target.closest('[data-nk]'); if (!t) return; const k = t.dataset.nk; N.ord = N.ord.k === k ? { k, d: -N.ord.d } : { k, d: 1 }; nuvDesenha(); });
+    $('#nuv-cop').addEventListener('click', async () => {
+      const t = ['Cliente', 'N° UC', 'Envelope', 'Clínica', 'Assinatura'].join('\t')+'\n'+(N.vis || []).map(r => [r.nome, r.uc, r.envelope, r.sigla, r.data_assinatura ? dBR(r.data_assinatura) : ''].join('\t')).join('\n');
+      try { await navigator.clipboard.writeText(t); toast('Tabela copiada.'); } catch (x) { toast('Não consegui copiar neste navegador.'); }
+    });
+    if (gestor){
+      $('#nuv-csv').addEventListener('click', () => $('#nuv-arq').click());
+      $('#nuv-arq').addEventListener('change', async e => {
+        const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return; $('#nuv-err').textContent = '';
+        const lido = nuvLinhas(await f.text()); if (lido.erro){ $('#nuv-err').textContent = lido.erro; return; }
+        $('#nuv-csv').disabled = true;
+        for (let i = 0; i < lido.linhas.length; i += 500){
+          const u = await sb.from('assinaturas_nuv').upsert(lido.linhas.slice(i, i + 500), { onConflict: 'envelope' });
+          if (u.error){ $('#nuv-csv').disabled = false; $('#nuv-err').textContent = msgErro(u.error); return; }
+        }
+        toast(lido.linhas.length+' assinaturas carregadas.'); nuvAssinaturas();
+      });
+    }
+    nuvDesenha();
   }
 
   /* ---------- entrar, sair, senha ---------- */
