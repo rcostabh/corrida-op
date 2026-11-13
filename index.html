@@ -648,6 +648,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.33.0', '2026-11-13', 'Agenda das teles em tempo real: quando um agendamento muda no banco (status, data, horário, novo ou excluído), a agenda de todas as pessoas com a tela aberta se atualiza sozinha, sem recarregar a página.'],
     ['1.32.0', '2026-11-13', 'Agenda das teles: a projeção de vendas passa a ser sempre do mês atual e só muda com a tele e a clínica escolhidas. Mudar as datas ou o período não altera mais a projeção.'],
     ['1.31.0', '2026-11-13', 'Assinaturas NUV no grid padrão: funil de filtro em cada coluna (com busca e marcar todos), linhas baixas, cabeçalho fixo e rodapé com os totais.'],
     ['1.30.0', '2026-11-13', 'Relatório NUV ganha a aba Assinaturas: tabela com filtros de período, clínica e busca, contadores por clínica e por dia. O gestor carrega o CSV exportado do relatório; cada gerente vê só as assinaturas da própria clínica (pelo voucher).'],
@@ -2334,6 +2335,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     $('#ag-recolher').addEventListener('click', () => agRecolher());
     $('#ag-resumo').addEventListener('click', () => agRecolher(false));
     $('#ag-cheia').addEventListener('click', () => agCheia());
+    rtAgenda();
     $('#ag-zm').addEventListener('click', () => agZoom(-1)); $('#ag-zp').addEventListener('click', () => agZoom(1)); $('#ag-zv').addEventListener('click', () => agZoom(0)); agZoom(null);
     $$('#ag-vis [data-v]').forEach(b => b.addEventListener('click', () => agVisao(b.dataset.v)));
     $('#gd-ant').addEventListener('click', () => agNavega(-1)); $('#gd-prox').addEventListener('click', () => agNavega(1));
@@ -2343,9 +2345,22 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     $('#ag-mes').addEventListener('click', () => { AG.ini = mesIni(); AG.fim = hoje().slice(0, 8)+String(new Date(Number(hoje().slice(0, 4)), Number(hoje().slice(5, 7)), 0).getDate()).padStart(2, '0'); $('#ag-ini').value = AG.ini; $('#ag-fim').value = AG.fim; agendaDados(); });
     agendaDados();
   }
-  async function agendaDados(){
+  /* tempo real: quando um agendamento muda no banco (por qualquer pessoa), a agenda aberta se atualiza sozinha */
+  let RT = null, rtT = 0, rtVis = 0;
+  function rtAgenda(){
+    if (!RT){
+      RT = sb.channel('agenda-rt').on('postgres_changes', { event: '*', schema: 'public', table: 'agendamentos' }, () => {
+        if (!$('#ag-tot')) return;
+        clearTimeout(rtT); rtT = setTimeout(() => { AG.proj = null; agendaDados(true); }, 500);
+      }).subscribe();
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && $('#ag-tot') && Date.now() - rtVis > 10000){ rtVis = Date.now(); AG.proj = null; agendaDados(true); }
+      });
+    }
+  }
+  async function agendaDados(quieto){
     if (!$('#ag-tot')) return;
-    $('#ag-tot').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    if (!quieto) $('#ag-tot').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
     let q = sb.from('agendamentos').select('*').is('excluido_em', null).gte('data_agendamento', AG.ini).lte('data_agendamento', AG.fim).order('data_agendamento').order('hora').limit(2000);
     if (AG.tele) q = q.eq('tele_id', Number(AG.tele));
     if (AG.clin) q = q.eq('clinica_id', Number(AG.clin));

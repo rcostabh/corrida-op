@@ -261,7 +261,7 @@ li:first-child>.ag-i{border-top:0}
   };
   const guarda = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k, v){ try { localStorage.setItem(k, v); } catch(e){} } };
 
-  const VERSAO = '2026-11-13 · Tele BH confirma';
+  const VERSAO = '2026-11-13 · agenda em tempo real';
   if ('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => { reg.update(); }).catch(() => {});
     let recarregou = false;
@@ -531,7 +531,23 @@ li:first-child>.ag-i{border-top:0}
     const er = rs[0].error || rs[1].error;
     if (er){ $('#main').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
     AGP.itens = rs[0].data; AGP.sig = Object.fromEntries(rs[1].data.map(c => [c.id, c.sigla]));
-    agendaDesenhar();
+    agendaDesenhar(); rtAgendaApp();
+  }
+  /* tempo real: mudanças nos agendamentos da tele (feitas pela clínica, por exemplo) aparecem na hora */
+  let rtA = null, rtAT = 0;
+  async function agendaAtualiza(){
+    if (aba !== 'agenda' || !AGP.sel) return;
+    const ini = ymd(AGP.ano, AGP.mes, 1), fim = ymd(AGP.ano, AGP.mes, new Date(AGP.ano, AGP.mes + 1, 0).getDate());
+    const r = await sb.from('agendamentos').select('*').eq('tele_id', eu.id).gte('data_agendamento', ini).lte('data_agendamento', fim).order('hora');
+    if (aba !== 'agenda' || r.error) return;
+    AGP.itens = r.data; agendaDesenhar();
+  }
+  function rtAgendaApp(){
+    if (rtA || !eu) return;
+    rtA = sb.channel('agenda-app').on('postgres_changes', { event: '*', schema: 'public', table: 'agendamentos', filter: 'tele_id=eq.'+eu.id }, () => {
+      if (aba !== 'agenda') return; clearTimeout(rtAT); rtAT = setTimeout(agendaAtualiza, 500);
+    }).subscribe();
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && aba === 'agenda') agendaAtualiza(); });
   }
   function agendaDesenhar(){
     const a = AGP.ano, m = AGP.mes, n = new Date(a, m + 1, 0).getDate(), vazios = new Date(a, m, 1).getDay(), cont = {};
