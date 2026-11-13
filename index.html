@@ -618,6 +618,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.29.0', '2026-11-13', 'Relatório NUV por clínica: cada clínica ganha o seu link (Cadastros › Clínicas) e a gerente vê o relatório da própria clínica. O relatório geral fica só para o gestor.'],
     ['1.28.1', '2026-11-13', 'Correção: o painel lateral do mapa voltou a aparecer (erro na projeção de vendas introduzido na 1.28.0).'],
     ['1.28.0', '2026-11-13', 'Projeção de vendas passa a contar sábados e a descontar os feriados nacionais. O painel do mapa também mostra a projeção do mês (total, por região, por clínica e por tipo).'],
     ['1.27.0', '2026-11-13', 'Agenda das teles: o card de totais ganha a Projeção de vendas, calculada pelas vendas atuais e pelos dias úteis (seg–sáb, sem feriados nacionais) já trabalhados, projetando até o fim do mês.'],
@@ -691,9 +692,15 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
         {k:'nome', rot:'Nome da clínica', tipo:'text', obrig:true},
         {k:'cidade', rot:'Cidade (Minas Gerais), para o mapa', tipo:'text', lista:'dl-mun'},
         {k:'cor', rot:'Cor do carro', tipo:'select', opcoes:CORES, padrao:'#5b9bff'},
+        {k:'link_nuv', rot:'Link do Relatório NUV desta clínica (Looker Studio)', tipo:'text'},
         {k:'ativa', rot:'Clínica ativa', tipo:'check', padrao:true}
       ],
-      validar: d => /^[A-Z0-9]{2,4}$/.test(d.sigla) ? '' : 'A sigla precisa ter de 2 a 4 letras ou números.',
+      validar: d => {
+        if (!/^[A-Z0-9]{2,4}$/.test(d.sigla)) return 'A sigla precisa ter de 2 a 4 letras ou números.';
+        d.link_nuv = (d.link_nuv || '').trim() || null;
+        if (d.link_nuv && !/^https:\/\/(datastudio|lookerstudio)\.google\.com\/(embed\/)?reporting\//.test(d.link_nuv)) return 'O link do Relatório NUV precisa ser do Looker Studio (começa com https://lookerstudio.google.com/reporting/...).';
+        return '';
+      },
       antes: async d => {
         if (!d.cidade){ Object.assign(d, { cidade: null, ibge_id: null, regiao_id: null, regiao: null, latitude: null, longitude: null }); return ''; }
         let lista; try { lista = await mgMunicipios(); } catch (e) { return 'Não consegui consultar a lista de cidades do IBGE agora. Tente de novo em instantes.'; }
@@ -2893,12 +2900,26 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   /* ---------- relatório externo (Looker Studio) dentro do painel ---------- */
   const LOOKER_LINK = 'https://datastudio.google.com/reporting/51710f3a-35d4-49ec-9c0f-37022a0c752c/page/p_td0t1ca4id';
   const lookerEmbed = u => u.replace(/^https:\/\/(datastudio|lookerstudio)\.google\.com\/reporting\//, 'https://lookerstudio.google.com/embed/reporting/');
-  function externoCarregar(){
+  async function externoCarregar(){
     marcarMenu(); $('#area').style.gridTemplateColumns = 'minmax(0,1fr)';
-    $('#area').innerHTML = '<div class="card" style="padding:14px 16px"><div class="pd-bar"><div><h2 style="margin:0">Relatório NUV</h2><p class="sub" style="margin:2px 0 0">Seu relatório do Looker Studio, aberto aqui dentro. Precisa estar com o login do Google que tem acesso a ele.</p></div>'
-      + '<div class="grp"><a class="btn ghost sm" href="'+esc(LOOKER_LINK)+'" target="_blank" rel="noopener">Abrir em outra aba</a></div></div>'
-      + '<div class="ds-ext"><iframe id="ext-frame" title="Relatório NUV" src="'+esc(lookerEmbed(LOOKER_LINK))+'" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>'
+    $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
+    const r = await soMinhasClin(sb.from('clinicas').select('id,sigla,nome,ativa,link_nuv').order('nome'));
+    if (r.error){ $('#area').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(r.error))+'</div></div>'; return; }
+    const geral = eu.papel === 'gestor' && modoVisao !== 'gerente';
+    const ops = (geral ? [{ rot: 'Geral · todas as clínicas', link: LOOKER_LINK }] : [])
+      .concat((r.data || []).filter(c => c.ativa !== false && c.link_nuv).map(c => ({ rot: c.sigla+' · '+c.nome, link: c.link_nuv })));
+    if (!ops.length){
+      $('#area').innerHTML = '<div class="card"><h2 style="margin:0">Relatório NUV</h2><p class="sub">'+(eu.papel === 'gerente' || modoVisao === 'gerente' ? 'O relatório da sua clínica ainda não foi cadastrado. Fale com o gestor.' : 'Nenhuma clínica tem link cadastrado ainda. Cadastre em Cadastros › Clínicas.')+'</p></div>'; return;
+    }
+    const pinta = i => {
+      const o = ops[i]; $('#ext-frame').src = lookerEmbed(o.link); $('#ext-abre').href = o.link;
+    };
+    $('#area').innerHTML = '<div class="card" style="padding:14px 16px"><div class="pd-bar"><div><h2 style="margin:0">Relatório NUV</h2><p class="sub" style="margin:2px 0 0">Relatório do Looker Studio, aberto aqui dentro. Precisa estar com o login do Google que tem acesso a ele.</p></div>'
+      + '<div class="grp">'+(ops.length > 1 ? '<select id="ext-sel" aria-label="Relatório">'+ops.map((o, i) => '<option value="'+i+'">'+esc(o.rot)+'</option>').join('')+'</select>' : '<span class="chip">'+esc(ops[0].rot)+'</span>')
+      + '<a class="btn ghost sm" id="ext-abre" href="'+esc(ops[0].link)+'" target="_blank" rel="noopener">Abrir em outra aba</a></div></div>'
+      + '<div class="ds-ext"><iframe id="ext-frame" title="Relatório NUV" src="'+esc(lookerEmbed(ops[0].link))+'" allowfullscreen loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>'
       + '<p class="sub" style="margin:10px 0 0">Se a área acima aparecer em branco ou pedir login, abra em outra aba. Para aparecer aqui, no Looker Studio use <b>Compartilhar › Incorporar relatório › Ativar incorporação</b>.</p></div>';
+    if ($('#ext-sel')) $('#ext-sel').addEventListener('change', e => pinta(Number(e.target.value)));
   }
 
   /* ---------- entrar, sair, senha ---------- */
