@@ -605,6 +605,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.23.1', '2026-11-13', 'Mapa: ao arrastar para selecionar clínicas, o retângulo pontilhado volta a aparecer, igual ao mapa do Orto+.'],
     ['1.23.0', '2026-11-12', 'Pessoas: a foto de cada pessoa aparece na lista e no cadastro, para identificação, e quem ainda não tem foto ganha o aviso "Sem foto". No aplicativo, a foto passou a ser obrigatória para todos: a pessoa só entra depois de tirar a foto na hora ou escolher da galeria.'],
     ['1.22.2', '2026-11-12', 'Agenda: quem não compareceu aparece como Não compareceu no cartão da agenda (antes aparecia Não fechou), no site e no app das teles.'],
     ['1.22.1', '2026-11-12', 'Exportar Excel: as opções de escolha única (Separar por e Resumo por) saíram gigantes; agora têm o mesmo tamanho das demais caixas de seleção.'],
@@ -2728,11 +2729,11 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       if (!ini) return;
       if (!arrasto && Math.hypot(e.clientX - ini.cx, e.clientY - ini.cy) > 7){ arrasto = true; try { svg.setPointerCapture(e.pointerId); } catch (x) {} }
       if (!arrasto) return;
-      const a = ini.p, b = pt(e), r = $('#ds-sel'); r.hidden = false;
+      const a = ini.p, b = pt(e), r = $('#ds-sel'); r.removeAttribute('hidden');
       r.setAttribute('x', Math.min(a.x, b.x)); r.setAttribute('y', Math.min(a.y, b.y)); r.setAttribute('width', Math.abs(a.x - b.x)); r.setAttribute('height', Math.abs(a.y - b.y));
     });
     const fim = e => {
-      if (!ini) return; const a = ini.p, alvo = ini.alvo; ini = null; $('#ds-sel').hidden = true;
+      if (!ini) return; const a = ini.p, alvo = ini.alvo; ini = null; $('#ds-sel').setAttribute('hidden', '');
       if (arrasto){
         arrasto = false; const b = pt(e), x0 = Math.min(a.x, b.x), x1 = Math.max(a.x, b.x), y0 = Math.min(a.y, b.y), y1 = Math.max(a.y, b.y);
         const ids = new Set(DS.base.filter(o => o.x != null && o.x >= x0 && o.x <= x1 && o.y >= y0 && o.y <= y1).map(o => o.c.id));
@@ -2746,7 +2747,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       if (DS.filtro) filtrar(null);
     };
     svg.addEventListener('pointerup', fim);
-    svg.addEventListener('pointercancel', () => { ini = null; arrasto = false; $('#ds-sel').hidden = true; });
+    svg.addEventListener('pointercancel', () => { ini = null; arrasto = false; $('#ds-sel').setAttribute('hidden', ''); });
     document.addEventListener('keydown', function esc1(e){ if (!$('#ds-svg')){ document.removeEventListener('keydown', esc1); return; } if (e.key === 'Escape' && DS.filtro) filtrar(null); });
     window.addEventListener('resize', aplicarVb);
   }
