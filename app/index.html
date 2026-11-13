@@ -346,7 +346,7 @@ li:first-child>.ag-i{border-top:0}
   const ehGestao = () => !!eu && (eu.papel === 'gestor' || eu.papel === 'assistente');
   const rotCargo = u => [u.cargo].concat(u.cargos_extra || []).filter(Boolean).join(' + ');
   const souBH = () => !!eu && eu.papel === 'promotor' && [eu.cargo].concat(eu.cargos_extra || []).includes('Tele BH');   // Tele BH só marca e remarca: a confirmação e o resultado são da clínica
-  const fotoObrig = () => !!eu && eu.papel === 'promotor';   // promotoras só entram no app depois de colocar a foto
+  const fotoObrig = () => !!eu;   // todos só entram no app depois de colocar a foto (tirada na hora ou da galeria)
   const ehTele = () => !!eu && eu.papel === 'promotor' && [eu.cargo].concat(eu.cargos_extra || []).some(g => g === 'Tele BH' || g === 'Tele interno');
   const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
   const ymd = (a, m, d) => a+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');

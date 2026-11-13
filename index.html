@@ -605,6 +605,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.23.0', '2026-11-12', 'Pessoas: a foto de cada pessoa aparece na lista e no cadastro, para identificação, e quem ainda não tem foto ganha o aviso "Sem foto". No aplicativo, a foto passou a ser obrigatória para todos: a pessoa só entra depois de tirar a foto na hora ou escolher da galeria.'],
     ['1.22.2', '2026-11-12', 'Agenda: quem não compareceu aparece como Não compareceu no cartão da agenda (antes aparecia Não fechou), no site e no app das teles.'],
     ['1.22.1', '2026-11-12', 'Exportar Excel: as opções de escolha única (Separar por e Resumo por) saíram gigantes; agora têm o mesmo tamanho das demais caixas de seleção.'],
     ['1.22.0', '2026-11-12', 'Agenda das teles: botão Exportar Excel. A gerente escolhe separar por clínica, por tele ou não separar; resumo por dia, semana ou mês (agendamentos, confirmaram, atendidos, fecharam, não fecharam, não compareceram e percentuais); e a lista de nomes de quem ela quiser (quem fechou, quem não foi etc.), uma aba por clínica ou tele.'],
@@ -863,6 +864,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     $('#area').innerHTML =
       '<div class="card"><h2>'+(atual ? 'Editar pessoa' : 'Nova pessoa')+'</h2>'
       + '<p class="sub">'+(atual ? 'Se trocar o e-mail, a pessoa recebe um link no novo endereço para criar a senha. Para tirar alguém de uso, desmarque "Pessoa ativa".' : 'A pessoa recebe um e-mail para criar a própria senha e colocar a foto.')+'</p>'
+      + (atual ? '<div style="display:flex;gap:14px;align-items:center;margin:4px 0 12px">'+pesAv(atual,72)+'<p class="sub" style="margin:0">'+(atual.foto_url ? 'Foto enviada pela própria pessoa no aplicativo.' : 'Ainda sem foto. No aplicativo, a pessoa só entra depois de colocar a foto.')+'</p></div>' : '')
       + '<form class="form" id="f-pes" novalidate>'
       + '<label class="field" for="p-papel">Função<select id="p-papel"'+(atual?' disabled':'')+'><option value="promotor"'+(papelForm==='promotor'?' selected':'')+'>Vendas</option>'+(eu.papel === 'gerente' || modoVisao === 'gerente' ? '' : '<option value="gerente"'+(papelForm==='gerente'?' selected':'')+'>Gerência (da clínica)</option>')+(eu.papel === 'gestor' ? '<option value="assistente"'+(papelForm==='assistente'?' selected':'')+'>Gestão (vê tudo, como o gestor)</option>' : '')+'</select></label>'
       + '<label class="field" for="p-nome">Nome<input id="p-nome" type="text" autocomplete="off" value="'+esc(atual?atual.nome:'')+'"></label>'
@@ -882,7 +884,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + '</div></form></div>'
       + '<div class="card"><h2>Pessoas</h2><label class="chk" style="margin-bottom:10px"><input type="checkbox" id="mostra-inat"'+(mostrarInativos?' checked':'')+'><span>Mostrar inativos</span></label>'
       + '<p class="sub">'+vis.length+' cadastrada'+(vis.length===1?'':'s')+'. Pessoas com lançamentos não são apagadas, só inativadas.</p>'
-      + '<ul class="items">'+(vis.map(p => { const cs = clinicasDe(p); return '<li class="item"><div><div class="line"><b>'+esc(p.nome)+'</b><span class="badge">'+(p.papel==='gerente'?'Gerência'+((p.cargos_extra || []).length ? ' + '+esc(p.cargos_extra.join(' + ')) : ''):p.papel==='assistente'?'Gestão':esc(p.cargo||'Vendas')+((p.cargos_extra || []).length ? ' + '+esc(p.cargos_extra.join(' + ')) : ''))+'</span>'+(cs.length?cs.map(c => '<span class="sigla">'+esc(c.sigla)+'</span>').join(''):(p.papel==='assistente'?'':'<span class="chip off">Sem clínica</span>'))+(p.auth_id?'':'<span class="chip off">Sem convite</span>')+(p.ativo?'':'<span class="chip off">Inativa</span>')+'</div><div class="meta">'+esc(p.email||'sem e-mail')+(p.telefone?' · '+esc(fmtTel(p.telefone)):'')+'</div></div><div><button type="button" class="btn ghost sm" data-ped="'+p.id+'">Editar</button></div></li>'; }).join('') || '<li class="empty">Ninguém cadastrado ainda.</li>')+'</ul></div>';
+      + '<ul class="items">'+(vis.map(p => { const cs = clinicasDe(p); return '<li class="item"><div style="display:flex;gap:12px;align-items:center;min-width:0">'+pesAv(p,44)+'<div style="min-width:0"><div class="line"><b>'+esc(p.nome)+'</b><span class="badge">'+(p.papel==='gerente'?'Gerência'+((p.cargos_extra || []).length ? ' + '+esc(p.cargos_extra.join(' + ')) : ''):p.papel==='assistente'?'Gestão':esc(p.cargo||'Vendas')+((p.cargos_extra || []).length ? ' + '+esc(p.cargos_extra.join(' + ')) : ''))+'</span>'+(cs.length?cs.map(c => '<span class="sigla">'+esc(c.sigla)+'</span>').join(''):(p.papel==='assistente'?'':'<span class="chip off">Sem clínica</span>'))+(p.auth_id?'':'<span class="chip off">Sem convite</span>')+(p.ativo?'':'<span class="chip off">Inativa</span>')+(p.foto_url?'':'<span class="chip off">Sem foto</span>')+'</div><div class="meta">'+esc(p.email||'sem e-mail')+(p.telefone?' · '+esc(fmtTel(p.telefone)):'')+'</div></div></div><div><button type="button" class="btn ghost sm" data-ped="'+p.id+'">Editar</button></div></li>'; }).join('') || '<li class="empty">Ninguém cadastrado ainda.</li>')+'</ul></div>';
     $('#f-pes').addEventListener('submit', pessoaSalvar);
     const sem = $('#p-sem'); if (sem) sem.addEventListener('click', () => pessoaSalvar(null, true));
     const cv = $('#p-conv'); if (cv) cv.addEventListener('click', async () => {
@@ -1273,6 +1275,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     for (let q = ini + 1; q <= p1; q++){ t.tile = tileDe(q, N); await kPular(t, K.geo.pt(t.tile), 300); }
   }
   const PALETA = ['#e10600','#ff8700','#00a6ff','#34c759','#af52de','#ffd60a','#ff375f','#5ac8fa','#a2845e','#8e8e93'];
+  const pesAv = (u, t) => u.foto_url ? '<img src="'+esc(u.foto_url)+'" alt="Foto de '+esc(u.nome)+'" style="width:'+t+'px;height:'+t+'px;border-radius:50%;object-fit:cover;flex:none">' : '<span aria-hidden="true" style="width:'+t+'px;height:'+t+'px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--line);color:var(--muted);font-weight:700;font-size:'+Math.round(t*.36)+'px">'+esc(iniciais(u.nome))+'</span>';
   const iniciais = n => { const p = String(n||'?').trim().split(/\s+/); return ((p[0]||'?')[0] + (p.length > 1 ? p[p.length-1][0] : (p[0]||'')[1] || '')).toUpperCase(); };
 
   async function corridaCarregar(){
