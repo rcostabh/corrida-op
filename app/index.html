@@ -217,7 +217,7 @@ li:first-child>.ag-i{border-top:0}
   </div>
 
   <div id="v-foto" class="login" hidden>
-    <div><span class="eyebrow">Quase pronto</span><h1>Coloque sua foto</h1><p class="sub">Ela aparece na corrida, junto do seu carro.</p></div>
+    <div><span class="eyebrow">Quase pronto</span><h1>Coloque sua foto</h1><p class="sub">Ela aparece na corrida, junto do seu carro.</p><p class="sub" id="o-obrig" hidden><b>Para entrar no aplicativo, a foto é obrigatória.</b></p></div>
     <div class="card">
       <div class="av xl" id="o-av">?</div>
       <div class="err" id="o-err" role="alert" style="text-align:center"></div>
@@ -261,7 +261,7 @@ li:first-child>.ag-i{border-top:0}
   };
   const guarda = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k, v){ try { localStorage.setItem(k, v); } catch(e){} } };
 
-  const VERSAO = '2026-11-12 · tele BH';
+  const VERSAO = '2026-11-12 · foto obrigatória';
   if ('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => { reg.update(); }).catch(() => {});
     let recarregou = false;
@@ -288,7 +288,7 @@ li:first-child>.ag-i{border-top:0}
     eu = data;
     const v = await sb.from('vinculos_clinica').select('*').eq('usuario_id', eu.id);
     minhasClin = (v.data || []).filter(x => !x.fim).map(x => x.clinica_id);
-    if (!eu.foto_url && !guarda.get('pulou-foto-'+eu.id)){ $('#o-av').innerHTML = esc(iniciais(eu.nome)); view('foto'); return; }
+    if (!eu.foto_url && (fotoObrig() || !guarda.get('pulou-foto-'+eu.id))){ $('#o-av').innerHTML = esc(iniciais(eu.nome)); $('#o-pular').hidden = fotoObrig(); $('#o-obrig').hidden = !fotoObrig(); view('foto'); return; }
     abrirApp();
   }
 
@@ -346,6 +346,7 @@ li:first-child>.ag-i{border-top:0}
   const ehGestao = () => !!eu && (eu.papel === 'gestor' || eu.papel === 'assistente');
   const rotCargo = u => [u.cargo].concat(u.cargos_extra || []).filter(Boolean).join(' + ');
   const souBH = () => !!eu && eu.papel === 'promotor' && [eu.cargo].concat(eu.cargos_extra || []).includes('Tele BH');   // Tele BH só marca e remarca: a confirmação e o resultado são da clínica
+  const fotoObrig = () => !!eu && eu.papel === 'promotor';   // promotoras só entram no app depois de colocar a foto
   const ehTele = () => !!eu && eu.papel === 'promotor' && [eu.cargo].concat(eu.cargos_extra || []).some(g => g === 'Tele BH' || g === 'Tele interno');
   const MESES = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
   const ymd = (a, m, d) => a+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
