@@ -607,6 +607,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.25.0', '2026-11-13', 'Mapa: todas as gerentes veem as clínicas de todas as regiões, com os números das outras para comparação. Ranking de vendas ganha as abas Promotores, Divulgadores (orto e clínico) e Clínicas, esta com a foto e o nome da gerente de cada clínica.'],
     ['1.24.0', '2026-11-13', 'Mapa: ao clicar ou selecionar clínicas, o painel lateral separa visitas e vendas por tipo (Promotor, Tele BH, Tele interno e as fontes de visita como Luminoso, Indicação e Prospecta), com o % de fechamento de cada um.'],
     ['1.23.1', '2026-11-13', 'Mapa: ao arrastar para selecionar clínicas, o retângulo pontilhado volta a aparecer, igual ao mapa do Orto+.'],
     ['1.23.0', '2026-11-12', 'Pessoas: a foto de cada pessoa aparece na lista e no cadastro, para identificação, e quem ainda não tem foto ganha o aviso "Sem foto". No aplicativo, a foto passou a ser obrigatória para todos: a pessoa só entra depois de tirar a foto na hora ou escolher da galeria.'],
@@ -1907,7 +1908,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 
 
   /* ---------- ranking de vendas (vem da planilha diária) ---------- */
-  const RK = { de: '', ate: '', per: 'mes', clin: '', teste: false, tk: 0 };
+  const RK = { de: '', ate: '', per: 'mes', clin: '', teste: false, tk: 0, aba: 'prom' };
   const RK_CARGOS = ['Promotor', 'Tele BH', 'Tele interno'];
   const rkIso = d => d.toLocaleDateString('sv-SE');
   function rkPeriodo(k){
@@ -1939,12 +1940,13 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     $('#area').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
     const e0 = await pdBase(); if (e0){ pdErro(e0); return; }
     if (!RK.de){ const x = rkPeriodo('mes'); RK.de = x[0]; RK.ate = x[1]; RK.per = 'mes'; }
-    $('#area').innerHTML = '<div class="pd-card" style="padding:16px 18px"><div class="pd-bar"><div><h2 style="margin:0">Ranking de vendas</h2><p class="sub" style="margin:2px 0 0">Promotores, Tele BH e Tele interno. Ordem: vendas, depois % de fechamento, depois visitas.</p></div></div>'
+    $('#area').innerHTML = '<div class="pd-card" style="padding:16px 18px"><div class="pd-bar"><div><h2 style="margin:0">Ranking de vendas</h2><p class="sub" style="margin:2px 0 0" id="rk-desc"></p></div></div>'
+      + '<div class="vr-q" id="rk-abas" style="margin-bottom:10px">'+[['prom', 'Promotores'], ['div', 'Divulgadores'], ['cli', 'Clínicas']].map(x => '<button type="button" data-aba="'+x[0]+'" aria-pressed="'+(RK.aba === x[0])+'">'+x[1]+'</button>').join('')+'</div>'
       + '<div class="vr-q" id="rk-q">'+RK_ROT.map(x => '<button type="button" data-per="'+x[0]+'" aria-pressed="'+(RK.per === x[0])+'">'+x[1]+'</button>').join('')+'</div>'
       + '<div class="vr-bar" style="margin-top:12px"><label class="field" for="rk-de">De<input type="date" id="rk-de" value="'+esc(RK.de)+'" max="'+hoje()+'"></label>'
       + '<label class="field" for="rk-ate">Até<input type="date" id="rk-ate" value="'+esc(RK.ate)+'" max="'+hoje()+'"></label>'
-      + '<label class="field" for="rk-clin">Clínica<select id="rk-clin"><option value="">Todas as clínicas</option>'+PD.clinicas.map(c => '<option value="'+c.id+'"'+(String(c.id) === String(RK.clin) ? ' selected' : '')+'>'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
-      + '<label class="chk" for="rk-teste" style="min-height:44px"><input type="checkbox" id="rk-teste"'+(RK.teste ? ' checked' : '')+'><span>Incluir promotores de teste</span></label></div></div>'
+      + '<label class="field" id="rk-wclin" for="rk-clin">Clínica<select id="rk-clin"><option value="">Todas as clínicas</option>'+PD.clinicas.map(c => '<option value="'+c.id+'"'+(String(c.id) === String(RK.clin) ? ' selected' : '')+'>'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="chk" id="rk-wteste" for="rk-teste" style="min-height:44px"><input type="checkbox" id="rk-teste"'+(RK.teste ? ' checked' : '')+'><span>Incluir promotores de teste</span></label></div></div>'
       + '<div id="rk-res" style="margin-top:14px"></div>';
     const set = (de, ate, per) => { RK.de = de; RK.ate = ate; RK.per = per; $('#rk-de').value = de; $('#rk-ate').value = ate; $$('#rk-q button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.per === per))); rankAtualizar(); };
     $$('#rk-q button').forEach(b => b.addEventListener('click', () => { const x = rkPeriodo(b.dataset.per); set(x[0], x[1], b.dataset.per); }));
@@ -1952,6 +1954,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     $('#rk-de').addEventListener('change', dt); $('#rk-ate').addEventListener('change', dt);
     $('#rk-clin').addEventListener('change', e => { RK.clin = e.target.value; rankAtualizar(); });
     $('#rk-teste').addEventListener('change', e => { RK.teste = e.target.checked; rankAtualizar(); });
+    $$('#rk-abas button').forEach(b => b.addEventListener('click', () => { RK.aba = b.dataset.aba; $$('#rk-abas button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); rankAtualizar(); }));
     rankAtualizar();
   }
 
@@ -1959,6 +1962,9 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const alvo = $('#rk-res'); if (!alvo) return;
     if (!RK.de || !RK.ate || RK.de > RK.ate){ alvo.innerHTML = '<div class="card"><div class="err">A data inicial precisa ser igual ou anterior à data final.</div></div>'; return; }
     const tk = ++RK.tk; alvo.innerHTML = '<div class="card"><p class="sub">Calculando...</p></div>';
+    const DESC = { prom: 'Promotores, Tele BH e Tele interno. Ordem: vendas, depois % de fechamento, depois visitas.', div: 'Divulgadores (orto e clínico). Ordem: vendas, depois % de fechamento, depois visitas.', cli: 'Clínicas, com a gerente de cada uma. Conta as visitas e vendas da equipe da clínica e das fontes de visita; os divulgadores ficam de fora para não contar a mesma visita duas vezes.' };
+    $('#rk-desc').textContent = DESC[RK.aba]; $('#rk-wclin').hidden = RK.aba === 'cli'; $('#rk-wteste').hidden = RK.aba !== 'prom';
+    if (RK.aba === 'cli') return rankClinicas(alvo, tk);
     let rows = [];
     for (let de = 0; ; de += 1000){
       let q = sb.from('planilha_diaria').select('*').gte('data_ref', RK.de).lte('data_ref', RK.ate);
@@ -1975,24 +1981,40 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const U = {}; (us.data || []).forEach(u => { U[u.id] = u; });
     const SG = {}; (cs.data || []).forEach(c => { SG[c.id] = c.sigla; });
     const A = {};
-    rows.forEach(r => { const u = U[r.usuario_id], cgl = r.cargo || (u && u.cargo); if (!u || !(RK_CARGOS.includes(cgl) || (RK.teste && cgl === TESTE))) return;
-      const a = A[r.usuario_id] = A[r.usuario_id] || { u, v: 0, s: 0, cl: {} }; a.v += r.visitas; a.s += r.vendas; a.cl[r.clinica_id] = (a.cl[r.clinica_id] || 0) + r.visitas + r.vendas; });
+    rows.forEach(r => { const u = U[r.usuario_id], cgl = r.cargo || (u && u.cargo); if (!u || !(RK.aba === 'div' ? ehDiv(cgl) : (RK_CARGOS.includes(cgl) || (RK.teste && cgl === TESTE)))) return;
+      const a = A[r.usuario_id] = A[r.usuario_id] || { u, v: 0, s: 0, cl: {}, cg: {} }; a.v += r.visitas; a.s += r.vendas; (a.cg[cgl] = a.cg[cgl] || [0, 0]); a.cg[cgl][0] += r.visitas; a.cg[cgl][1] += r.vendas; a.cl[r.clinica_id] = (a.cl[r.clinica_id] || 0) + r.visitas + r.vendas; });
     const lista = Object.values(A).filter(a => a.v > 0 || a.s > 0).map(a => Object.assign(a, { pc: a.v > 0 ? 100 * a.s / a.v : -1 }))
       .sort((x, y) => y.s - x.s || y.pc - x.pc || y.v - x.v || String(x.u.nome).localeCompare(String(y.u.nome), 'pt-BR'));
-    const sub = a => Object.keys(a.cl).sort((x, y) => a.cl[y] - a.cl[x]).map(id => SG[id] || '#'+id).join(', ') + (a.u.cargo ? ' · '+a.u.cargo : '');
+    const sub = a => a.sub0 != null ? a.sub0 : Object.keys(a.cl).sort((x, y) => a.cl[y] - a.cl[x]).map(id => SG[id] || '#'+id).join(', ') + (RK.aba === 'div' ? ' · '+Object.keys(a.cg).map(k => (k === DIV_CLIN ? 'Clínico' : 'Orto')+' '+a.cg[k][1]).join(' · ') : (a.u.cargo ? ' · '+a.u.cargo : ''));
+    rankMontar(alvo, lista, sub, RK.aba === 'cli' ? ['clínica', 'clínicas'] : ['pessoa', 'pessoas']);
+  }
+  function rankMontar(alvo, lista, sub, unidade){
     const tv = lista.reduce((t, a) => t + a.v, 0), ts = lista.reduce((t, a) => t + a.s, 0);
     const per = dBR(RK.de) === dBR(RK.ate) ? dBR(RK.de) : dBR(RK.de)+' a '+dBR(RK.ate);
     if (!lista.length){ alvo.innerHTML = '<div class="card"><div class="empty">Sem lançamentos de vendas e visitas entre '+esc(per)+'.</div></div>'; return; }
-    const card = (a, n) => '<div class="vr-card p'+n+'" data-pos="'+n+'">'+rkIcone(n)+rkAvatar(a.u, 'vr-av')+'<div class="vr-nm" title="'+esc(a.u.nome)+'">'+esc(a.u.nome)+'</div><div class="vr-sub">'+esc(sub(a))+'</div>'
+    const card = (a, n) => '<div class="vr-card p'+n+'" data-pos="'+n+'">'+rkIcone(n)+rkAvatar(a.u, 'vr-av')+'<div class="vr-nm" title="'+esc(a.titulo || a.u.nome)+'">'+esc(a.titulo || a.u.nome)+'</div><div class="vr-sub">'+esc(sub(a))+'</div>'
       + '<div class="vr-big">'+a.s+'<small>vendas</small></div><div class="vr-mini"><span><b>'+(a.pc < 0 ? '—' : pf1(a.pc))+'</b> fechamento</span><span><b>'+a.v+'</b> visitas</span></div></div>';
     const topo = lista.slice(0, 3), ordem = [topo[1], topo[0], topo[2]], pos = [2, 1, 3];
-    let h = '<div class="pd-card" style="padding:16px 18px"><p class="sub" style="margin:0 0 12px">'+esc(per)+' · '+lista.length+' pessoa'+(lista.length === 1 ? '' : 's')+' · '+ts+' vendas em '+tv+' visitas ('+(tv ? pf1(100 * ts / tv) : '—')+')</p>'
+    let h = '<div class="pd-card" style="padding:16px 18px"><p class="sub" style="margin:0 0 12px">'+esc(per)+' · '+lista.length+' '+(lista.length === 1 ? unidade[0] : unidade[1])+' · '+ts+' vendas em '+tv+' visitas ('+(tv ? pf1(100 * ts / tv) : '—')+')</p>'
       + '<div class="vr-pod" id="rk-pod">'+ordem.map((a, i) => a ? card(a, pos[i]) : '').join('')+'</div></div>';
     if (lista.length > 3){
       h += '<div class="pd-card" style="padding:16px 18px;margin-top:14px"><div class="vr-row h"><span>#</span><span></span><span>Pessoa</span><span>Vendas</span><span>Visitas</span><span>%</span></div>'
-        + lista.slice(3).map((a, i) => '<div class="vr-row" data-pos="'+(i + 4)+'"><span class="pos">'+(i + 4)+'º</span>'+rkAvatar(a.u, 'av2')+'<div style="min-width:0"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(a.u.nome)+'</b><span class="vr-sub">'+esc(sub(a))+'</span></div><span class="n">'+a.s+'</span><span class="n">'+a.v+'</span><span class="n">'+(a.pc < 0 ? '—' : pf1(a.pc))+'</span></div>').join('')+'</div>';
+        + lista.slice(3).map((a, i) => '<div class="vr-row" data-pos="'+(i + 4)+'"><span class="pos">'+(i + 4)+'º</span>'+rkAvatar(a.u, 'av2')+'<div style="min-width:0"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(a.titulo || a.u.nome)+'</b><span class="vr-sub">'+esc(sub(a))+'</span></div><span class="n">'+a.s+'</span><span class="n">'+a.v+'</span><span class="n">'+(a.pc < 0 ? '—' : pf1(a.pc))+'</span></div>').join('')+'</div>';
     }
     alvo.innerHTML = h;
+  }
+
+  async function rankClinicas(alvo, tk){
+    const [pg, gs, cs] = await Promise.all([sb.rpc('painel_geral', { p_de: RK.de, p_ate: RK.ate }), sb.rpc('gerentes_das_clinicas'), sb.from('clinicas').select('id,sigla,nome,ativa')]);
+    if (tk !== RK.tk) return;
+    const er = pg.error || gs.error || cs.error; if (er){ alvo.innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
+    const G = {}; (gs.data || []).forEach(g => { (G[g.clinica_id] = G[g.clinica_id] || []).push(g); });
+    const A = {}; (cs.data || []).filter(c => c.ativa !== false).forEach(c => { const gl = G[c.id] || [], g0 = gl[0];
+      A[c.id] = { u: { nome: g0 ? g0.nome : c.sigla, foto_url: g0 ? g0.foto_url : null }, titulo: c.sigla+' · '+c.nome, sub0: gl.length ? 'Gerente: '+gl.map(g => g.nome).join(' e ') : 'Sem gerente vinculada', v: 0, s: 0 }; });
+    (pg.data || []).forEach(r => { const a = A[r.clinica_id]; if (!a || !r.cargo || ehDiv(r.cargo)) return; a.v += r.visitas; a.s += r.vendas; });
+    const lista = Object.values(A).filter(a => a.v > 0 || a.s > 0).map(a => Object.assign(a, { pc: a.v > 0 ? 100 * a.s / a.v : -1 }))
+      .sort((x, y) => y.s - x.s || y.pc - x.pc || y.v - x.v || String(x.titulo).localeCompare(String(y.titulo), 'pt-BR'));
+    rankMontar(alvo, lista, a => a.sub0, ['clínica', 'clínicas']);
   }
 
 
@@ -2606,13 +2628,12 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const n = pdN(DS.ano, DS.mes), de = pdIso(DS.ano, DS.mes, 1), ate = pdIso(DS.ano, DS.mes, n), tk = ++DS.tk;
     DS.geoErro = '';
     const geoP = Promise.all([mgContorno(), mgMunicipios()]).catch(e => { DS.geoErro = (e && e.message) || 'erro'; return null; });
-    const rs = await Promise.all([soMinhasClin(sb.from('clinicas').select('*').order('nome')), sb.from('usuarios').select('id,cargo'), buscarPlanilha(de, ate), geoP, canaisCarrega()]);
+    const rs = await Promise.all([sb.from('clinicas').select('*').order('nome'), sb.rpc('painel_geral', { p_de: de, p_ate: ate }), sb.rpc('gerentes_das_clinicas'), geoP, canaisCarrega()]);
     if (tk !== DS.tk || recurso !== 'inicio') return;
     const er = rs.slice(0, 3).map(r => r.error).find(Boolean); if (er){ pdErro(er); return; }
-    const cargo = {}; rs[1].data.forEach(u => { cargo[u.id] = u.cargo; });
     const base = {}; rs[0].data.filter(c => c.ativa !== false).forEach(c => { base[c.id] = { c, v: 0, s: 0, d: {}, t: {} }; });
-    rs[2].data.forEach(r => {
-      const cg = r.cargo || cargo[r.usuario_id]; if (!cg || ehDiv(cg)) return;
+    (rs[1].data || []).forEach(r => {
+      const cg = r.cargo; if (!cg || ehDiv(cg)) return;
       const o = base[r.clinica_id]; if (!o) return; const d = Number(String(r.data_ref).slice(8));
       (o.t[cg] = o.t[cg] || [0, 0]); o.t[cg][0] += r.visitas; o.t[cg][1] += r.vendas;
       o.v += r.visitas; o.s += r.vendas; (o.d[d] = o.d[d] || [0, 0]); o.d[d][0] += r.visitas; o.d[d][1] += r.vendas;
