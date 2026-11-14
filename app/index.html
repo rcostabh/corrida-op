@@ -261,7 +261,7 @@ li:first-child>.ag-i{border-top:0}
   };
   const guarda = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k, v){ try { localStorage.setItem(k, v); } catch(e){} } };
 
-  const VERSAO = '2026-11-13 · agenda em tempo real';
+  const VERSAO = '2026-11-13 · teles liberadas';
   if ('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => { reg.update(); }).catch(() => {});
     let recarregou = false;
@@ -579,14 +579,14 @@ li:first-child>.ag-i{border-top:0}
     await motivosCarregar();
     const ps = await sb.from('agendamento_prints').select('*').eq('agendamento_id', id).order('criado_em');
     const urls = await Promise.all((ps.data || []).map(x => sb.storage.from('prints').createSignedUrl(x.path, 3600).then(r => r.data ? r.data.signedUrl : null)));
-    const comResultado = ['atendido', 'fechado', 'nao_fechou'].includes(g.status), editavel = (RETRO || g.data_agendamento >= hoje()) && !comResultado, podeConf = editavel && (!souBH() || g.status !== 'confirmado');
+    const comResultado = ['atendido', 'fechado', 'nao_fechou'].includes(g.status), editavel = (RETRO || g.data_agendamento >= hoje()) && !comResultado, podeConf = editavel;
     const ov = document.createElement('div'); ov.className = 'sheet'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
     ov.innerHTML = '<div class="sh-c"><div class="line" style="justify-content:space-between"><h2 style="margin:0">'+esc(g.paciente)+'</h2><button type="button" class="sndbtn" data-x aria-label="Fechar">×</button></div>'
       + '<p class="meta">'+esc(fmtTelDigitos(g.telefone))+' · <span class="sigla">'+esc(AGP.sig[g.clinica_id] || '')+'</span> · '+stChip(g)+'</p>'
       + (podeConf ? (g.status === 'confirmado'
           ? '<button type="button" class="link" id="e-desconf" style="justify-self:start">Desfazer confirmação</button>'
           : '<button type="button" class="btn verde block" id="e-conf">Confirmado</button>')
-        : (souBH() && g.status === 'confirmado' ? '<p class="meta"><b>Confirmado.</b> Para mudar, remarque o agendamento.</p>' : ''))
+        : '')
       + resultadoHtml(g)
       + '<div class="form"><div class="g2"><label class="field" for="e-data">Data<input id="e-data" type="date"'+(RETRO ? '' : ' min="'+hoje()+'"')+' value="'+esc(g.data_agendamento)+'"'+(editavel ? '' : ' disabled')+'></label>'
       + '<label class="field" for="e-hora">Horário<select id="e-hora"'+(editavel ? '' : ' disabled')+'>'+opHoras(hh(g.hora), g.data_agendamento)+'</select></label></div>'
