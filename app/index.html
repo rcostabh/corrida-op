@@ -261,7 +261,7 @@ li:first-child>.ag-i{border-top:0}
   };
   const guarda = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k, v){ try { localStorage.setItem(k, v); } catch(e){} } };
 
-  const VERSAO = '2026-11-14 · teles com resultado';
+  const VERSAO = '2026-11-14 · teles com resultado em um toque';
   if ('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => { reg.update(); }).catch(() => {});
     let recarregou = false;
@@ -437,12 +437,12 @@ li:first-child>.ag-i{border-top:0}
     if (g.status === 'fechado' || g.status === 'nao_fechou')
       return (g.status === 'nao_fechou' ? '<p class="meta"><b>Motivo:</b> '+esc(motivoTxt(g))+'</p>' : '')+'<div class="rs">'+des('Desfazer resultado')+'<div class="err" data-rs-err role="alert"></div></div>';
     if (g.data_agendamento > hoje()) return '';
-    if (g.status === 'atendido')
-      return '<div class="rs"><b>Atendido. E o contrato?</b><div class="btns"><button type="button" class="btn verde fe" data-rs-ok>Fechado</button><button type="button" class="btn verm" data-rs-nao>Não fechou</button></div>'
-        + '<div class="nfb" data-rs-nf hidden><label class="field">Motivo<select data-rs-mot><option value="">Escolha...</option>'+MOTIVOS.filter(x => x.nome !== 'Paciente não compareceu').map(x => '<option value="'+x.id+'" data-o="'+(x.exige_obs ? 1 : 0)+'">'+esc(x.nome)+'</option>').join('')+'</select></label>'
-        + '<label class="field">Observação <small data-rs-oh>(opcional)</small><textarea data-rs-obs rows="2" maxlength="300"></textarea></label><button type="button" class="btn" data-rs-salvar>Salvar</button></div>'
-        + des('Desfazer atendimento')+'<div class="err" data-rs-err role="alert"></div></div>';
-    return '<div class="rs"><b>Atendimento</b><div class="btns"><button type="button" class="btn verde fe" data-rs-ate>Atendido</button><button type="button" class="btn verm" data-rs-nc>Não compareceu</button></div><div class="err" data-rs-err role="alert"></div></div>';
+    if (g.status === 'faltou') return '';
+    const ate = g.status === 'atendido';
+    return '<div class="rs"><b>'+(ate ? 'Atendido. E o contrato?' : 'Resultado do atendimento')+'</b><div class="btns"><button type="button" class="btn verde fe" data-rs-ok>Fechado</button><button type="button" class="btn verm" data-rs-nao>Não fechou</button></div>'
+      + '<div class="nfb" data-rs-nf hidden><label class="field">Motivo<select data-rs-mot><option value="">Escolha...</option>'+MOTIVOS.filter(x => x.nome !== 'Paciente não compareceu').map(x => '<option value="'+x.id+'" data-o="'+(x.exige_obs ? 1 : 0)+'">'+esc(x.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="field">Observação <small data-rs-oh>(opcional)</small><textarea data-rs-obs rows="2" maxlength="300"></textarea></label><button type="button" class="btn" data-rs-salvar>Salvar</button></div>'
+      + (ate ? des('Desfazer atendimento') : '<div class="btns"><button type="button" class="btn ghost sm" data-rs-ate>Só atendido (ainda sem contrato)</button><button type="button" class="btn ghost sm" data-rs-nc>Não compareceu</button></div>')+'<div class="err" data-rs-err role="alert"></div></div>';
   }
   function resultadoLiga(ov, g, depois){
     const erro = t => { const e = $('[data-rs-err]', ov); if (e) e.textContent = t || ''; };
