@@ -261,7 +261,7 @@ li:first-child>.ag-i{border-top:0}
   };
   const guarda = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k, v){ try { localStorage.setItem(k, v); } catch(e){} } };
 
-  const VERSAO = '2026-11-14 · retorno, acompanhante e faltou';
+  const VERSAO = '2026-11-14 · teles com resultado';
   if ('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => { reg.update(); }).catch(() => {});
     let recarregou = false;
@@ -433,7 +433,6 @@ li:first-child>.ag-i{border-top:0}
   // resultado do atendimento (Fechado / Não fechou + motivo), a partir do dia do atendimento
   const motNC = () => (MOTIVOS.find(x => x.nome === 'Paciente não compareceu') || {}).id;
   function resultadoHtml(g){
-    if (souBH()) return g.status === 'nao_fechou' ? '<p class="meta"><b>Motivo:</b> '+esc(motivoTxt(g))+'</p>' : '';
     const des = txt => '<button type="button" class="link" data-rs-desfaz style="justify-self:start">'+txt+'</button>';
     if (g.status === 'fechado' || g.status === 'nao_fechou')
       return (g.status === 'nao_fechou' ? '<p class="meta"><b>Motivo:</b> '+esc(motivoTxt(g))+'</p>' : '')+'<div class="rs">'+des('Desfazer resultado')+'<div class="err" data-rs-err role="alert"></div></div>';
