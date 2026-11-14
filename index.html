@@ -648,6 +648,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.35.0', '2026-11-14', 'Mapa de vários estados: a clínica ganha o campo Estado e a cidade vem da lista do estado escolhido. Quando há clínica ativa fora de Minas, o mapa acopla o estado dela na posição geográfica real. Ao inativar ou excluir a clínica, o estado some e o mapa volta ao de Minas.'],
     ['1.34.0', '2026-11-14', 'Agenda das teles: retorno (conta venda, não conta como nova visita), acompanhantes como visitas do mesmo agendamento, status Faltou automático 1 hora depois do horário e bloqueio de agendamento duplicado no mesmo dia.'],
     ['1.33.0', '2026-11-13', 'Agenda das teles em tempo real: quando um agendamento muda no banco (status, data, horário, novo ou excluído), a agenda de todas as pessoas com a tela aberta se atualiza sozinha, sem recarregar a página.'],
     ['1.32.0', '2026-11-13', 'Agenda das teles: a projeção de vendas passa a ser sempre do mês atual e só muda com a tele e a clínica escolhidas. Mudar as datas ou o período não altera mais a projeção.'],
@@ -717,6 +718,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   };
 
   /* ---------- cadastros ---------- */
+  const UFS = [['AC','Acre',12],['AL','Alagoas',27],['AP','Amapá',16],['AM','Amazonas',13],['BA','Bahia',29],['CE','Ceará',23],['DF','Distrito Federal',53],['ES','Espírito Santo',32],['GO','Goiás',52],['MA','Maranhão',21],['MT','Mato Grosso',51],['MS','Mato Grosso do Sul',50],['MG','Minas Gerais',31],['PA','Pará',15],['PB','Paraíba',25],['PR','Paraná',41],['PE','Pernambuco',26],['PI','Piauí',22],['RJ','Rio de Janeiro',33],['RN','Rio Grande do Norte',24],['RS','Rio Grande do Sul',43],['RO','Rondônia',11],['RR','Roraima',14],['SC','Santa Catarina',42],['SP','São Paulo',35],['SE','Sergipe',28],['TO','Tocantins',17]];
+  const ufId = uf => (UFS.find(x => x[0] === uf) || UFS[12])[2], ufNome = uf => (UFS.find(x => x[0] === uf) || UFS[12])[1];
   const CORES = [['#5b9bff','Azul'],['#ffa23a','Laranja'],['#ff7aa8','Rosa'],['#3ecf9a','Verde'],['#b58cff','Roxo'],['#ff7a6b','Coral']];
   const RECURSOS = {
     clinicas: {
@@ -725,7 +728,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       campos: [
         {k:'sigla', rot:'Sigla (2 a 4 letras)', tipo:'text', max:4, upper:true, obrig:true},
         {k:'nome', rot:'Nome da clínica', tipo:'text', obrig:true},
-        {k:'cidade', rot:'Cidade (Minas Gerais), para o mapa', tipo:'text', lista:'dl-mun'},
+        {k:'uf', rot:'Estado', tipo:'select', opcoes:UFS.map(x => [x[0], x[1]]), padrao:'MG'},
+        {k:'cidade', rot:'Cidade, para o mapa (do estado escolhido)', tipo:'text', lista:'dl-mun'},
         {k:'cor', rot:'Cor do carro', tipo:'select', opcoes:CORES, padrao:'#5b9bff'},
         {k:'link_nuv', rot:'Link do Relatório NUV desta clínica (Looker Studio)', tipo:'text'},
         {k:'ativa', rot:'Clínica ativa', tipo:'check', padrao:true}
@@ -738,12 +742,12 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       },
       antes: async d => {
         if (!d.cidade){ Object.assign(d, { cidade: null, ibge_id: null, regiao_id: null, regiao: null, latitude: null, longitude: null }); return ''; }
-        let lista; try { lista = await mgMunicipios(); } catch (e) { return 'Não consegui consultar a lista de cidades do IBGE agora. Tente de novo em instantes.'; }
-        const m = lista.find(x => normTxt(x.nome) === normTxt(d.cidade)); if (!m) return 'Não encontrei essa cidade em Minas Gerais. Escolha uma da lista que aparece ao digitar.';
+        let lista; try { lista = await munUF(d.uf); } catch (e) { return 'Não consegui consultar a lista de cidades do IBGE agora. Tente de novo em instantes.'; }
+        const m = lista.find(x => normTxt(x.nome) === normTxt(d.cidade)); if (!m) return 'Não encontrei essa cidade em '+ufNome(d.uf)+'. Escolha uma da lista que aparece ao digitar.';
         let c; try { c = await mgCentro(m.id); } catch (e) { return 'Não consegui obter a localização dessa cidade agora. Tente de novo.'; }
         Object.assign(d, { cidade: m.nome, ibge_id: m.id, regiao_id: m.rid, regiao: m.rnome, longitude: c[0], latitude: c[1] }); return '';
       },
-      resumo: r => '<div class="line"><span class="dot" style="background:'+esc(r.cor||'#999')+'"></span><span class="sigla">'+esc(r.sigla)+'</span><b>'+esc(r.nome)+'</b>'+(r.cidade?'<span class="chip">'+esc(r.cidade)+(r.regiao?' · '+esc(r.regiao.replace(/^Região (Geográfica )?(Intermediária de )?/,'')):'')+'</span>':'<span class="chip off">sem cidade</span>')+(r.ativa?'':'<span class="chip off">Inativa</span>')+'</div>'
+      resumo: r => '<div class="line"><span class="dot" style="background:'+esc(r.cor||'#999')+'"></span><span class="sigla">'+esc(r.sigla)+'</span><b>'+esc(r.nome)+'</b>'+(r.cidade?'<span class="chip">'+esc(r.cidade)+(r.uf && r.uf !== 'MG' ? '/'+esc(r.uf) : '')+(r.regiao?' · '+esc(r.regiao.replace(/^Região (Geográfica )?(Intermediária de )?/,'')):'')+'</span>':'<span class="chip off">sem cidade</span>')+(r.ativa?'':'<span class="chip off">Inativa</span>')+'</div>'
     },
     tipos: {
       titulo: 'Tipo de lançamento', plural: 'Tipos de lançamento', tabela: 'tipos_lancamento', ordem: 'nome', ativo: 'ativo',
@@ -806,7 +810,10 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     $('#mostra-inat').addEventListener('change', e => { mostrarInativos = e.target.checked; desenhar(); });
     const del = $('#c-del'); if (del) del.addEventListener('click', excluir);
     const cancel = $('#c-cancel'); if (cancel) cancel.addEventListener('click', () => { editId = null; confirmaExcluir = false; desenhar(); });
-    if (recurso === 'clinicas') mgMunicipios().then(l => { const dl = $('#dl-mun'); if (dl) dl.innerHTML = l.map(m => '<option value="'+esc(m.nome)+'">').join(''); }).catch(() => {});
+    if (recurso === 'clinicas'){
+      const dlUF = () => { const u = $('#f-uf'); munUF(u ? u.value : 'MG').then(l => { const dl = $('#dl-mun'); if (dl) dl.innerHTML = l.map(m => '<option value="'+esc(m.nome)+'">').join(''); }).catch(() => {}); };
+      dlUF(); const u = $('#f-uf'); if (u) u.addEventListener('change', () => { const c = $('#f-cidade'); if (c) c.value = ''; dlUF(); });
+    }
     $$('[data-ed]').forEach(b => b.addEventListener('click', () => { editId = Number(b.dataset.ed); confirmaExcluir = false; desenhar(); const p = $('#f-cad input, #f-cad select'); if (p) p.focus(); }));
   }
 
@@ -2705,18 +2712,19 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   }
   const arred = n => Math.round(n * 1000) / 1000;
   const polis = g => !g ? [] : g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
-  const mgMunicipios = () => cacheado('mg-mun-v1', async () => (await ibgeJson('v1/localidades/estados/31/municipios')).map(m => {
+  const munUF = (uf = 'MG') => cacheado(uf === 'MG' ? 'mg-mun-v1' : 'mun-'+uf+'-v1', async () => (await ibgeJson('v1/localidades/estados/'+ufId(uf)+'/municipios')).map(m => {
     const r = (m['regiao-imediata'] || {})['regiao-intermediaria'] || {}; return { id: m.id, nome: m.nome, rid: r.id || null, rnome: r.nome || '' }; }));
+  const mgMunicipios = () => munUF('MG');
   const compactar = fs => fs.map(f => ({ key: f.key, polys: f.polys.map(p => p.map(r => r.map(c => [arred(c[0]), arred(c[1])]))) }));
   async function malha(url){ const j = await ibgeJson(url); return (j.features || []).map(f => ({ key: String((f.properties || {}).codarea || ''), polys: polis(f.geometry) })); }
   /* Tenta o contorno pronto das regiões intermediárias; se o IBGE não entregar, monta as regiões juntando as cidades. */
-  const mgContorno = () => cacheado('mg-geo-v2', async () => {
-    const muns = await mgMunicipios(), rids = new Set(muns.map(m => String(m.rid)));
-    const tentativas = ['v4/malhas/estados/31?intrarregiao=regiao-intermediaria&qualidade=minima&formato=application/vnd.geo+json', 'v3/malhas/estados/31?intrarregiao=intermediaria&qualidade=minima&formato=application/vnd.geo+json'];
+  const contornoUF = (uf = 'MG') => cacheado(uf === 'MG' ? 'mg-geo-v2' : 'geo-'+uf+'-v1', async () => {
+    const eid = ufId(uf), muns = await munUF(uf), rids = new Set(muns.map(m => String(m.rid)));
+    const tentativas = ['v4/malhas/estados/'+eid+'?intrarregiao=regiao-intermediaria&qualidade=minima&formato=application/vnd.geo+json', 'v3/malhas/estados/'+eid+'?intrarregiao=intermediaria&qualidade=minima&formato=application/vnd.geo+json'];
     for (const u of tentativas){
       try { const f = await malha(u); if (f.length >= 2 && f.every(x => rids.has(x.key))) return compactar(f); } catch (e) { /* tenta a próxima */ }
     }
-    const cid = await malha('v3/malhas/estados/31?intrarregiao=municipio&qualidade=minima&formato=application/vnd.geo+json');
+    const cid = await malha('v3/malhas/estados/'+eid+'?intrarregiao=municipio&qualidade=minima&formato=application/vnd.geo+json');
     const porId = {}; muns.forEach(m => { porId[String(m.id)] = m; porId[String(m.id).slice(0, 6)] = m; });
     const reg = {}; cid.forEach(c => { const m = porId[c.key] || porId[c.key.slice(0, 6)]; if (!m || !m.rid) return; (reg[m.rid] = reg[m.rid] || { key: String(m.rid), polys: [] }).polys.push(...c.polys); });
     const lista = Object.values(reg); if (lista.length < 2) throw new Error('contorno indisponível');
@@ -2751,8 +2759,14 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     if (!DS.ano){ const h = hoje(); DS.ano = Number(h.slice(0, 4)); DS.mes = Number(h.slice(5, 7)) - 1; }
     const n = pdN(DS.ano, DS.mes), de = pdIso(DS.ano, DS.mes, 1), ate = pdIso(DS.ano, DS.mes, n), tk = ++DS.tk;
     DS.geoErro = '';
-    const geoP = Promise.all([mgContorno(), mgMunicipios()]).catch(e => { DS.geoErro = (e && e.message) || 'erro'; return null; });
-    const rs = await Promise.all([sb.from('clinicas').select('*').order('nome'), sb.rpc('painel_geral', { p_de: de, p_ate: ate }), sb.rpc('gerentes_das_clinicas'), geoP, canaisCarrega()]);
+    const cl0 = await sb.from('clinicas').select('*').order('nome');
+    const ufs = ['MG'].concat([...new Set((cl0.data || []).filter(c => c.ativa !== false && c.uf && c.uf !== 'MG' && c.latitude != null).map(c => c.uf))].sort());
+    DS.ufs = ufs;
+    const geoP = Promise.all(ufs.map((u, i) => Promise.all([contornoUF(u), munUF(u)]).catch(e => { DS.geoErro = (e && e.message) || 'erro'; return null; }))).then(l => {
+      const ok = l.filter(Boolean); if (!ok.length) return null;
+      return [ok.reduce((t, x) => t.concat(x[0]), []), ok.reduce((t, x) => t.concat(x[1]), [])];
+    });
+    const rs = await Promise.all([Promise.resolve(cl0), sb.rpc('painel_geral', { p_de: de, p_ate: ate }), sb.rpc('gerentes_das_clinicas'), geoP, canaisCarrega()]);
     if (tk !== DS.tk || recurso !== 'inicio') return;
     const er = rs.slice(0, 3).map(r => r.error).find(Boolean); if (er){ pdErro(er); return; }
     const base = {}; rs[0].data.filter(c => c.ativa !== false).forEach(c => { base[c.id] = { c, v: 0, s: 0, d: {}, t: {} }; });
@@ -2806,13 +2820,14 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   }
 
   /* ---- tela: barra, mapa e painéis ---- */
+  const mapaTit = () => (DS.ufs || ['MG']).length > 1 ? 'Mapa: '+DS.ufs.map(ufNome).join(', ') : 'Mapa de Minas Gerais';
   function inicioMontar(){
     const fechado = !DS.proj;
     $('#area').innerHTML = '<div class="ds-sec">'
       + '<div class="pd-bar"><p class="sub" style="margin:0" id="ds-info"></p>'
       + '<div class="pd-mes"><button type="button" id="ds-ant" aria-label="Mês anterior">‹</button><b>'+new Date(DS.ano, DS.mes, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })+'</b><button type="button" id="ds-prox" aria-label="Próximo mês">›</button></div></div>'
-      + '<div class="card ds-mapa-card"><div class="pd-bar" style="margin-bottom:8px"><div><h2 style="margin:0">Mapa de Minas Gerais</h2><p class="sub" style="margin:2px 0 0" id="ds-dica"></p></div><div id="ds-filtro"></div></div>'
-      + (fechado ? '<div class="empty">Cadastre a cidade de cada clínica em Cadastros › Clínicas para ver o mapa.</div>' : '<div class="ds-mapa-grid"><div class="ds-mapa"><svg id="ds-svg" preserveAspectRatio="xMidYMid meet" role="group" aria-label="Mapa de Minas Gerais com as clínicas"></svg></div><aside class="ds-lado" id="ds-lado" aria-live="polite"></aside></div>')
+      + '<div class="card ds-mapa-card"><div class="pd-bar" style="margin-bottom:8px"><div><h2 style="margin:0">'+esc(mapaTit())+'</h2><p class="sub" style="margin:2px 0 0" id="ds-dica"></p></div><div id="ds-filtro"></div></div>'
+      + (fechado ? '<div class="empty">Cadastre a cidade de cada clínica em Cadastros › Clínicas para ver o mapa.</div>' : '<div class="ds-mapa-grid"><div class="ds-mapa"><svg id="ds-svg" preserveAspectRatio="xMidYMid meet" role="group" aria-label="Mapa com as clínicas"></svg></div><aside class="ds-lado" id="ds-lado" aria-live="polite"></aside></div>')
       + '<div class="ds-sem" id="ds-sem"></div></div>'
       + '<div id="ds-paineis" class="ds-sec"></div></div>';
     const h = hoje(); $('#ds-prox').disabled = DS.ano === Number(h.slice(0, 4)) && DS.mes >= Number(h.slice(5, 7)) - 1;
@@ -2910,7 +2925,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const mi = DS.ano+'-'+String(DS.mes + 1).padStart(2, '0')+'-01', mf = DS.ano+'-'+String(DS.mes + 1).padStart(2, '0')+'-'+String(new Date(DS.ano, DS.mes + 1, 0).getDate()).padStart(2, '0');
     const pjm = n => { const r = projecao(n, mi, mf, mf); return r.proj; }, pjx = n => { const r = pjm(n); return r === null ? '' : ' · proj. '+r; };
     const pjT = projecao(S, mi, mf, mf);
-    const titulo = !f ? 'Minas Gerais' : f.rotulo, sub = !f ? 'Todas as clínicas' : (f.tipo === 'regiao' ? 'Região em foco' : (f.ids.size === 1 ? 'Clínica em foco' : 'Clínicas selecionadas'));
+    const titulo = !f ? ((DS.ufs || ['MG']).length > 1 ? DS.ufs.join(' + ') : 'Minas Gerais') : f.rotulo, sub = !f ? 'Todas as clínicas' : (f.tipo === 'regiao' ? 'Região em foco' : (f.ids.size === 1 ? 'Clínica em foco' : 'Clínicas selecionadas'));
     const tp = {}; em.forEach(o => Object.keys(o.t || {}).forEach(k => { const x = tp[k] = tp[k] || [0, 0]; x[0] += o.t[k][0]; x[1] += o.t[k][1]; }));
     const ordem = ordemGrupos(), tks = Object.keys(tp).sort((a, b) => { const ia = ordem.indexOf(a), ib = ordem.indexOf(b); return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b); });
     const tipos = tks.length ? '<h3>Por tipo</h3><ul class="ds-li">'+tks.map(k => '<li><div class="ti"><span class="n"><b>'+esc(k)+'</b></span><span class="v">'+tp[k][0]+' vis · '+tp[k][1]+' ven'+pjx(tp[k][1])+'</span><span class="p">'+pf0(pdPct(tp[k][0], tp[k][1]))+'</span></div></li>').join('')+'</ul>' : '';
