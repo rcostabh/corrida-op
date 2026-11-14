@@ -261,7 +261,7 @@ li:first-child>.ag-i{border-top:0}
   };
   const guarda = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k, v){ try { localStorage.setItem(k, v); } catch(e){} } };
 
-  const VERSAO = '2026-11-13 · teles liberadas';
+  const VERSAO = '2026-11-14 · retorno, acompanhante e faltou';
   if ('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => { reg.update(); }).catch(() => {});
     let recarregou = false;
@@ -420,7 +420,8 @@ li:first-child>.ag-i{border-top:0}
   const ligaHoras = (inpData, selHora) => { if (!inpData || !selHora) return; inpData.addEventListener('change', () => { const ant = selHora.value; selHora.innerHTML = opHoras(horasDia(inpData.value).includes(ant) ? ant : '', inpData.value); }); };
   const hh = h => h ? String(h).slice(0, 5) : '';
   const ehNC = g => g.status === 'nao_fechou' && (MOTIVOS.find(x => x.id === g.motivo_id) || {}).nome === 'Paciente não compareceu';
-  const stChip = g => ehNC(g) ? '<span class="ncc">⊘ Não compareceu</span>' : g.status === 'confirmado' ? '<span class="okc">✓ Confirmado</span>' : g.status === 'atendido' ? '<span class="atc">● Atendido</span>' : g.status === 'fechado' ? '<span class="okc fe">★ Fechado</span>' : g.status === 'nao_fechou' ? '<span class="nfc">✕ Não fechou</span>' : 'Agendado';
+  const tipoTag = g => g.tipo === 'retorno' ? ' <span class="ncc" style="color:#5b3fb5">↩ Retorno</span>' : g.tipo === 'acompanhante' ? ' <span class="ncc" style="color:#5b3fb5">+ Acompanhante</span>' : '';
+  const stChip = g => g.status === 'faltou' ? '<span class="ncc">⊘ Faltou</span>' : ehNC(g) ? '<span class="ncc">⊘ Não compareceu</span>' : g.status === 'confirmado' ? '<span class="okc">✓ Confirmado</span>' : g.status === 'atendido' ? '<span class="atc">● Atendido</span>' : g.status === 'fechado' ? '<span class="okc fe">★ Fechado</span>' : g.status === 'nao_fechou' ? '<span class="nfc">✕ Não fechou</span>' : 'Agendado';
   // Lançamento retroativo: enquanto estiver liberado no banco (parâmetro), datas anteriores a hoje são aceitas
   let RETRO = false;
   async function retroCarregar(){ try { const r = await sb.rpc('agendamento_retroativo'); RETRO = !r.error && r.data === true; } catch (e) { RETRO = false; } }
@@ -506,17 +507,51 @@ li:first-child>.ag-i{border-top:0}
     e.preventDefault();
     const clinica = Number($('#a-clin').value), nome = $('#a-nome').value.trim(), tel = $('#a-tel').value.replace(/\D/g, ''), data = $('#a-data').value, hora = $('#a-hora').value;
     const erro = !nome || nome.length < 2 ? 'Informe o nome do paciente.' : !/^[0-9]{10,11}$/.test(tel) ? 'Telefone com DDD, 10 ou 11 números.'
-      : !data || passado(data) ? 'A data do agendamento não pode ser anterior a hoje.' : !hora ? 'Escolha o horário.' : !printArq ? 'Anexe o print da conversa do WhatsApp.' : '';
+      : !data || passado(data) ? 'A data do agendamento não pode ser anterior a hoje.' : !hora ? 'Escolha o horário.' : '';
     if (erro){ $('#a-err').textContent = erro; return; }
     const btn = $('#a-btn'); btn.disabled = true; $('#a-err').textContent = '';
-    let caminho = null;
+    let caminho = null, retorno = false;
+    const finaliza = () => { btn.disabled = false; toast(retorno ? 'Retorno lançado.' : 'Agendamento lançado.'); AGP.sel = data; AGP.ano = Number(data.slice(0, 4)); AGP.mes = Number(data.slice(5, 7)) - 1; mostrar('agenda'); };
+    const lancaRetorno = async origem => {
+      const r = await sb.rpc('lancar_retorno', { p_origem: origem, p_data: data, p_hora: hora }); if (r.error) throw r.error;
+      if (printArq){ try { const c = await enviarPrint(printArq); await sb.rpc('adicionar_conversa', { p_id: r.data, p_print: c }); } catch (x){} }
+      retorno = true;
+    };
     try {
-      caminho = await enviarPrint(printArq);
-      const r = await sb.rpc('lancar_agendamento', { p_clinica: clinica, p_paciente: nome, p_telefone: tel, p_data: data, p_hora: hora, p_print: caminho });
-      if (r.error){ await sb.storage.from('prints').remove([caminho]); throw r.error; }
+      const va = await sb.rpc('visita_anterior', { p_telefone: tel }), v = va.data && va.data[0];
+      let origem = null;
+      if (v){
+        const sim = await perguntar('Este paciente já foi avaliado em '+dBR(v.data_agendamento)+'. Este agendamento é um retorno? (Retorno conta como venda, não como nova visita.)', 'Sim, é retorno', 'Não, é nova visita');
+        if (sim === null){ btn.disabled = false; return; }
+        if (sim) origem = v.id;
+      }
+      if (origem){ await lancaRetorno(origem); }
+      else {
+        if (!printArq) throw new Error('Anexe o print da conversa do WhatsApp.');
+        caminho = await enviarPrint(printArq);
+        const r = await sb.rpc('lancar_agendamento', { p_clinica: clinica, p_paciente: nome, p_telefone: tel, p_data: data, p_hora: hora, p_print: caminho });
+        if (r.error){
+          await sb.storage.from('prints').remove([caminho]);
+          const dup = /DUPLICADO#(\d+)/.exec(r.error.message || '');
+          if (!dup) throw r.error;
+          const sim = await perguntar('Este paciente já está agendado nesta clínica neste dia. É um retorno? (Se não for, não é possível agendar de novo.)', 'Sim, é retorno', 'Não, cancelar');
+          if (!sim){ btn.disabled = false; return; }
+          await lancaRetorno(Number(dup[1]));
+        }
+      }
     } catch (x){ btn.disabled = false; $('#a-err').textContent = msgErro(x); return; }
-    btn.disabled = false; toast('Agendamento lançado.'); AGP.sel = data; AGP.ano = Number(data.slice(0, 4)); AGP.mes = Number(data.slice(5, 7)) - 1; mostrar('agenda');
+    finaliza();
   }
+  function perguntar(msg, sim, nao){
+    return new Promise(res => {
+      const d = document.createElement('div'); d.className = 'card'; d.setAttribute('role', 'alertdialog');
+      d.innerHTML = '<p style="margin:0 0 10px"><b>'+esc(msg)+'</b></p><div class="btns"><button type="button" class="btn ghost" data-n>'+esc(nao)+'</button><button type="button" class="btn" data-s>'+esc(sim)+'</button></div>';
+      $('#a-btn').before(d); d.scrollIntoView({ block: 'center' });
+      d.querySelector('[data-s]').addEventListener('click', () => { d.remove(); res(true); });
+      d.querySelector('[data-n]').addEventListener('click', () => { d.remove(); res(nao === 'Não, é nova visita' ? false : null); });
+    });
+  }
+
 
   /* ---------- agendamentos da telemarketing: calendário do mês ---------- */
   const SEMANA = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -565,7 +600,7 @@ li:first-child>.ag-i{border-top:0}
       + '<div class="cal">'+SEMANA.map(x => '<span class="sm">'+x+'</span>').join('')+cel+'</div></div>'
       + '<button type="button" class="btn block" id="g-novo">+ Novo agendamento</button>'
       + '<div class="card"><h2>'+dBR(AGP.sel)+(AGP.sel === hoje() ? ' · hoje' : '')+'</h2>'
-      + (dia.length ? '<ul class="items">'+dia.map(g => '<li><button type="button" class="ag-i" data-g="'+g.id+'"><span class="chip">'+(hh(g.hora) || 'sem horário')+'</span><span class="ag-n"><b>'+esc(g.paciente)+'</b><small>'+esc(fmtTelDigitos(g.telefone))+(g.status !== 'agendado' ? ' · '+stChip(g) : '')+'</small></span><span class="sigla">'+esc(AGP.sig[g.clinica_id] || '')+'</span></button></li>').join('')+'</ul>' : '<div class="empty">Nenhum agendamento neste dia.</div>')
+      + (dia.length ? '<ul class="items">'+dia.map(g => '<li><button type="button" class="ag-i" data-g="'+g.id+'"><span class="chip">'+(hh(g.hora) || 'sem horário')+'</span><span class="ag-n"><b>'+esc(g.paciente)+'</b><small>'+esc(fmtTelDigitos(g.telefone))+tipoTag(g)+(g.status !== 'agendado' ? ' · '+stChip(g) : '')+'</small></span><span class="sigla">'+esc(AGP.sig[g.clinica_id] || '')+'</span></button></li>').join('')+'</ul>' : '<div class="empty">Nenhum agendamento neste dia.</div>')
       + '</div>';
     $('#g-voltar').addEventListener('click', () => mostrar('inicio'));
     $('#g-novo').addEventListener('click', () => mostrar('agendar'));
@@ -579,18 +614,21 @@ li:first-child>.ag-i{border-top:0}
     await motivosCarregar();
     const ps = await sb.from('agendamento_prints').select('*').eq('agendamento_id', id).order('criado_em');
     const urls = await Promise.all((ps.data || []).map(x => sb.storage.from('prints').createSignedUrl(x.path, 3600).then(r => r.data ? r.data.signedUrl : null)));
-    const comResultado = ['atendido', 'fechado', 'nao_fechou'].includes(g.status), editavel = (RETRO || g.data_agendamento >= hoje()) && !comResultado, podeConf = editavel;
+    const comResultado = ['atendido', 'fechado', 'nao_fechou'].includes(g.status), faltou = g.status === 'faltou', editavel = (RETRO || g.data_agendamento >= hoje() || faltou) && !comResultado, podeConf = editavel && !faltou,
+      podeAcomp = !faltou && (RETRO || g.data_agendamento >= hoje()), podeRet = !faltou && g.status !== 'fechado' && g.tipo !== 'acompanhante';
     const ov = document.createElement('div'); ov.className = 'sheet'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
     ov.innerHTML = '<div class="sh-c"><div class="line" style="justify-content:space-between"><h2 style="margin:0">'+esc(g.paciente)+'</h2><button type="button" class="sndbtn" data-x aria-label="Fechar">×</button></div>'
-      + '<p class="meta">'+esc(fmtTelDigitos(g.telefone))+' · <span class="sigla">'+esc(AGP.sig[g.clinica_id] || '')+'</span> · '+stChip(g)+'</p>'
+      + '<p class="meta">'+esc(fmtTelDigitos(g.telefone))+' · <span class="sigla">'+esc(AGP.sig[g.clinica_id] || '')+'</span> · '+stChip(g)+tipoTag(g)+'</p>'
+      + (faltou ? '<p class="meta"><b>O paciente faltou.</b> Se ele chegou depois, reagende para outro horário abaixo.</p>' : '')
       + (podeConf ? (g.status === 'confirmado'
           ? '<button type="button" class="link" id="e-desconf" style="justify-self:start">Desfazer confirmação</button>'
           : '<button type="button" class="btn verde block" id="e-conf">Confirmado</button>')
         : '')
       + resultadoHtml(g)
-      + '<div class="form"><div class="g2"><label class="field" for="e-data">Data<input id="e-data" type="date"'+(RETRO ? '' : ' min="'+hoje()+'"')+' value="'+esc(g.data_agendamento)+'"'+(editavel ? '' : ' disabled')+'></label>'
-      + '<label class="field" for="e-hora">Horário<select id="e-hora"'+(editavel ? '' : ' disabled')+'>'+opHoras(hh(g.hora), g.data_agendamento)+'</select></label></div>'
-      + (editavel ? '<button type="button" class="btn ghost" id="e-salvar">Salvar nova data e horário</button>' : '<p class="meta">'+(comResultado ? 'Agendamento com resultado: desfaça o resultado para remarcar.' : 'Agendamentos de dias passados não podem ser alterados nem excluídos.')+'</p>')
+      + '<div class="form"><div class="g2"><label class="field" for="e-data">Data<input id="e-data" type="date"'+(RETRO ? '' : ' min="'+hoje()+'"')+' value="'+esc(faltou && g.data_agendamento < hoje() ? hoje() : g.data_agendamento)+'"'+(editavel ? '' : ' disabled')+'></label>'
+      + '<label class="field" for="e-hora">Horário<select id="e-hora"'+(editavel ? '' : ' disabled')+'>'+opHoras(faltou ? '' : hh(g.hora), faltou && g.data_agendamento < hoje() ? hoje() : g.data_agendamento)+'</select></label></div>'
+      + (editavel ? '<button type="button" class="btn ghost" id="e-salvar">'+(faltou ? 'Reagendar' : 'Salvar nova data e horário')+'</button>' : '<p class="meta">'+(comResultado ? 'Agendamento com resultado: desfaça o resultado para remarcar.' : 'Agendamentos de dias passados não podem ser alterados nem excluídos.')+'</p>')
+      + (podeAcomp || podeRet ? '<div class="btns" id="e-extra">'+(podeAcomp ? '<button type="button" class="btn ghost sm" id="e-acomp">+ Acompanhante</button>' : '')+(podeRet ? '<button type="button" class="btn ghost sm" id="e-ret">↩ Marcar retorno</button>' : '')+'</div><div id="e-sub"></div>' : '')
       + '<div class="field">Conversas ('+urls.filter(Boolean).length+')</div>'
       + urls.filter(Boolean).map(u => '<img class="cv" src="'+esc(u)+'" alt="Print da conversa">').join('')
       + '<div class="btns" style="align-items:center"><label class="btn ghost sm" for="e-img" style="display:inline-grid;place-items:center">+ Incluir nova conversa</label></div><input id="e-img" type="file" accept="image/*" hidden>'
@@ -618,6 +656,30 @@ li:first-child>.ag-i{border-top:0}
       salvar.disabled = true; const r = await sb.rpc('alterar_agendamento', { p_id: id, p_data: d, p_hora: h }); salvar.disabled = false;
       if (r.error) return erro(msgErro(r.error));
       toast('Agendamento alterado.'); AGP.sel = d; AGP.ano = Number(d.slice(0, 4)); AGP.mes = Number(d.slice(5, 7)) - 1; refaz();
+    });
+    const sub = $('#e-sub', ov);
+    const acomp = $('#e-acomp', ov), ret = $('#e-ret', ov);
+    if (acomp) acomp.addEventListener('click', () => {
+      sub.innerHTML = '<div class="form"><label class="field">Nome do acompanhante<input id="s-nome" type="text" autocomplete="off" autocapitalize="words"></label><label class="field">Telefone <small>(opcional)</small><input id="s-tel" type="tel" inputmode="numeric" placeholder="(31) 99999-9999"></label><button type="button" class="btn" id="s-ok">Adicionar acompanhante</button></div>';
+      $('#s-tel', ov).addEventListener('input', e => { e.target.value = fmtTelDigitos(e.target.value); });
+      $('#s-ok', ov).addEventListener('click', async e => {
+        const n = $('#s-nome', ov).value.trim(); if (n.length < 2) return erro('Informe o nome do acompanhante.');
+        e.currentTarget.disabled = true; const r = await sb.rpc('adicionar_acompanhante', { p_origem: id, p_paciente: n, p_telefone: $('#s-tel', ov).value.replace(/\D/g, '') || null });
+        if (r.error){ e.currentTarget.disabled = false; return erro(msgErro(r.error)); }
+        toast('Acompanhante adicionado.'); refaz();
+      });
+    });
+    if (ret) ret.addEventListener('click', () => {
+      const d0 = g.data_agendamento < hoje() ? hoje() : g.data_agendamento;
+      sub.innerHTML = '<div class="form"><p class="meta" style="margin:0">Retorno conta como venda, não como nova visita.</p><div class="g2"><label class="field">Data<input id="r-data" type="date"'+(RETRO ? '' : ' min="'+hoje()+'"')+' value="'+esc(d0)+'"></label><label class="field">Horário<select id="r-hora">'+opHoras('', d0)+'</select></label></div><button type="button" class="btn" id="r-ok">Marcar retorno</button></div>';
+      ligaHoras($('#r-data', ov), $('#r-hora', ov));
+      $('#r-ok', ov).addEventListener('click', async e => {
+        const d = $('#r-data', ov).value, h = $('#r-hora', ov).value;
+        if (!d || passado(d)) return erro('A data do retorno não pode ser anterior a hoje.'); if (!h) return erro('Escolha o horário.');
+        e.currentTarget.disabled = true; const r = await sb.rpc('lancar_retorno', { p_origem: id, p_data: d, p_hora: h });
+        if (r.error){ e.currentTarget.disabled = false; return erro(msgErro(r.error)); }
+        toast('Retorno marcado.'); AGP.sel = d; AGP.ano = Number(d.slice(0, 4)); AGP.mes = Number(d.slice(5, 7)) - 1; refaz();
+      });
     });
     $('#e-img', ov).addEventListener('change', async e => {
       const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return; erro('');
