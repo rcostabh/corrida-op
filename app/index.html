@@ -250,7 +250,7 @@ li:first-child>.ag-i{border-top:0}
   const hoje = () => new Date().toLocaleDateString('sv-SE');
   const dBR = d => d ? d.split('-').reverse().join('/') : '';
   const iniciais = n => { const p = String(n||'?').trim().split(/\s+/); return ((p[0]||'?')[0] + (p.length > 1 ? p[p.length-1][0] : (p[0]||'')[1] || '')).toUpperCase(); };
-  const avatar = (u, cls) => u && u.foto_url ? '<img class="av '+(cls||'')+'" src="'+esc(u.foto_url)+'" alt="">' : '<div class="av '+(cls||'')+'">'+esc(iniciais(u && u.nome))+'</div>';
+  const avatar = (u, cls) => u && u.foto_url ? '<img class="av '+(cls||'')+'" src="'+esc(u.foto_url)+'" alt="'+esc(u.nome)+'" title="'+esc(u.nome)+'">' : '<div class="av '+(cls||'')+'" title="'+esc(u && u.nome)+'">'+esc(iniciais(u && u.nome))+'</div>';
   let toastTimer;
   function toast(m){ const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 4500); }
   const msgErro = e => {
@@ -935,7 +935,7 @@ li:first-child>.ag-i{border-top:0}
   function criarToken(id, e, souEu){
     const el = document.createElement('div'); el.className = 'tk'+(souEu ? ' eu' : ''); el.dataset.id = id;
     el.innerHTML = '<span class="sombra"></span>' + (souEu ? '<img class="mas" src="mascote.png" alt="Você"><span class="nm">'+(K.modo==='clinica'?'Sua clínica':'Você')+'</span>'
-      : (e.foto_url ? '<img class="disc" style="--rc:'+esc(e.cor)+'" src="'+esc(e.foto_url)+'" alt="'+esc(e.nome)+'">' : '<span class="disc" style="--rc:'+esc(e.cor)+'" title="'+esc(e.nome)+'">'+esc(e.tag)+'</span>'));
+      : (e.foto_url ? '<img class="disc" style="--rc:'+esc(e.cor)+'" src="'+esc(e.foto_url)+'" alt="'+esc(e.nome)+'" title="'+esc(e.nome)+'">' : '<span class="disc" style="--rc:'+esc(e.cor)+'" title="'+esc(e.nome)+'">'+esc(e.tag)+'</span>'));
     return el;
   }
   const colocar = (t, ponto, off) => { t.xy = { x: ponto.x + (off || 0), y: ponto.y }; t.el.style.transform = 'translate('+t.xy.x+'px,'+t.xy.y+'px)'; };
