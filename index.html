@@ -649,6 +649,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.36.1', '2026-11-17', 'Pessoas: a gerente responsável pelas teles BH (Paloma) agora escolhe em quais clínicas cada tele BH atende, ao cadastrar e ao editar.'],
     ['1.36.0', '2026-11-17', 'Agenda das teles: quem não chega até 1 hora depois do horário passa sozinho a Não compareceu (a rotina estava falhando e foi consertada, inclusive para retorno e acompanhante). Se o paciente chegar atrasado, quem acompanha o agendamento marca Atendido, Fechado, Não fechou ou Não apto sobre o Não compareceu. Novo status Não apto, que não conta nas visitas nem nas taxas.'],
     ['1.35.1', '2026-11-16', 'Corrida: ao passar o mouse na foto de cada pessoa na pista (e nas fotos do ranking e da lista de pessoas), aparece o nome dela.'],
     ['1.35.0', '2026-11-14', 'Mapa de vários estados: a clínica ganha o campo Estado e a cidade vem da lista do estado escolhido. Quando há clínica ativa fora de Minas, o mapa acopla o estado dela na posição geográfica real. Ao inativar ou excluir a clínica, o estado some e o mapa volta ao de Minas.'],
@@ -896,6 +897,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const ehTeleCargo = g => g === 'Tele BH' || g === 'Tele interno';
   const clinicasDe = p => vincs.filter(x => x.usuario_id === p.id).map(v => clin.find(c => c.id === v.clinica_id)).filter(Boolean);
   const gestorVe = () => eu.papel !== 'gerente' && modoVisao !== 'gerente';
+  /* gerente responsável pelas teles BH (escopo Tele BH) também escolhe em quais clínicas cada tele atende */
+  const veOutras = () => gestorVe() || eu.escopo_tele === 'Tele BH';
   const clinicaDe = p => { const v = vincs.find(x => x.usuario_id === p.id); return v ? clin.find(c => c.id === v.clinica_id) : null; };
 
   async function chamar(body){
@@ -944,7 +947,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + '<label class="field" for="p-tel">Telefone com DDD<input id="p-tel" type="tel" inputmode="numeric" autocomplete="off" placeholder="(31) 99999-9999" value="'+esc(atual?fmtTel(atual.telefone):'')+'"></label>'
       + '<label class="field" for="p-clin" id="w-clin"'+(papelForm==='assistente'?' hidden':'')+'>Clínica<select id="p-clin"><option value="">Escolha...</option>'+opcClin.map(c => '<option value="'+c.id+'"'+(cAtual&&cAtual.id===c.id?' selected':'')+'>'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
       + '<label class="field" for="p-desde" id="w-desde"'+(papelForm==='assistente'?' hidden':'')+'>Atua na clínica desde<input id="p-desde" type="date" max="'+hoje()+'" value="'+esc(vAtual ? vAtual.inicio : hoje())+'"><span class="sub" style="margin:0">Permite lançar visitas e vendas na planilha desde essa data, mesmo antes do cadastro aqui.</span></label>'
-      + (gestorVe() ? '<div class="field" id="w-outras" hidden>Também atende nas clínicas <small>(Tele: ao lançar um agendamento ela escolhe a clínica, e ele aparece na lista dessa clínica para o gerente)</small><div class="mp-opts" id="p-outras">'+clin.filter(c => c.ativa || outrasAtual.includes(c.id)).map(c => '<label class="chk" data-oc="'+c.id+'"><input type="checkbox" data-o="'+c.id+'"'+(outrasAtual.includes(c.id) ? ' checked' : '')+'><span>'+esc(c.sigla)+' · '+esc(c.nome)+'</span></label>').join('')+'</div></div>' : '')
+      + (veOutras() ? '<div class="field" id="w-outras" hidden>Também atende nas clínicas <small>(Tele: ao lançar um agendamento ela escolhe a clínica, e ele aparece na lista dessa clínica para o gerente)</small><div class="mp-opts" id="p-outras">'+clin.filter(c => c.ativa || outrasAtual.includes(c.id)).map(c => '<label class="chk" data-oc="'+c.id+'"><input type="checkbox" data-o="'+c.id+'"'+(outrasAtual.includes(c.id) ? ' checked' : '')+'><span>'+esc(c.sigla)+' · '+esc(c.nome)+'</span></label>').join('')+'</div></div>' : '')
       + '<label class="field" for="p-cargo" id="w-cargo"'+(papelForm==='promotor'?'':' hidden')+'>Cargo<select id="p-cargo"><option value="">Escolha...</option>'+CARGOS.map(g => '<option'+(atual&&atual.cargo===g?' selected':'')+'>'+g+'</option>').join('')+'</select></label>'
       + '<div class="field" id="w-extra"'+(papelForm==='promotor'||papelForm==='gerente'?'':' hidden')+'>Também atua como <small>(opcional; a pessoa ganha uma linha própria para cada cargo na planilha)</small><div class="mp-opts" id="p-extra">'+(papelForm==='gerente'?['Divulgador']:CARGOS).map(g => '<label class="chk" data-xg="'+esc(g)+'"><input type="checkbox" data-x="'+esc(g)+'"'+(atual && (atual.cargos_extra || []).includes(g) ? ' checked' : '')+'><span>'+esc(g)+'</span></label>').join('')+'</div></div>'
       + '<label class="chk" id="w-dcl" for="p-dcl" hidden><input id="p-dcl" type="checkbox"'+(atual && (atual.cargos_extra || []).includes(DIV_CLIN) ? ' checked' : '')+'><span>Também divulga clínico <small>(a pessoa ganha duas linhas na planilha: "Nome (orto)" e "Nome (clínico)")</small></span></label>'
@@ -1030,6 +1033,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
         const g = await sb.rpc('gerente_criar_promotor', { p_nome: d.nome, p_telefone: d.telefone || null, p_email: d.email || null, p_cargo: d.cargo, p_clinica: d.clinica_id, p_inicio: d.inicio });
         libera();
         if (g.error){ $('#p-err').textContent = msgErro(g.error); return; }
+        if (d.outras.length){ const eo = await outrasIns(g.data); if (eo) toast('Salva, mas não consegui vincular às outras clínicas: '+msgErro(eo)); }
         toast(d.nome+' foi salva, sem convite. Quando quiser dar acesso, edite a pessoa e use "Enviar convite agora".'); pessoasCarregar(); return;
       }
       const login = await loginUnico(d.email || d.nome);
