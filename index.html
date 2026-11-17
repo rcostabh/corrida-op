@@ -352,6 +352,8 @@ table.pd tr.tot td{font-weight:700}
 .ag-h{position:sticky;top:0;z-index:2;background:var(--surface);border-bottom:2px solid var(--c,var(--line));padding:5px 8px;display:grid;gap:0;line-height:1.2;font-size:12px}
 .ag-h small{color:var(--muted);font-size:10.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ag-t{padding:5px 6px;font-family:var(--font-body);font-weight:600;font-size:calc(10.5px * var(--z,1));color:var(--muted);border-top:1px solid var(--line);position:sticky;left:0;background:var(--surface);z-index:1}
+.ag-x[data-nv]{cursor:cell}.ag-x[data-nv]:hover{background:color-mix(in srgb,var(--accent,#f5a623) 12%,transparent)}
+.fi-w{position:relative;overflow:hidden}.fi{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:0;border:0;padding:0;margin:0}
 .ag-x{border-top:1px solid var(--line);border-left:1px solid var(--line);padding:2px;display:grid;gap:2px;align-content:start;min-height:calc(26px * var(--z,1))}
 .ag-c{border:0;text-align:left;cursor:pointer;border-radius:7px;padding:2px 6px;display:grid;gap:0;line-height:1.25;background:color-mix(in srgb,var(--c) 18%,var(--surface));border-left:3px solid var(--c);color:var(--ink);font-family:var(--font-body);font-weight:500;font-size:calc(11.5px * var(--z,1));min-width:0}
 .ag-c b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -649,6 +651,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.37.0', '2026-11-17', 'Agenda: gestor e gerente agendam uma nova visita clicando num horário vazio da grade (dia ou semana): escolhem clínica, tele, paciente, telefone, data, hora e, se quiserem, o print da conversa.'],
     ['1.36.1', '2026-11-17', 'Pessoas: a gerente responsável pelas teles BH (Paloma) agora escolhe em quais clínicas cada tele BH atende, ao cadastrar e ao editar.'],
     ['1.36.0', '2026-11-17', 'Agenda das teles: quem não chega até 1 hora depois do horário passa sozinho a Não compareceu (a rotina estava falhando e foi consertada, inclusive para retorno e acompanhante). Se o paciente chegar atrasado, quem acompanha o agendamento marca Atendido, Fechado, Não fechou ou Não apto sobre o Não compareceu. Novo status Não apto, que não conta nas visitas nem nas taxas.'],
     ['1.35.1', '2026-11-16', 'Corrida: ao passar o mouse na foto de cada pessoa na pista (e nas fotos do ranking e da lista de pessoas), aparece o nome dela.'],
@@ -2475,7 +2478,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const semHora = its.filter(g => !g.hora), linhas = (semHora.length ? [['Sem horário', semHora]] : []).concat(agHoras(its, AG.dia).map(h => [h, its.filter(g => g.hora && agHorario(g.hora) === h)]));
     return '<div class="ag-gw"><div class="ag-g" style="grid-template-columns:52px repeat('+cols.length+', minmax(calc(118px * var(--z,1)), 1fr))"><div class="ag-h"></div>'
       + cols.map(c => '<div class="ag-h" style="--c:'+esc(c.cor || '#5b9bff')+'"><b>'+esc(c.sigla)+'</b><small>'+esc(c.nome)+'</small><span class="ag-ht">'+esc(agTxtTot(agTotais(its.filter(g => g.clinica_id === c.id))))+'</span></div>').join('')
-      + linhas.map(([h, l]) => '<div class="ag-t">'+esc(h)+'</div>'+cols.map(c => '<div class="ag-x">'+l.filter(g => g.clinica_id === c.id).map(card).join('')+'</div>').join('')).join('')+'</div></div>';
+      + linhas.map(([h, l]) => '<div class="ag-t">'+esc(h)+'</div>'+cols.map(c => '<div class="ag-x"'+(agPodeCorrigir() && /^\d\d:\d\d$/.test(h) ? ' data-nv="'+c.id+'|'+AG.dia+'|'+h+'"' : '')+'>'+l.filter(g => g.clinica_id === c.id).map(card).join('')+'</div>').join('')).join('')+'</div></div>';
   }
   function agHtmlSemana(its){
     const ini = iniSemana(AG.dia), dias = []; for (let i = 0; i < 7; i++) dias.push(somaDias(ini, i));
@@ -2484,7 +2487,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const semHora = its.filter(g => !g.hora), linhas = (semHora.length ? [['Sem horário', null]] : []).concat(agHoras(its).map(h => [h, h]));
     return agFaixa(its)+'<div class="ag-gw"><div class="ag-g" style="grid-template-columns:52px repeat(7, minmax(calc(108px * var(--z,1)), 1fr))"><div class="ag-h"></div>'
       + dias.map((d, i) => '<div class="ag-h ag-hd'+(d === hoje() ? ' hoje' : '')+'"><b>'+DSEM[i]+'</b><small>'+dBR(d).slice(0, 5)+'</small></div>').join('')
-      + linhas.map(([rot, h]) => '<div class="ag-t">'+esc(rot)+'</div>'+dias.map(d => '<div class="ag-x'+(d === hoje() ? ' hoje' : '')+'">'+its.filter(g => g.data_agendamento === d && (h === null ? !g.hora : (g.hora && agHorario(g.hora) === h))).map(card).join('')+'</div>').join('')).join('')+'</div></div>';
+      + linhas.map(([rot, h]) => '<div class="ag-t">'+esc(rot)+'</div>'+dias.map(d => '<div class="ag-x'+(d === hoje() ? ' hoje' : '')+'"'+(agPodeCorrigir() && h ? ' data-nv="'+(AG.clin || '')+'|'+d+'|'+h+'"' : '')+'>'+its.filter(g => g.data_agendamento === d && (h === null ? !g.hora : (g.hora && agHorario(g.hora) === h))).map(card).join('')+'</div>').join('')).join('')+'</div></div>';
   }
   function agHtmlMes(its){
     const [i, f] = agIntervalo(), n = Number(f.slice(8)), vazios = (new Date(i+'T12:00:00').getDay() + 6) % 7, sig = Object.fromEntries(AG.clinicas.map(c => [c.id, c.sigla]));
@@ -2518,6 +2521,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     if (!reduz()){ pal.classList.remove('entrando'); void pal.offsetWidth; pal.classList.add('entrando'); }
     $$('#ag-palco [data-g]').forEach(b => b.addEventListener('click', () => agendaDetalhe(Number(b.dataset.g))));
     $$('#ag-palco [data-dia]').forEach(b => b.addEventListener('click', () => { AG.dia = b.dataset.dia; AG.vis = 'dia'; agendaGrade('zoom-in'); }));
+    $$('#ag-palco [data-nv]').forEach(x => x.addEventListener('click', e => { if (e.target.closest('[data-g]')) return; agNovaVisita(x.dataset.nv); }));
     const nT = r.data.length; $('#ag-per').title = nT+' agendamento(s) nesta visão';
   }
   const agOrdV = { paciente: g => g.paciente || '', clinica: g => (AG.clinicas.find(c => c.id === g.clinica_id) || {}).sigla || '', tel: g => soDigitos(g.telefone), data: g => (g.data_agendamento || '')+' '+(g.hora || ''), tele: g => (AG.teles.find(t => t.id === g.tele_id) || {}).nome || '', status: g => AG_ST[agKey(g)] || '', motivo: g => agNC(g) ? '' : (g.status === 'nao_fechou' ? agMotivo(g) : '') };
@@ -2577,6 +2581,57 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   }
   const agMotivo = g => { const mo = AG.motivos.find(x => x.id === g.motivo_id); return (mo ? mo.nome : 'Motivo não informado')+(g.motivo_obs ? ' — '+g.motivo_obs : ''); };
   const agPodeCorrigir = () => !!eu && (eu.papel === 'gestor' || eu.papel === 'gerente');
+  /* ---------- nova visita pela agenda (gestor e gerente), clicando no horário vazio da grade ---------- */
+  async function agNovaVisita(chave){
+    const [cid0, dia0, hora0] = chave.split('|'), cls = AG.clinicas.filter(c => c.ativa);
+    if (!cls.length) return toast('Nenhuma clínica ativa para agendar.');
+    if (!AG.vinc){ const v = await sb.from('vinculos_clinica').select('usuario_id,clinica_id,inicio,fim'); if (v.error) return toast(msgErro(v.error)); AG.vinc = v.data || []; }
+    const m = document.createElement('div'); m.className = 'ag-modal'; m.setAttribute('role', 'dialog'); m.setAttribute('aria-label', 'Nova visita');
+    const cid = cls.some(c => String(c.id) === cid0) ? cid0 : String(cls[0].id);
+    const horasDe = (dia, sel) => agHoras([], dia).map(h => '<option'+(h === sel ? ' selected' : '')+'>'+h+'</option>').join('');
+    m.innerHTML = '<div class="cx"><div class="line" style="justify-content:space-between"><b style="font-size:17px">Nova visita</b><button type="button" class="btn ghost" data-x>Fechar</button></div>'
+      + '<form class="form" id="nv-f" novalidate>'
+      + '<label class="field" for="nv-clin">Clínica<select id="nv-clin">'+cls.map(c => '<option value="'+c.id+'"'+(String(c.id) === cid ? ' selected' : '')+'>'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="field" for="nv-tele">Tele que agendou<select id="nv-tele"></select></label>'
+      + '<label class="field" for="nv-nome">Nome do paciente<input id="nv-nome" type="text" autocomplete="off"></label>'
+      + '<label class="field" for="nv-tel">Telefone do paciente<input id="nv-tel" type="tel" inputmode="numeric" autocomplete="off" placeholder="(31) 99999-9999"></label>'
+      + '<div class="g2"><label class="field" for="nv-data">Data<input id="nv-data" type="date" value="'+esc(dia0)+'"></label><label class="field" for="nv-hora">Horário<select id="nv-hora">'+horasDe(dia0, hora0)+'</select></label></div>'
+      + '<div class="field">Print da conversa do WhatsApp <small>(opcional)</small><div class="btns" style="align-items:center"><label class="btn ghost sm fi-w" style="display:inline-grid;place-items:center">Escolher imagem<input id="nv-img" class="fi" type="file" accept="image/*"></label><span class="meta" id="nv-imgn">Nenhuma imagem</span></div></div>'
+      + '<div class="err" id="nv-err" role="alert"></div><div class="df"><button type="submit" class="btn" id="nv-ok">Lançar agendamento</button></div></form></div>';
+    m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-x]')) m.remove(); });
+    document.body.appendChild(m);
+    const hoje0 = hoje(), telesDa = c => AG.teles.filter(t => AG.vinc.some(v => v.usuario_id === t.id && String(v.clinica_id) === String(c) && v.inicio <= hoje0 && (!v.fim || v.fim >= hoje0)));
+    const montaTeles = () => { const l = telesDa($('#nv-clin', m).value), at = $('#nv-tele', m).value; $('#nv-tele', m).innerHTML = l.length ? '<option value="">Escolha...</option>'+l.map(t => '<option value="'+t.id+'"'+(String(t.id) === at || (l.length === 1) ? ' selected' : '')+'>'+esc(t.nome)+'</option>').join('') : '<option value="">Nenhuma tele nesta clínica</option>'; };
+    montaTeles();
+    $('#nv-clin', m).addEventListener('change', montaTeles);
+    $('#nv-data', m).addEventListener('change', e => { if (e.target.value) $('#nv-hora', m).innerHTML = horasDe(e.target.value, $('#nv-hora', m).value); });
+    $('#nv-tel', m).addEventListener('input', e => { const d = e.target.value.replace(/\D/g, '').slice(0, 11); e.target.value = d.length > 10 ? '('+d.slice(0, 2)+') '+d.slice(2, 7)+'-'+d.slice(7) : d.length > 6 ? '('+d.slice(0, 2)+') '+d.slice(2, 6)+'-'+d.slice(6) : d.length > 2 ? '('+d.slice(0, 2)+') '+d.slice(2) : d; });
+    let arq = null;
+    $('#nv-img', m).addEventListener('change', e => { arq = e.target.files && e.target.files[0] || null; $('#nv-imgn', m).textContent = arq ? arq.name : 'Nenhuma imagem'; });
+    $('#nv-f', m).addEventListener('submit', async e => {
+      e.preventDefault(); const er = t => { $('#nv-err', m).textContent = t || ''; }; er();
+      const tele = Number($('#nv-tele', m).value), nome = $('#nv-nome', m).value.trim(), tel = $('#nv-tel', m).value.replace(/\D/g, ''), data = $('#nv-data', m).value, hora = $('#nv-hora', m).value;
+      if (!tele) return er('Escolha a tele que agendou.');
+      if (nome.length < 2) return er('Informe o nome do paciente.');
+      if (!/^[0-9]{10,11}$/.test(tel)) return er('Telefone com DDD, 10 ou 11 números.');
+      if (!data) return er('Informe a data.');
+      if (arq && arq.size > 12 * 1024 * 1024) return er('A imagem é muito grande (máximo 12 MB).');
+      const b = $('#nv-ok', m); b.disabled = true;
+      try {
+        let caminho = null;
+        if (arq){
+          const ext = (/\.(png|jpe?g|webp|gif|heic)$/i.exec(arq.name) || [0, 'jpg'])[1].toLowerCase();
+          caminho = eu.auth_id+'/'+Date.now()+'-'+Math.random().toString(36).slice(2, 7)+'.'+ext;
+          const up = await sb.storage.from('prints').upload(caminho, arq, { contentType: arq.type || 'image/jpeg', cacheControl: '3600' });
+          if (up.error) throw up.error;
+        }
+        const r = await sb.rpc('gerente_lancar_agendamento', { p_tele: tele, p_clinica: Number($('#nv-clin', m).value), p_paciente: nome, p_telefone: tel, p_data: data, p_hora: hora, p_print: caminho });
+        if (r.error) throw r.error;
+        m.remove(); toast('Visita agendada para '+dBR(data)+' às '+hora+'.'); agendaDados(true);
+      } catch (x){ b.disabled = false; er(String(msgErro(x) || x.message).replace(/^DUPLICADO#\d+:\s*/, 'Duplicado: ')); }
+    });
+  }
+
   function agCorrigirHtml(g){
     if (!agPodeCorrigir()) return '';
     const cur = agKey(g);
