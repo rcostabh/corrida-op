@@ -103,9 +103,9 @@ input[type=checkbox],input[type=radio]{width:20px;height:20px;min-height:0;paddi
 .pr-cs-m .chk{display:flex;gap:8px;padding:4px 2px}
 .pr-comp{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0;padding:8px 10px;border-radius:12px;background:var(--surface-2);border-left:4px solid var(--c)}
 .pr-comp input[type=month]{width:auto}
-.pr-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:8px 0 12px}
-.pr-kpi{display:grid;gap:2px;padding:10px 12px;border-radius:14px;background:#050a14;color:#cfeaff;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 55%,transparent),0 0 18px color-mix(in srgb,var(--c) 22%,transparent)}
-.pr-kpi.cp{border-style:dashed}.pr-kpi span{font-size:12px;color:#8fb7c4}.pr-kpi b{font-size:22px;font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 0 10px var(--c)}.pr-kpi small{font-size:11px;font-weight:500;color:#8fb7c4}.pr-kpi i{font-style:normal;font-size:12px;color:var(--c)}
+.pr-kpis{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.pr-kpi{display:grid;gap:0;padding:5px 9px;min-width:104px;border-radius:10px;background:#050a14;color:#cfeaff;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 55%,transparent),0 0 18px color-mix(in srgb,var(--c) 22%,transparent)}
+.pr-kpi.cp{border-style:dashed}.pr-kpi span{font-size:10.5px;font-weight:700;color:#8fb7c4}.pr-kpi b{font-size:13px;line-height:1.25;font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 0 10px var(--c)}.pr-kpi small{font-size:9.5px;font-weight:500;color:#8fb7c4}.pr-kpi i{font-style:normal;font-size:12px;color:var(--c)}
 .pr-holo{position:relative;border-radius:18px;padding:10px 8px 4px;background:radial-gradient(520px 240px at 50% 0%,rgba(34,211,238,.16),transparent 70%),radial-gradient(420px 220px at 100% 100%,rgba(255,138,51,.12),transparent 70%),#050a14;box-shadow:inset 0 0 0 1px rgba(34,211,238,.25),0 0 40px rgba(34,211,238,.08);overflow:hidden}
 .pr-holo::after{content:"";position:absolute;left:0;right:0;height:80px;top:-80px;pointer-events:none;background:linear-gradient(180deg,transparent,rgba(34,211,238,.10),transparent);animation:prscan 6s linear infinite}
 @keyframes prscan{to{top:110%}}
@@ -671,6 +671,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.40.1', '2026-11-18', 'Relatório Por período: o gráfico fica sempre em colunas estilo holograma, uma coluna por clínica (sem somar), e os cards das clínicas ficam bem pequenos.'],
     ['1.40.0', '2026-11-18', 'Mapa: clínicas inativas que tiveram lançamento no mês escolhido aparecem como pontos tracejados, com visitas, vendas e fechamento, como as ativas (opção Incluir clínicas inativas). Várias clínicas na mesma cidade ficam lado a lado.'],
     ['1.39.0', '2026-11-18', 'Relatórios ganha a aba Por período: gráfico em estilo holograma com as visitas e vendas mês a mês de cada clínica individualmente (sem somar) e um comparativo com as mesmas ou outras clínicas em outro período (ex.: as ativas neste mês × BHE em março de 2022, ou a mesma clínica em dois períodos).'],
     ['1.38.0', '2026-11-18', 'Início e planilha diária: clique no nome do mês para escolher qualquer mês e ano direto, sem precisar passar pelas setinhas.'],
@@ -1866,7 +1867,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
         + S.series.map(s => s.meses.map((m, i) => '<tr><td>'+esc(s.nome)+'</td><td>'+esc(mesRot(m))+'</td><td class="n">'+nfmt(s.pts[i].v)+'</td><td class="n">'+nfmt(s.pts[i].d)+'</td><td class="n">'+pct1(pctF(s.pts[i]))+'</td></tr>').join('')
           + '<tr class="tot"><td>'+esc(s.nome)+'</td><td>Total</td><td class="n">'+nfmt(tv(s.pts))+'</td><td class="n">'+nfmt(td(s.pts))+'</td><td class="n">'+pct1(tv(s.pts) > 0 ? 100 * td(s.pts) / tv(s.pts) : null)+'</td></tr>').join('')+'</tbody></table></div>';
     } else {
-      corpo = '<div class="pr-kpis">'+S.series.map(s => '<div class="pr-kpi'+(s.comp ? ' cp' : '')+'" style="--c:'+s.cor+'"><span>'+esc(s.nome)+'</span><b>'+nfmt(tv(s.pts))+' <small>visitas</small></b><b>'+nfmt(td(s.pts))+' <small>vendas</small></b><i>'+pct1(tv(s.pts) > 0 ? 100 * td(s.pts) / tv(s.pts) : null)+' de fechamento</i></div>').join('')+'</div>'
+      corpo = '<div class="pr-kpis">'+S.series.map(s => '<div class="pr-kpi'+(s.comp ? ' cp' : '')+'" style="--c:'+s.cor+'"><span>'+esc(s.nome)+'</span><b>'+nfmt(tv(s.pts))+' <small>vis</small> · '+nfmt(td(s.pts))+' <small>vend</small></b><i>'+pct1(tv(s.pts) > 0 ? 100 * td(s.pts) / tv(s.pts) : null)+'</i></div>').join('')+'</div>'
         + '<div class="pr-holo" id="pe-holo" role="img" aria-label="Gráfico de visitas e vendas mês a mês, uma série por clínica"></div><div class="pr-leg" id="pe-leg"></div>';
     }
     alvo.innerHTML = cabec + corpo;
@@ -1881,9 +1882,9 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const W = Math.max(640, Math.min(1100, box.clientWidth || 900)), H = 340, ml = 54, mr = 16, mt = 18, mb = 44, pw = W - ml - mr, ph = H - mt - mb, n = S.cats.length;
     const ehPct = met === 'pct', fmt = v => ehPct ? pct1(v) : nfmt(v);
     const um = S.series.length === 1;
-    const comBarras = n <= 2 || um;                  // poucos meses: barras agrupadas; vários meses: linhas
-    const barras = um ? [{ nome: 'Visitas', cor: PCOR[0], v: S.series[0].pts.map(p => p.v) }] : comBarras ? S.series.map(s => ({ nome: s.nome, cor: s.cor, comp: s.comp, v: s.pts.map(p => val(p)) })) : [];
-    const linhas = um ? [{ nome: 'Vendas', cor: PCOR[1], v: S.series[0].pts.map(p => p.d) }] : comBarras ? [] : S.series.map(s => ({ nome: s.nome, cor: s.cor, comp: s.comp, v: s.pts.map(p => val(p)) }));
+    const comBarras = true;                          // sempre colunas agrupadas, uma por clínica
+    const barras = um ? [{ nome: 'Visitas', cor: PCOR[0], v: S.series[0].pts.map(p => p.v) }, { nome: 'Vendas', cor: PCOR[1], v: S.series[0].pts.map(p => p.d) }] : comBarras ? S.series.map(s => ({ nome: s.nome, cor: s.cor, comp: s.comp, v: s.pts.map(p => val(p)) })) : [];
+    const linhas = comBarras ? [] : S.series.map(s => ({ nome: s.nome, cor: s.cor, comp: s.comp, v: s.pts.map(p => val(p)) }));
     const todos = barras.concat(linhas).flatMap(s => s.v).filter(x => x != null);
     let max = Math.max(1, ...todos); { const e = Math.pow(10, Math.floor(Math.log10(max))), f = max / e; max = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 4 ? 4 : f <= 5 ? 5 : f <= 8 ? 8 : 10) * e; }
     const gw = pw / Math.max(n, 1), nb = Math.max(barras.length, 1), bw = Math.min(46, gw * 0.8 / nb), dep = Math.min(9, bw * 0.4);
