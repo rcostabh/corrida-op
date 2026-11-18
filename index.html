@@ -97,6 +97,23 @@ input[type=checkbox],input[type=radio]{width:20px;height:20px;min-height:0;paddi
 .seg{display:inline-flex;background:var(--surface-2);border-radius:999px;padding:3px}
 .seg button{border:0;background:transparent;color:var(--muted);font:600 13px var(--font-body);padding:7px 16px;border-radius:999px;min-height:34px;cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.12)}
+/* relatório por período (holograma) */
+.pr-cs{position:relative;display:inline-block}.pr-cs summary{list-style:none;cursor:pointer;width:100%;text-align:left}.pr-cs summary::-webkit-details-marker{display:none}
+.pr-cs-m{position:absolute;z-index:30;left:0;top:calc(100% + 6px);min-width:260px;max-height:340px;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:10px}
+.pr-cs-m .chk{display:flex;gap:8px;padding:4px 2px}
+.pr-comp{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:6px 0;padding:8px 10px;border-radius:12px;background:var(--surface-2);border-left:4px solid var(--c)}
+.pr-comp input[type=month]{width:auto}
+.pr-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:8px 0 12px}
+.pr-kpi{display:grid;gap:2px;padding:10px 12px;border-radius:14px;background:#050a14;color:#cfeaff;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 55%,transparent),0 0 18px color-mix(in srgb,var(--c) 22%,transparent)}
+.pr-kpi span{font-size:12px;color:#8fb7c4}.pr-kpi b{font-size:22px;font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 0 10px var(--c)}.pr-kpi small{font-size:11px;font-weight:500;color:#8fb7c4}.pr-kpi i{font-style:normal;font-size:12px;color:var(--c)}
+.pr-holo{position:relative;border-radius:18px;padding:10px 8px 4px;background:radial-gradient(520px 240px at 50% 0%,rgba(34,211,238,.16),transparent 70%),radial-gradient(420px 220px at 100% 100%,rgba(255,138,51,.12),transparent 70%),#050a14;box-shadow:inset 0 0 0 1px rgba(34,211,238,.25),0 0 40px rgba(34,211,238,.08);overflow:hidden}
+.pr-holo::after{content:"";position:absolute;left:0;right:0;height:80px;top:-80px;pointer-events:none;background:linear-gradient(180deg,transparent,rgba(34,211,238,.10),transparent);animation:prscan 6s linear infinite}
+@keyframes prscan{to{top:110%}}
+.pr-b{transition:opacity .2s}.pr-holo:hover .pr-b{opacity:.85}
+.pr-tip{position:absolute;z-index:5;min-width:200px;max-width:260px;padding:10px 12px;border-radius:12px;background:rgba(5,10,20,.94);color:#e9fbff;font-size:12px;box-shadow:inset 0 0 0 1px rgba(34,211,238,.4),0 8px 30px rgba(0,0,0,.5);pointer-events:none;display:grid;gap:6px}
+.pr-tip[hidden]{display:none}.pr-tip i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}.pr-tip span{color:#9fd8e6}
+.pr-leg{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px;font-size:13px;color:var(--muted)}.pr-leg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+@media (prefers-reduced-motion:reduce){.pr-holo::after{animation:none}}
 .mapa{position:relative;border-radius:22px;overflow:hidden;background:linear-gradient(180deg,#7fd0ff 0%,#b9ecff 22%,#c9f2b8 55%,#8fdc74 100%);box-shadow:var(--shadow)}
 .mapa .nuvem{position:absolute;width:90px;height:30px;border-radius:30px;background:#fff;opacity:.85;filter:blur(.4px)}
 .mapa .nuvem::before,.mapa .nuvem::after{content:"";position:absolute;background:#fff;border-radius:50%}
@@ -651,6 +668,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.38.0', '2026-11-18', 'Relatórios ganha a aba Por período: gráfico em estilo holograma com as visitas e vendas mês a mês, clínicas juntas ou uma por uma, e comparativos com outras clínicas e outros períodos (ex.: todas as ativas neste mês × BHE em março de 2022).'],
     ['1.37.0', '2026-11-17', 'Agenda: gestor e gerente agendam uma nova visita clicando num horário vazio da grade (dia ou semana): escolhem clínica, tele, paciente, telefone, data, hora e, se quiserem, o print da conversa.'],
     ['1.36.1', '2026-11-17', 'Pessoas: a gerente responsável pelas teles BH (Paloma) agora escolhe em quais clínicas cada tele BH atende, ao cadastrar e ao editar.'],
     ['1.36.0', '2026-11-17', 'Agenda das teles: quem não chega até 1 hora depois do horário passa sozinho a Não compareceu (a rotina estava falhando e foi consertada, inclusive para retorno e acompanhante). Se o paciente chegar atrasado, quem acompanha o agendamento marca Atendido, Fechado, Não fechou ou Não apto sobre o Não compareceu. Novo status Não apto, que não conta nas visitas nem nas taxas.'],
@@ -1629,9 +1647,9 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   }
 
   function relDesenhar(){
-    $('#area').innerHTML = '<div class="card"><div class="top"><h2>Relatórios</h2><div class="seg" role="group" aria-label="Relatório"><button type="button" data-ra="fech" aria-pressed="'+(RP.aba==='fech')+'">% pela corrida</button><button type="button" data-ra="aud" aria-pressed="'+(RP.aba==='aud')+'">Auditoria</button></div></div><div id="r-corpo" style="margin-top:12px"></div></div>';
+    $('#area').innerHTML = '<div class="card"><div class="top"><h2>Relatórios</h2><div class="seg" role="group" aria-label="Relatório"><button type="button" data-ra="fech" aria-pressed="'+(RP.aba==='fech')+'">% pela corrida</button><button type="button" data-ra="per" aria-pressed="'+(RP.aba==='per')+'">Por período</button><button type="button" data-ra="aud" aria-pressed="'+(RP.aba==='aud')+'">Auditoria</button></div></div><div id="r-corpo" style="margin-top:12px"></div></div>';
     $$('[data-ra]').forEach(b => b.addEventListener('click', () => { RP.aba = b.dataset.ra; relDesenhar(); }));
-    if (RP.aba === 'fech') relFiltrosFech(); else relFiltrosAud();
+    if (RP.aba === 'fech') relFiltrosFech(); else if (RP.aba === 'per') relFiltrosPer(); else relFiltrosAud();
   }
 
   const optsPessoas = (sel, papeis) => '<option value="">Todas as pessoas</option>'+RP.usu.filter(u => papeis.includes(u.papel)).map(u => '<option value="'+u.id+'"'+(String(u.id)===String(sel)?' selected':'')+'>'+esc(u.nome)+'</option>').join('');
@@ -1694,6 +1712,175 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       ? '<div style="overflow-x:auto"><table class="tab"><thead><tr><th>'+({promotor:'Promotor',clinica:'Clínica',mes:'Mês'}[f.por])+'</th><th class="n">Visitas</th><th class="n">Vendas de início</th><th class="n">% de fechamento</th></tr></thead><tbody>'
         + RP.linhas.map(x => '<tr'+(x.total?' class="tot"':'')+'><td>'+esc(x.nome)+'</td><td class="n">'+nfmt(x.visitas)+'</td><td class="n">'+nfmt(x.vendas)+'</td><td class="n"><span class="barra"><i style="width:'+Math.min(100, x.pct || 0)+'%"></i></span> <b>'+pct1(x.pct)+'</b></td></tr>').join('')+'</tbody></table></div>'
       : '<div class="empty">Nenhuma visita ou venda de início neste período.</div>';
+  }
+
+  /* ---------- relatório por período: mês a mês, clínicas juntas ou separadas e comparativos ---------- */
+  const PER = { sel: null, de: '', ate: '', juntas: true, met: 'visitas', div: false, comps: [], res: null, tk: 0, tab: false };
+  const PCOR = ['#22d3ee', '#ff8a33', '#e879f9', '#a3e635', '#818cf8', '#fbbf24', '#f472b6', '#2dd4bf'];
+  const MESES_ABR = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const mesRot = m => MESES_ABR[Number(m.slice(5, 7)) - 1]+'/'+m.slice(0, 4);
+  const mesUlt = m => new Date(Number(m.slice(0, 4)), Number(m.slice(5, 7)), 0).toLocaleDateString('sv-SE');
+  const mesesEntre = (de, ate) => { const l = []; let a = Number(de.slice(0, 4)), m = Number(de.slice(5, 7)); const fa = Number(ate.slice(0, 4)), fm = Number(ate.slice(5, 7)); while (a < fa || (a === fa && m <= fm) ){ l.push(a+'-'+String(m).padStart(2, '0')); if (++m > 12){ m = 1; a++; } if (l.length > 120) break; } return l; };
+  const clinNome = id => (c => c ? c.sigla : '#'+id)(RP.clin.find(x => x.id === id));
+
+  function perIni(){
+    const h = hoje().slice(0, 7), a = Number(h.slice(0, 4)), m = Number(h.slice(5, 7)), ini = new Date(a, m - 12, 1).toLocaleDateString('sv-SE').slice(0, 7);
+    if (!PER.de){ PER.de = ini; PER.ate = h; }
+    if (!PER.sel) PER.sel = RP.clin.filter(c => c.ativa).map(c => c.id);
+  }
+
+  /* seletor de clínicas (várias) */
+  function perSeletor(id, ids){
+    const txt = ids.length === 0 ? 'Nenhuma clínica' : ids.length === RP.clin.filter(c => c.ativa).length && ids.every(i => (RP.clin.find(c => c.id === i) || {}).ativa) ? 'Todas as ativas ('+ids.length+')' : ids.length === RP.clin.length ? 'Todas ('+ids.length+')' : ids.length <= 3 ? ids.map(clinNome).join(', ') : ids.length+' clínicas';
+    return '<details class="pr-cs" data-cs="'+id+'"><summary class="btn ghost sm" aria-label="Escolher clínicas">'+esc(txt)+' ▾</summary><div class="pr-cs-m"><div class="btns" style="margin-bottom:6px"><button type="button" class="btn ghost sm" data-q="ativas">Todas as ativas</button><button type="button" class="btn ghost sm" data-q="todas">Todas</button><button type="button" class="btn ghost sm" data-q="nada">Limpar</button></div>'
+      + RP.clin.map(c => '<label class="chk"><input type="checkbox" value="'+c.id+'"'+(ids.includes(c.id) ? ' checked' : '')+'> '+esc(c.sigla)+' · '+esc(c.nome)+(c.ativa ? '' : ' <small>(inativa)</small>')+'</label>').join('')+'</div></details>';
+  }
+  function perLigaSeletor(raiz, aoMudar){
+    $$('details.pr-cs', raiz).forEach(d => {
+      const id = d.dataset.cs, set = v => { aoMudar(id, v); };
+      $$('input[type=checkbox]', d).forEach(i => i.addEventListener('change', () => set($$('input:checked', d).map(x => Number(x.value)))));
+      $$('[data-q]', d).forEach(b => b.addEventListener('click', () => set(b.dataset.q === 'ativas' ? RP.clin.filter(c => c.ativa).map(c => c.id) : b.dataset.q === 'todas' ? RP.clin.map(c => c.id) : [])));
+    });
+  }
+  function perMesSel(id, v){ return '<input type="month" id="'+id+'" value="'+esc(v)+'" min="2020-01" max="'+esc(hoje().slice(0, 7))+'">'; }
+
+  function relFiltrosPer(){
+    perIni();
+    $('#r-corpo').innerHTML = '<p class="sub">Visitas e vendas mês a mês (planilha diária). Escolha as clínicas, veja juntas ou separadas, e adicione comparativos com outras clínicas e outros períodos.</p>'
+      + '<div class="g3"><label class="field">Clínicas'+perSeletor('base', PER.sel)+'</label><label class="field">De'+perMesSel('pe-de', PER.de)+'</label><label class="field">Até'+perMesSel('pe-ate', PER.ate)+'</label></div>'
+      + '<div class="btns" style="margin:10px 0;align-items:center"><div class="seg" role="group" aria-label="Como ver as clínicas"><button type="button" data-pj="1" aria-pressed="'+PER.juntas+'">Juntas</button><button type="button" data-pj="0" aria-pressed="'+!PER.juntas+'">Uma por uma</button></div>'
+      + '<label class="chk"><input type="checkbox" id="pe-div"'+(PER.div ? ' checked' : '')+'> Somar a divulgação</label>'
+      + '<button class="btn ghost sm" type="button" data-p="12">12 meses</button><button class="btn ghost sm" type="button" data-p="ano">Este ano</button><button class="btn ghost sm" type="button" data-p="ant">Ano passado</button>'
+      + '<button class="btn sm" type="button" id="pe-comp">+ Comparativo</button></div>'
+      + '<div id="pe-comps"></div><div id="pe-res" style="margin-top:6px"></div>';
+    const ler = () => { PER.de = $('#pe-de').value || PER.de; PER.ate = $('#pe-ate').value || PER.ate; perCalcula(); };
+    $('#pe-de').addEventListener('change', ler); $('#pe-ate').addEventListener('change', ler);
+    $('#pe-div').addEventListener('change', () => { PER.div = $('#pe-div').checked; perCalcula(); });
+    $$('[data-pj]').forEach(b => b.addEventListener('click', () => { PER.juntas = b.dataset.pj === '1'; $$('[data-pj]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); perDesenha(); }));
+    $$('#r-corpo [data-p]').forEach(b => b.addEventListener('click', () => {
+      const h = hoje(), a = Number(h.slice(0, 4)), m = Number(h.slice(5, 7));
+      if (b.dataset.p === '12'){ PER.de = new Date(a, m - 12, 1).toLocaleDateString('sv-SE').slice(0, 7); PER.ate = h.slice(0, 7); }
+      else if (b.dataset.p === 'ano'){ PER.de = a+'-01'; PER.ate = h.slice(0, 7); }
+      else { PER.de = (a - 1)+'-01'; PER.ate = (a - 1)+'-12'; }
+      $('#pe-de').value = PER.de; $('#pe-ate').value = PER.ate; perCalcula();
+    }));
+    $('#pe-comp').addEventListener('click', () => { const u = PER.comps[PER.comps.length - 1]; PER.comps.push({ id: Date.now(), sel: RP.clin.filter(c => c.ativa).map(c => c.id), de: u ? u.de : PER.de, ate: u ? u.ate : PER.ate }); perComps(); perCalcula(); });
+    perLigaSeletor($('#r-corpo'), (id, v) => { if (id === 'base') PER.sel = v; else { const c = PER.comps.find(x => String(x.id) === id); if (c) c.sel = v; } relFiltrosPerTexto(); perCalcula(); });
+    perComps(); perCalcula();
+  }
+  function relFiltrosPerTexto(){
+    $$('details.pr-cs').forEach(d => { const id = d.dataset.cs, ids = id === 'base' ? PER.sel : ((PER.comps.find(x => String(x.id) === id) || {}).sel || []), t = perSeletor(id, ids), tmp = document.createElement('div'); tmp.innerHTML = t; d.querySelector('summary').textContent = tmp.querySelector('summary').textContent; $$('input[type=checkbox]', d).forEach(i => { i.checked = ids.includes(Number(i.value)); }); });
+  }
+  function perComps(){
+    const box = $('#pe-comps'); if (!box) return;
+    box.innerHTML = PER.comps.map((c, i) => '<div class="pr-comp" style="--c:'+PCOR[(i + 1) % PCOR.length]+'"><b>Comparar com</b>'+perSeletor(String(c.id), c.sel)+perMesSel('pc-de-'+c.id, c.de)+'<span>até</span>'+perMesSel('pc-ate-'+c.id, c.ate)+'<button type="button" class="btn ghost sm" data-rm="'+c.id+'" aria-label="Remover comparativo">Remover</button></div>').join('');
+    PER.comps.forEach(c => {
+      const a = $('#pc-de-'+c.id), b = $('#pc-ate-'+c.id);
+      [a, b].forEach(el => el.addEventListener('change', () => { c.de = a.value || c.de; c.ate = b.value || c.ate; perCalcula(); }));
+    });
+    $$('[data-rm]', box).forEach(b => b.addEventListener('click', () => { PER.comps = PER.comps.filter(c => String(c.id) !== b.dataset.rm); perComps(); perCalcula(); }));
+    perLigaSeletor(box, (id, v) => { const c = PER.comps.find(x => String(x.id) === id); if (c) c.sel = v; relFiltrosPerTexto(); perCalcula(); });
+  }
+
+  async function perBusca(sel, de, ate){
+    const r = await sb.rpc('relatorio_periodo', { p_de: de+'-01', p_ate: mesUlt(ate), p_clinicas: sel });
+    if (r.error) throw r.error;
+    return r.data || [];
+  }
+  async function perCalcula(){
+    const alvo = $('#pe-res'); if (!alvo) return;
+    const tk = ++PER.tk;
+    const conj = [{ nome: 'Seleção principal', sel: PER.sel, de: PER.de, ate: PER.ate }].concat(PER.comps.map(c => ({ nome: 'Comparativo', sel: c.sel, de: c.de, ate: c.ate })));
+    for (const c of conj){ if (!c.sel.length){ alvo.innerHTML = '<div class="empty">Escolha ao menos uma clínica em '+(c.nome === 'Seleção principal' ? 'Clínicas' : 'cada comparativo')+'.</div>'; return; } if (!c.de || !c.ate || c.de > c.ate){ alvo.innerHTML = '<div class="err">Informe um período válido ('+esc(c.nome.toLowerCase())+').</div>'; return; } }
+    alvo.innerHTML = '<p class="sub">Calculando...</p>';
+    try {
+      const dados = await Promise.all(conj.map(c => perBusca(c.sel, c.de, c.ate)));
+      if (tk !== PER.tk || !$('#pe-res')) return;
+      PER.res = conj.map((c, i) => ({ ...c, linhas: dados[i] }));
+      perDesenha();
+    } catch (e){ if (tk === PER.tk && $('#pe-res')) $('#pe-res').innerHTML = '<div class="err">'+esc(msgErro(e))+'</div>'; }
+  }
+
+  /* monta as séries a partir das linhas (mes, clinica_id, visitas, vendas) */
+  function perSeries(){
+    const dv = x => PER.div ? Number(x.div_visitas) : 0, dd = x => PER.div ? Number(x.div_vendas) : 0;
+    const cats = mesesEntre(PER.res[0].de, PER.res[0].ate);
+    const soma = (r, mes, cl) => r.linhas.filter(x => String(x.mes).slice(0, 7) === mes && (cl == null || x.clinica_id === cl)).reduce((s, x) => ({ v: s.v + Number(x.visitas) + dv(x), d: s.d + Number(x.vendas) + dd(x) }), { v: 0, d: 0 });
+    if (PER.res.length === 1 && !PER.juntas){
+      const cls = PER.sel.slice().sort((a, b) => clinNome(a).localeCompare(clinNome(b)));
+      return { cats, modo: 'clinicas', series: cls.map((id, i) => ({ nome: clinNome(id), cor: PCOR[i % PCOR.length], meses: cats, pts: cats.map(m => soma(PER.res[0], m, id)) })) };
+    }
+    const nomeConj = (c) => (c.sel.length === RP.clin.filter(x => x.ativa).length && c.sel.every(i => (RP.clin.find(x => x.id === i) || {}).ativa) ? 'Todas as ativas' : c.sel.length <= 3 ? c.sel.map(clinNome).join('+') : c.sel.length+' clínicas')+' · '+(c.de === c.ate ? mesRot(c.de) : mesRot(c.de)+'–'+mesRot(c.ate));
+    const series = PER.res.map((c, i) => { const ms = mesesEntre(c.de, c.ate); return { nome: nomeConj(c), cor: PCOR[i % PCOR.length], meses: ms, pts: ms.map(m => soma(c, m, null)) }; });
+    return { cats: series.reduce((a, s) => s.meses.length > a.length ? s.meses : a, []), modo: PER.res.length > 1 ? 'comparar' : 'juntas', series };
+  }
+
+  function perDesenha(){
+    const alvo = $('#pe-res'); if (!alvo || !PER.res) return;
+    const S = perSeries(), tot = S.series.reduce((a, s) => a + s.pts.reduce((x, p) => x + p.v + p.d, 0), 0);
+    if (!tot){ alvo.innerHTML = '<div class="empty">Sem visitas nem vendas neste período para as clínicas escolhidas.</div>'; return; }
+    const pctF = p => p.v > 0 ? 100 * p.d / p.v : null;
+    const met = PER.met, val = p => met === 'visitas' ? p.v : met === 'vendas' ? p.d : pctF(p);
+    const cabec = '<div class="btns" style="margin:8px 0;align-items:center">'+(S.modo === 'juntas' ? '' : '<div class="seg" role="group" aria-label="O que mostrar">'+[['visitas','Visitas'],['vendas','Vendas'],['pct','% fechamento']].map(m => '<button type="button" data-pm="'+m[0]+'" aria-pressed="'+(met === m[0])+'">'+m[1]+'</button>').join('')+'</div>')+'<button type="button" class="btn ghost sm" id="pe-tab">'+(PER.tab ? 'Ver gráfico' : 'Ver tabela')+'</button></div>';
+    let corpo;
+    if (PER.tab){
+      corpo = '<div style="overflow-x:auto"><table class="tab"><thead><tr><th>Série</th><th>Mês</th><th class="n">Visitas</th><th class="n">Vendas</th><th class="n">% de fechamento</th></tr></thead><tbody>'
+        + S.series.map(s => s.meses.map((m, i) => '<tr><td>'+esc(s.nome)+'</td><td>'+esc(mesRot(m))+'</td><td class="n">'+nfmt(s.pts[i].v)+'</td><td class="n">'+nfmt(s.pts[i].d)+'</td><td class="n">'+pct1(pctF(s.pts[i]))+'</td></tr>').join('')
+          + '<tr class="tot"><td>'+esc(s.nome)+'</td><td>Total</td><td class="n">'+nfmt(s.pts.reduce((x, p) => x + p.v, 0))+'</td><td class="n">'+nfmt(s.pts.reduce((x, p) => x + p.d, 0))+'</td><td class="n">'+pct1((v => v > 0 ? 100 * s.pts.reduce((x, p) => x + p.d, 0) / v : null)(s.pts.reduce((x, p) => x + p.v, 0)))+'</td></tr>').join('')+'</tbody></table></div>';
+    } else {
+      const tv = a => a.reduce((x, p) => x + p.v, 0), td = a => a.reduce((x, p) => x + p.d, 0);
+      const cards = S.series.length <= 8 ? '<div class="pr-kpis">'+S.series.map(s => '<div class="pr-kpi" style="--c:'+s.cor+'"><span>'+esc(s.nome)+'</span><b>'+nfmt(tv(s.pts))+' <small>visitas</small></b><b>'+nfmt(td(s.pts))+' <small>vendas</small></b><i>'+pct1(tv(s.pts) > 0 ? 100 * td(s.pts) / tv(s.pts) : null)+' de fechamento</i></div>').join('')+'</div>' : '';
+      corpo = cards + '<div class="pr-holo" id="pe-holo" role="img" aria-label="Gráfico de visitas e vendas mês a mês"></div><div class="pr-leg" id="pe-leg"></div>';
+    }
+    alvo.innerHTML = cabec + corpo;
+    $('#pe-tab').addEventListener('click', () => { PER.tab = !PER.tab; perDesenha(); });
+    $$('[data-pm]', alvo).forEach(b => b.addEventListener('click', () => { PER.met = b.dataset.pm; perDesenha(); }));
+    if (!PER.tab) perHolo(S, met, val);
+  }
+
+  /* gráfico holográfico (SVG): barras com profundidade, linhas neon, grade e varredura */
+  function perHolo(S, met, val){
+    const box = $('#pe-holo'); if (!box) return;
+    const W = Math.max(640, Math.min(1100, box.clientWidth || 900)), H = 340, ml = 54, mr = 16, mt = 18, mb = 44, pw = W - ml - mr, ph = H - mt - mb, n = S.cats.length;
+    const ehPct = met === 'pct', fmt = v => ehPct ? pct1(v) : nfmt(v);
+    const juntas = S.modo === 'juntas';
+    // juntas: barras = visitas (cor 1), linha = vendas; senão: uma série por cor (barras agrupadas ou linhas)
+    const barras = juntas ? [{ nome: 'Visitas', cor: PCOR[0], v: S.series[0].pts.map(p => p.v) }] : (S.modo === 'comparar' ? S.series.map(s => ({ nome: s.nome, cor: s.cor, v: s.meses.map((m, i) => val(s.pts[i])) })) : []);
+    const linhas = juntas ? [{ nome: 'Vendas', cor: PCOR[1], v: S.series[0].pts.map(p => p.d) }] : (S.modo === 'clinicas' ? S.series.map(s => ({ nome: s.nome, cor: s.cor, v: s.pts.map(p => val(p)) })) : []);
+    const todos = barras.concat(linhas).flatMap(s => s.v).filter(x => x != null);
+    let max = Math.max(1, ...todos); { const e = Math.pow(10, Math.floor(Math.log10(max))), f = max / e; max = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 4 ? 4 : f <= 5 ? 5 : f <= 8 ? 8 : 10) * e; }
+    const gw = pw / Math.max(n, 1), nb = Math.max(barras.length, 1), bw = Math.min(46, gw * 0.7 / nb), dep = Math.min(9, bw * 0.4);
+    const X = i => ml + gw * i + gw / 2, Y = v => mt + ph - ph * (v / max);
+    let s = '<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="display:block"><defs><filter id="hg" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>'
+      + '<pattern id="hs" width="4" height="4" patternUnits="userSpaceOnUse"><path d="M0 2H4" stroke="rgba(255,255,255,.12)" stroke-width="1"/></pattern>'
+      + barras.concat(linhas).map((b, i) => '<linearGradient id="hb'+i+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+b.cor+'" stop-opacity=".75"/><stop offset="1" stop-color="'+b.cor+'" stop-opacity=".08"/></linearGradient>').join('')+'</defs>';
+    for (let g = 0; g <= 4; g++){ const v = max * g / 4, y = Y(v); s += '<line x1="'+ml+'" x2="'+(W - mr)+'" y1="'+y+'" y2="'+y+'" stroke="rgba(34,211,238,'+(g ? .13 : .4)+')" stroke-dasharray="'+(g ? '3 5' : '0')+'"/><text x="'+(ml - 8)+'" y="'+(y + 4)+'" text-anchor="end" fill="#8fb7c4" font-size="11">'+esc(fmt(v))+'</text>'; }
+    const passoX = Math.ceil(n / 14);
+    S.cats.forEach((m, i) => { if (i % passoX === 0 || n <= 14) s += '<text x="'+X(i)+'" y="'+(H - mb + 18)+'" text-anchor="middle" fill="#8fb7c4" font-size="11">'+esc(S.modo === 'comparar' ? 'Mês '+(i + 1) : mesRot(m))+'</text>'; });
+    barras.forEach((b, k) => b.v.forEach((v, i) => {
+      if (v == null) return; const x0 = X(i) - (nb * bw) / 2 + k * bw, y = Y(v), h = Math.max(1, mt + ph - y);
+      s += '<g class="pr-b" data-i="'+i+'"><polygon points="'+x0+','+y+' '+(x0 + dep)+','+(y - dep * .6)+' '+(x0 + bw + dep)+','+(y - dep * .6)+' '+(x0 + bw)+','+y+'" fill="'+b.cor+'" fill-opacity=".55" stroke="'+b.cor+'" stroke-width="1"/>'
+        + '<polygon points="'+(x0 + bw)+','+y+' '+(x0 + bw + dep)+','+(y - dep * .6)+' '+(x0 + bw + dep)+','+(y - dep * .6 + h)+' '+(x0 + bw)+','+(y + h)+'" fill="'+b.cor+'" fill-opacity=".22" stroke="'+b.cor+'" stroke-opacity=".6"/>'
+        + '<rect x="'+x0+'" y="'+y+'" width="'+bw+'" height="'+h+'" fill="url(#hb'+k+')" stroke="'+b.cor+'" stroke-width="1.2" filter="url(#hg)"/><rect x="'+x0+'" y="'+y+'" width="'+bw+'" height="'+h+'" fill="url(#hs)"/></g>';
+    }));
+    linhas.forEach((l, k) => {
+      const pts = l.v.map((v, i) => v == null ? null : [X(i), Y(v)]).filter(Boolean); if (!pts.length) return;
+      const idx = barras.length + k;
+      s += '<polyline fill="none" stroke="'+l.cor+'" stroke-width="2.4" stroke-linejoin="round" filter="url(#hg)" points="'+pts.map(p => p.join(',')).join(' ')+'"/>';
+      pts.forEach(p => { s += (k % 2 ? '<rect x="'+(p[0] - 4)+'" y="'+(p[1] - 4)+'" width="8" height="8" transform="rotate(45 '+p[0]+' '+p[1]+')"' : '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="4.2"')+' fill="#050a14" stroke="'+l.cor+'" stroke-width="2"/>'; });
+    });
+    s += '<line id="pe-cur" x1="0" x2="0" y1="'+mt+'" y2="'+(mt + ph)+'" stroke="rgba(255,255,255,.5)" stroke-dasharray="2 4" visibility="hidden"/>';
+    s += '<rect id="pe-hit" x="'+ml+'" y="'+mt+'" width="'+pw+'" height="'+ph+'" fill="transparent"/></svg><div class="pr-tip" id="pe-tip" hidden></div>';
+    box.innerHTML = s;
+    const tip = $('#pe-tip'), cur = $('#pe-cur', box), hit = $('#pe-hit', box);
+    const mostra = (e) => {
+      const r = hit.getBoundingClientRect(), px = (e.clientX - r.left) / r.width * pw, i = Math.max(0, Math.min(n - 1, Math.floor(px / gw)));
+      cur.setAttribute('x1', X(i)); cur.setAttribute('x2', X(i)); cur.setAttribute('visibility', 'visible');
+      tip.innerHTML = '<b>'+esc(S.modo === 'comparar' ? 'Mês '+(i + 1) : mesRot(S.cats[i]))+'</b>'+S.series.map(sr => { const p = sr.pts[i]; if (!p) return ''; return '<div><i style="background:'+sr.cor+'"></i>'+esc(sr.nome)+(S.modo === 'comparar' ? ' <small>('+esc(mesRot(sr.meses[i]))+')</small>' : '')+'<br><span>'+nfmt(p.v)+' visitas · '+nfmt(p.d)+' vendas · '+pct1(p.v > 0 ? 100 * p.d / p.v : null)+'</span></div>'; }).join('');
+      tip.hidden = false; const br = box.getBoundingClientRect(); tip.style.left = Math.min(br.width - 250, Math.max(6, e.clientX - br.left + 14))+'px'; tip.style.top = Math.max(6, e.clientY - br.top - 20)+'px';
+    };
+    hit.addEventListener('mousemove', mostra); hit.addEventListener('touchstart', e => mostra(e.touches[0]), { passive: true }); hit.addEventListener('mouseleave', () => { tip.hidden = true; cur.setAttribute('visibility', 'hidden'); });
+    $('#pe-leg').innerHTML = barras.concat(linhas).map((b, k) => '<span><i style="background:'+b.cor+';'+(k >= barras.length ? 'height:3px' : '')+'"></i>'+esc(b.nome)+'</span>').join('');
   }
 
   function baixarCsv(){
