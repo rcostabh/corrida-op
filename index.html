@@ -521,6 +521,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 #ds-svg .bd .t2{font-size:11px;font-weight:600;text-anchor:middle;fill:var(--muted)}
 #ds-svg .mk{cursor:pointer;transition:opacity .25s}
 #ds-svg .mk circle{fill:var(--accent);stroke:var(--surface);stroke-width:2.5}
+#ds-svg .mk.inat circle{fill:var(--surface);stroke:var(--accent);stroke-width:3;stroke-dasharray:3 2.5}
 #ds-svg .mk .lb{opacity:0;transition:opacity .25s;pointer-events:none}
 #ds-svg.foco .mk .lb{opacity:1}
 #ds-svg .mk .lb rect{fill:var(--surface);stroke:var(--line)}
@@ -670,6 +671,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.40.0', '2026-11-18', 'Mapa: clínicas inativas que tiveram lançamento no mês escolhido aparecem como pontos tracejados, com visitas, vendas e fechamento, como as ativas (opção Incluir clínicas inativas). Várias clínicas na mesma cidade ficam lado a lado.'],
     ['1.39.0', '2026-11-18', 'Relatórios ganha a aba Por período: gráfico em estilo holograma com as visitas e vendas mês a mês de cada clínica individualmente (sem somar) e um comparativo com as mesmas ou outras clínicas em outro período (ex.: as ativas neste mês × BHE em março de 2022, ou a mesma clínica em dois períodos).'],
     ['1.38.0', '2026-11-18', 'Início e planilha diária: clique no nome do mês para escolher qualquer mês e ano direto, sem precisar passar pelas setinhas.'],
     ['1.37.0', '2026-11-17', 'Agenda: gestor e gerente agendam uma nova visita clicando num horário vazio da grade (dia ou semana): escolhem clínica, tele, paciente, telefone, data, hora e, se quiserem, o print da conversa.'],
@@ -3047,25 +3049,34 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     if (!DS.ano){ const h = hoje(); DS.ano = Number(h.slice(0, 4)); DS.mes = Number(h.slice(5, 7)) - 1; }
     const n = pdN(DS.ano, DS.mes), de = pdIso(DS.ano, DS.mes, 1), ate = pdIso(DS.ano, DS.mes, n), tk = ++DS.tk;
     DS.geoErro = '';
-    const cl0 = await sb.from('clinicas').select('*').order('nome');
-    const ufs = ['MG'].concat([...new Set((cl0.data || []).filter(c => c.ativa !== false && c.uf && c.uf !== 'MG' && c.latitude != null).map(c => c.uf))].sort());
-    DS.ufs = ufs;
-    const geoP = Promise.all(ufs.map((u, i) => Promise.all([contornoUF(u), munUF(u)]).catch(e => { DS.geoErro = (e && e.message) || 'erro'; return null; }))).then(l => {
+    if (DS.inat == null) DS.inat = true;
+    const r0 = await Promise.all([sb.from('clinicas').select('*').order('nome'), sb.rpc('painel_geral', { p_de: de, p_ate: ate }), sb.rpc('gerentes_das_clinicas'), canaisCarrega()]);
+    if (tk !== DS.tk || recurso !== 'inicio') return;
+    const er = r0.slice(0, 3).map(r => r.error).find(Boolean); if (er){ pdErro(er); return; }
+    const todas = r0[0].data || [], linhas = r0[1].data || [];
+    /* clínicas inativas só entram no mapa se tiveram lançamento no mês escolhido (e só o gestor as enxerga) */
+    const comDado = new Set(); linhas.forEach(r => { if (r.cargo && !ehDiv(r.cargo) && (r.visitas || r.vendas)) comDado.add(r.clinica_id); });
+    const inat = DS.inat ? todas.filter(c => c.ativa === false && comDado.has(c.id)) : [];
+    DS.nInat = todas.filter(c => c.ativa === false && comDado.has(c.id)).length;
+    /* sem localização cadastrada: usa o centro da cidade (IBGE), só para o desenho do mapa */
+    await Promise.all(inat.filter(c => c.latitude == null && c.cidade && c.uf).map(async c => {
+      try { const m = (await munUF(c.uf)).find(x => normTxt(x.nome) === normTxt(c.cidade)); if (!m) return; const g = await mgCentro(m.id); Object.assign(c, { ibge_id: m.id, regiao_id: m.rid, regiao: m.rnome, longitude: g[0], latitude: g[1], _geoLocal: true }); } catch (e) {} }));
+    const ufs = ['MG'].concat([...new Set(todas.filter(c => (c.ativa !== false || inat.includes(c)) && c.uf && c.uf !== 'MG' && c.latitude != null).map(c => c.uf))].sort());
+    DS.ufs = ufs; DS.geoErro = '';
+    const geo = await Promise.all(ufs.map(u => Promise.all([contornoUF(u), munUF(u)]).catch(e => { DS.geoErro = (e && e.message) || 'erro'; return null; }))).then(l => {
       const ok = l.filter(Boolean); if (!ok.length) return null;
       return [ok.reduce((t, x) => t.concat(x[0]), []), ok.reduce((t, x) => t.concat(x[1]), [])];
     });
-    const rs = await Promise.all([Promise.resolve(cl0), sb.rpc('painel_geral', { p_de: de, p_ate: ate }), sb.rpc('gerentes_das_clinicas'), geoP, canaisCarrega()]);
     if (tk !== DS.tk || recurso !== 'inicio') return;
-    const er = rs.slice(0, 3).map(r => r.error).find(Boolean); if (er){ pdErro(er); return; }
-    const base = {}; rs[0].data.filter(c => c.ativa !== false).forEach(c => { base[c.id] = { c, v: 0, s: 0, d: {}, t: {} }; });
-    (rs[1].data || []).forEach(r => {
+    const base = {}; todas.filter(c => c.ativa !== false || inat.includes(c)).forEach(c => { base[c.id] = { c, v: 0, s: 0, d: {}, t: {}, inat: c.ativa === false }; });
+    linhas.forEach(r => {
       const cg = r.cargo; if (!cg || ehDiv(cg)) return;
       const o = base[r.clinica_id]; if (!o) return; const d = Number(String(r.data_ref).slice(8));
       (o.t[cg] = o.t[cg] || [0, 0]); o.t[cg][0] += r.visitas; o.t[cg][1] += r.vendas;
       o.v += r.visitas; o.s += r.vendas; (o.d[d] = o.d[d] || [0, 0]); o.d[d][0] += r.visitas; o.d[d][1] += r.vendas;
     });
-    DS.base = Object.values(base); DS.n = n; DS.filtro = null; DS.geo = rs[3] ? { reg: rs[3][0] } : null;
-    DS.nomes = {}; if (rs[3]) rs[3][1].forEach(m => { if (m.rid) DS.nomes[String(m.rid)] = m.rnome; });
+    DS.base = Object.values(base); DS.n = n; DS.filtro = null; DS.geo = geo ? { reg: geo[0] } : null;
+    DS.nomes = {}; if (geo) geo[1].forEach(m => { if (m.rid) DS.nomes[String(m.rid)] = m.rnome; });
     mapaPreparar(); inicioMontar();
   }
 
@@ -3096,6 +3107,9 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       o.reg = h ? h.key : (c.regiao_id ? String(c.regiao_id) : '');
       if (h && !h.nome && c.regiao) h.nome = c.regiao;
     });
+    /* clínicas na mesma cidade (ex.: várias em Belo Horizonte) ficam em pontos separados, em volta do centro */
+    const gr = {}; DS.base.filter(o => o.x != null).forEach(o => { const k = o.x.toFixed(1)+'|'+o.y.toFixed(1); (gr[k] = gr[k] || []).push(o); });
+    Object.values(gr).filter(l => l.length > 1).forEach(l => { const r = Math.max(5, DS.proj.W / 160) * (l.length > 4 ? 1.6 : 1.2); l.sort((a, b) => a.c.id - b.c.id).forEach((o, i) => { const an = -Math.PI / 2 + 2 * Math.PI * i / l.length; o.x += r * Math.cos(an); o.y += r * Math.sin(an); }); });
   }
 
   const ptsDe = ids => DS.base.filter(o => o.x != null && (!ids || ids.has(o.c.id)));
@@ -3114,7 +3128,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     $('#area').innerHTML = '<div class="ds-sec">'
       + '<div class="pd-bar"><p class="sub" style="margin:0" id="ds-info"></p>'
       + '<div class="pd-mes"><button type="button" id="ds-ant" aria-label="Mês anterior">‹</button><button type="button" class="mp-btn" id="ds-mes" aria-haspopup="dialog" aria-expanded="false" title="Escolher mês"><span>'+new Date(DS.ano, DS.mes, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })+'</span></button><button type="button" id="ds-prox" aria-label="Próximo mês">›</button></div></div>'
-      + '<div class="card ds-mapa-card"><div class="pd-bar" style="margin-bottom:8px"><div><h2 style="margin:0">'+esc(mapaTit())+'</h2><p class="sub" style="margin:2px 0 0" id="ds-dica"></p></div><div id="ds-filtro"></div></div>'
+      + '<div class="card ds-mapa-card"><div class="pd-bar" style="margin-bottom:8px"><div><h2 style="margin:0">'+esc(mapaTit())+'</h2><p class="sub" style="margin:2px 0 0" id="ds-dica"></p></div><div id="ds-filtro"></div><label class="chk" id="ds-inat-w" style="margin-left:auto"'+(DS.nInat ? '' : ' hidden')+'><input type="checkbox" id="ds-inat"'+(DS.inat ? ' checked' : '')+'> Incluir clínicas inativas</label></div>'
       + (fechado ? '<div class="empty">Cadastre a cidade de cada clínica em Cadastros › Clínicas para ver o mapa.</div>' : '<div class="ds-mapa-grid"><div class="ds-mapa"><svg id="ds-svg" preserveAspectRatio="xMidYMid meet" role="group" aria-label="Mapa com as clínicas"></svg></div><aside class="ds-lado" id="ds-lado" aria-live="polite"></aside></div>')
       + '<div class="ds-sem" id="ds-sem"></div></div>'
       + '<div id="ds-paineis" class="ds-sec"></div></div>';
@@ -3122,9 +3136,11 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     $('#ds-ant').addEventListener('click', () => { DS.mes--; if (DS.mes < 0){ DS.mes = 11; DS.ano--; } inicioCarregar(); });
     $('#ds-prox').addEventListener('click', () => { DS.mes++; if (DS.mes > 11){ DS.mes = 0; DS.ano++; } inicioCarregar(); });
     $('#ds-mes').addEventListener('click', e => mesPicker(e.currentTarget, DS.ano, DS.mes, (a, m) => { DS.ano = a; DS.mes = m; inicioCarregar(); }));
+    $('#ds-inat').addEventListener('click', e => { DS.inat = e.target.checked; inicioCarregar(); });
     if (DS.proj) mapaDesenhar();
     const sem = DS.base.filter(o => o.x == null);
     $('#ds-sem').innerHTML = (DS.geoErro && DS.proj ? 'Não consegui carregar o contorno das regiões agora ('+esc(DS.geoErro)+'). Os pontos mostram onde ficam as clínicas. ' : '')
+      + (DS.base.some(o => o.inat && o.x != null) ? 'Ponto vazado e tracejado = clínica inativa (posição no centro da cidade). ' : '')
       + (sem.length && DS.proj ? 'Sem localização no mapa: '+sem.map(o => esc(o.c.sigla)).join(', ')+'. Informe a cidade em Cadastros › Clínicas.' : '');
     inicioPaineis(); filtroBarra(); ladoDesenhar();
   }
@@ -3137,7 +3153,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const bds = (DS.regs || []).filter(r => regsPorKey[r.key]).map(r => { const t = regsPorKey[r.key], cx = (r.bbox[0] + r.bbox[2]) / 2, cy = (r.bbox[1] + r.bbox[3]) / 2;
       return '<g class="bd" data-reg="'+esc(r.key)+'" data-x="'+cx.toFixed(1)+'" data-y="'+cy.toFixed(1)+'"><text class="t1" y="-3">'+esc((r.nome || 'Região').replace(/^Região (Geográfica )?(Intermediária de )?/, ''))+'</text><text class="t2" y="11">'+t.v+' vis · '+pf0(pdPct(t.v, t.s))+'</text></g>'; }).join('');
     const mks = DS.base.filter(o => o.x != null).map(o => { const txt = esc(o.c.sigla)+' · '+o.v+' vis · '+pf0(pdPct(o.v, o.s)), w = Math.round(txt.length * 6.3 + 14);
-      return '<g class="mk" data-id="'+o.c.id+'" data-x="'+o.x.toFixed(1)+'" data-y="'+o.y.toFixed(1)+'"><title>'+esc(o.c.nome)+': '+o.v+' visitas, '+o.s+' vendas, '+pf1(pdPct(o.v, o.s))+'</title><g class="lb"><rect x="9" y="-11" width="'+w+'" height="22" rx="11"/><text x="16" y="4">'+txt+'</text></g><circle r="6.5"/></g>'; }).join('');
+      return '<g class="mk'+(o.inat ? ' inat' : '')+'" data-id="'+o.c.id+'" data-x="'+o.x.toFixed(1)+'" data-y="'+o.y.toFixed(1)+'"><title>'+esc(o.c.nome)+(o.inat ? ' (inativa)' : '')+': '+o.v+' visitas, '+o.s+' vendas, '+pf1(pdPct(o.v, o.s))+'</title><g class="lb"><rect x="9" y="-11" width="'+w+'" height="22" rx="11"/><text x="16" y="4">'+txt+'</text></g><circle r="6.5"/></g>'; }).join('');
     svg.innerHTML = '<g class="regs">'+regs+'</g><g class="bds">'+bds+'</g><g class="mks">'+mks+'</g><rect id="ds-sel" class="selr" hidden></rect>';
     DS.vb = DS.full.slice(); aplicarVb(); mapaEventos(svg); mapaEstado(); $('#ds-dica').textContent = 'Clique numa região para aproximar. Arraste sobre o mapa para escolher várias clínicas.';
   }
@@ -3246,7 +3262,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const comDados = L.filter(x => x.pct != null), pmed = comDados.length ? comDados.reduce((t, x) => t + x.pct, 0) / comDados.length : null;
     const maxV = Math.max(1, ...Object.values(dias).map(x => x[0]));
     L.sort((a, b) => (b.pct == null ? -1 : b.pct) - (a.pct == null ? -1 : a.pct) || b.v - a.v);
-    $('#ds-info').textContent = (f ? f.rotulo+': ' : 'Todas as clínicas ativas: ')+'dados da planilha diária. Divulgadores ficam de fora para não contar a mesma visita duas vezes.';
+    $('#ds-info').textContent = (f ? f.rotulo+': ' : (DS.base.some(o => o.inat) ? 'Clínicas ativas e inativas com lançamento no mês: ' : 'Todas as clínicas ativas: '))+'dados da planilha diária. Divulgadores ficam de fora para não contar a mesma visita duas vezes.';
     const k = (rot, val, un, fo, dest) => '<div class="ds-k'+(dest ? ' destaque' : '')+'"><div class="k">'+rot+'</div><div class="v">'+val+(un ? '<small>'+un+'</small>' : '')+'</div><div class="f">'+fo+'</div></div>';
     let graf = '';
     for (let d = 1; d <= n; d++){ const x = dias[d] || [0, 0];
