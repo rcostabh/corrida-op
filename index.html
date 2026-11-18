@@ -142,6 +142,8 @@ table.tab tr.tot td{font-weight:700;border-top:2px solid var(--line);background:
 .pd-mes{display:inline-flex;align-items:center;gap:2px;background:var(--surface-2);border-radius:12px;padding:2px}
 .pd-mes button{border:0;background:transparent;color:var(--ink);font:700 16px var(--font-body);width:34px;height:34px;border-radius:10px;cursor:pointer}
 .pd-mes button:disabled{opacity:.35;cursor:default}
+.pd-mes .mp-btn{width:auto;min-width:130px;padding:0 10px;font:700 14px var(--font-body);display:inline-flex;align-items:center;justify-content:center;gap:6px}.pd-mes .mp-btn:hover{background:var(--surface)}.pd-mes .mp-btn::after{content:'▾';font-size:11px;color:var(--muted)}.pd-mes .mp-btn span{display:inline-block}.pd-mes .mp-btn span::first-letter{text-transform:uppercase}
+.mp-pop{position:absolute;z-index:1000;width:244px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:10px}.mp-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.mp-top b{font:700 15px var(--font-body)}.mp-pop button{border:0;background:transparent;color:var(--ink);font:600 14px var(--font-body);border-radius:10px;cursor:pointer}.mp-top button{width:34px;height:34px;font-size:16px}.mp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.mp-grid button{height:38px;background:var(--surface-2)}.mp-pop button:hover:not(:disabled){background:var(--accent-soft)}.mp-grid button.on{background:var(--accent);color:var(--on-accent)}.mp-pop button:disabled{opacity:.35;cursor:default}
 .pd-mes b{min-width:130px;text-align:center;font-size:14px;display:inline-block}.pd-mes b::first-letter,.pd-bar .sub::first-letter{text-transform:uppercase}.pd-bar select{width:auto;min-width:200px}
 .pd-placar{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
 .pd-pc{background:var(--surface);border-radius:18px;padding:14px 16px;box-shadow:var(--shadow);display:grid;gap:6px;min-width:0}
@@ -651,6 +653,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.38.0', '2026-11-18', 'Início e planilha diária: clique no nome do mês para escolher qualquer mês e ano direto, sem precisar passar pelas setinhas.'],
     ['1.37.0', '2026-11-17', 'Agenda: gestor e gerente agendam uma nova visita clicando num horário vazio da grade (dia ou semana): escolhem clínica, tele, paciente, telefone, data, hora e, se quiserem, o print da conversa.'],
     ['1.36.1', '2026-11-17', 'Pessoas: a gerente responsável pelas teles BH (Paloma) agora escolhe em quais clínicas cada tele BH atende, ao cadastrar e ao editar.'],
     ['1.36.0', '2026-11-17', 'Agenda das teles: quem não chega até 1 hora depois do horário passa sozinho a Não compareceu (a rotina estava falhando e foi consertada, inclusive para retorno e acompanhante). Se o paciente chegar atrasado, quem acompanha o agendamento marca Atendido, Fechado, Não fechou ou Não apto sobre o Não compareceu. Novo status Não apto, que não conta nas visitas nem nas taxas.'],
@@ -1103,6 +1106,35 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   let C = { camps: [], cc: [], cp: [], rg: [], cs: [], tipos: [], premios: [], promos: [] };
   let ed = null;
   const hoje = () => new Date().toLocaleDateString('sv-SE');
+  /* Escolha direta de mês: abre uma grade com os 12 meses e troca de ano. */
+  function mesPicker(btn, ano, mes, aoEscolher){
+    const aberto = document.querySelector('.mp-pop');
+    if (aberto){ aberto._fechar(); if (aberto._btn === btn) return; }
+    const h = hoje(), maxA = Number(h.slice(0, 4)), maxM = Number(h.slice(5, 7)) - 1;
+    const nomes = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+    let a = ano;
+    const pop = document.createElement('div');
+    pop.className = 'mp-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', 'Escolher mês'); pop._btn = btn;
+    const fora = e => { if (!pop.contains(e.target) && !btn.contains(e.target)) fechar(); };
+    const tecla = e => { if (e.key === 'Escape'){ fechar(); btn.focus(); } };
+    function fechar(){ pop.remove(); btn.setAttribute('aria-expanded', 'false'); document.removeEventListener('click', fora, true); document.removeEventListener('keydown', tecla); }
+    pop._fechar = fechar;
+    function desenhar(){
+      pop.innerHTML = '<div class="mp-top"><button type="button" class="mp-a" aria-label="Ano anterior">‹</button><b>'+a+'</b><button type="button" class="mp-p" aria-label="Próximo ano"'+(a >= maxA ? ' disabled' : '')+'>›</button></div>'
+        + '<div class="mp-grid">'+nomes.map((n, i) => '<button type="button" data-m="'+i+'"'+(a > maxA || (a === maxA && i > maxM) ? ' disabled' : '')+(a === ano && i === mes ? ' class="on" aria-current="true"' : '')+'>'+n+'</button>').join('')+'</div>';
+      pop.querySelector('.mp-a').onclick = () => { a--; desenhar(); };
+      pop.querySelector('.mp-p').onclick = () => { if (a < maxA){ a++; desenhar(); } };
+      pop.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { fechar(); aoEscolher(a, Number(b.dataset.m)); });
+    }
+    desenhar();
+    document.body.appendChild(pop);
+    const r = btn.getBoundingClientRect();
+    pop.style.top = (r.bottom + window.scrollY + 6)+'px';
+    pop.style.left = Math.max(8, Math.min(window.innerWidth - 252, r.left + r.width / 2 - 122) + window.scrollX)+'px';
+    btn.setAttribute('aria-expanded', 'true');
+    setTimeout(() => { document.addEventListener('click', fora, true); document.addEventListener('keydown', tecla); }, 0);
+    (pop.querySelector('.mp-grid .on') || pop.querySelector('.mp-grid button:not(:disabled)')).focus();
+  }
   const dBR = d => d ? d.split('-').reverse().join('/') : '';
   const statusCamp = c => { const h = hoje(); return h < c.inicio ? ['Agendada',''] : h > c.fim ? ['Encerrada','off'] : ['Ativa','ok']; };
   const MODOS = { ocorrencia: 'Cada lançamento', quantidade: 'A cada N unidades', valor: 'A cada N reais' };
@@ -1883,12 +1915,13 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     h += '<td class="rt r1"></td><td class="rt r2"></td><td class="rt r3"></td><td class="rt r4">'+pf0(mdiv)+'</td></tr></tbody></table>';
 
     $('#area').innerHTML = '<div class="pd-card" style="padding:16px 18px"><div class="pd-bar"><div><h2 style="margin:0">Planilha do mês</h2><p class="sub" style="margin:2px 0 0">Visitas / vendas de início de cada pessoa, dia a dia.</p></div>'
-      + '<div class="grp">'+pdSelClin()+'<div class="pd-mes"><button type="button" id="pd-ant" aria-label="Mês anterior">‹</button><b>'+new Date(PD.ano, PD.mes, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })+'</b><button type="button" id="pd-prox" aria-label="Próximo mês">›</button></div></div></div>'
+      + '<div class="grp">'+pdSelClin()+'<div class="pd-mes"><button type="button" id="pd-ant" aria-label="Mês anterior">‹</button><button type="button" class="mp-btn" id="pd-mesbtn" aria-haspopup="dialog" aria-expanded="false" title="Escolher mês"><span>'+new Date(PD.ano, PD.mes, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })+'</span></button><button type="button" id="pd-prox" aria-label="Próximo mês">›</button></div></div></div>'
       + placar+aviso+aviso2+'<div class="pd-card"><div class="pd-scroll">'+h+'</div><div class="pd-leg"><label class="chk" for="pd-ver-in" style="min-height:0;padding:6px 12px"><input type="checkbox" id="pd-ver-in"'+(PD.inativos ? ' checked' : '')+'><span>Mostrar inativos (I)</span></label><span>"·" = dia sem lançamento</span><span>Vermelho = diferente da corrida</span><span>Inativos continuam somando no %</span><span>Promotores de teste somam numa linha só: clique na seta para ver cada um</span></div></div>';
     const hojeD = hoje(); $('#pd-prox').disabled = PD.ano === Number(hojeD.slice(0, 4)) && PD.mes >= Number(hojeD.slice(5, 7)) - 1;
     $('#pd-clin').addEventListener('change', e => { PD.clin = Number(e.target.value); planCarregar(); });
     $('#pd-ant').addEventListener('click', () => { PD.mes--; if (PD.mes < 0){ PD.mes = 11; PD.ano--; } planCarregar(); });
     $('#pd-prox').addEventListener('click', () => { PD.mes++; if (PD.mes > 11){ PD.mes = 0; PD.ano++; } planCarregar(); });
+    $('#pd-mesbtn').addEventListener('click', e => mesPicker(e.currentTarget, PD.ano, PD.mes, (a, m) => { PD.ano = a; PD.mes = m; planCarregar(); }));
     $('#pd-ver-in').addEventListener('change', e => { PD.inativos = e.target.checked; planDesenhar(); });
     const ex = $('[data-teste=mes]'); if (ex) ex.addEventListener('click', () => { PD.testeMes = !PD.testeMes; planDesenhar(); });
   }
@@ -2889,7 +2922,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const fechado = !DS.proj;
     $('#area').innerHTML = '<div class="ds-sec">'
       + '<div class="pd-bar"><p class="sub" style="margin:0" id="ds-info"></p>'
-      + '<div class="pd-mes"><button type="button" id="ds-ant" aria-label="Mês anterior">‹</button><b>'+new Date(DS.ano, DS.mes, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })+'</b><button type="button" id="ds-prox" aria-label="Próximo mês">›</button></div></div>'
+      + '<div class="pd-mes"><button type="button" id="ds-ant" aria-label="Mês anterior">‹</button><button type="button" class="mp-btn" id="ds-mes" aria-haspopup="dialog" aria-expanded="false" title="Escolher mês"><span>'+new Date(DS.ano, DS.mes, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })+'</span></button><button type="button" id="ds-prox" aria-label="Próximo mês">›</button></div></div>'
       + '<div class="card ds-mapa-card"><div class="pd-bar" style="margin-bottom:8px"><div><h2 style="margin:0">'+esc(mapaTit())+'</h2><p class="sub" style="margin:2px 0 0" id="ds-dica"></p></div><div id="ds-filtro"></div></div>'
       + (fechado ? '<div class="empty">Cadastre a cidade de cada clínica em Cadastros › Clínicas para ver o mapa.</div>' : '<div class="ds-mapa-grid"><div class="ds-mapa"><svg id="ds-svg" preserveAspectRatio="xMidYMid meet" role="group" aria-label="Mapa com as clínicas"></svg></div><aside class="ds-lado" id="ds-lado" aria-live="polite"></aside></div>')
       + '<div class="ds-sem" id="ds-sem"></div></div>'
@@ -2897,6 +2930,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const h = hoje(); $('#ds-prox').disabled = DS.ano === Number(h.slice(0, 4)) && DS.mes >= Number(h.slice(5, 7)) - 1;
     $('#ds-ant').addEventListener('click', () => { DS.mes--; if (DS.mes < 0){ DS.mes = 11; DS.ano--; } inicioCarregar(); });
     $('#ds-prox').addEventListener('click', () => { DS.mes++; if (DS.mes > 11){ DS.mes = 0; DS.ano++; } inicioCarregar(); });
+    $('#ds-mes').addEventListener('click', e => mesPicker(e.currentTarget, DS.ano, DS.mes, (a, m) => { DS.ano = a; DS.mes = m; inicioCarregar(); }));
     if (DS.proj) mapaDesenhar();
     const sem = DS.base.filter(o => o.x == null);
     $('#ds-sem').innerHTML = (DS.geoErro && DS.proj ? 'Não consegui carregar o contorno das regiões agora ('+esc(DS.geoErro)+'). Os pontos mostram onde ficam as clínicas. ' : '')
