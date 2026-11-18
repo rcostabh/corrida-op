@@ -671,6 +671,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.40.2', '2026-11-18', 'Listas de clínicas mostram só as ativas; as inativas aparecem quando você escolhe ver (Ver clínicas inativas). O menu de clínicas do relatório Por período fecha ao clicar fora ou apertar Esc.'],
     ['1.40.1', '2026-11-18', 'Relatório Por período: o gráfico fica sempre em colunas estilo holograma, uma coluna por clínica (sem somar), e os cards das clínicas ficam bem pequenos.'],
     ['1.40.0', '2026-11-18', 'Mapa: clínicas inativas que tiveram lançamento no mês escolhido aparecem como pontos tracejados, com visitas, vendas e fechamento, como as ativas (opção Incluir clínicas inativas). Várias clínicas na mesma cidade ficam lado a lado.'],
     ['1.39.0', '2026-11-18', 'Relatórios ganha a aba Por período: gráfico em estilo holograma com as visitas e vendas mês a mês de cada clínica individualmente (sem somar) e um comparativo com as mesmas ou outras clínicas em outro período (ex.: as ativas neste mês × BHE em março de 2022, ou a mesma clínica em dois períodos).'],
@@ -1565,13 +1566,13 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + '<label class="field" for="n-valor" id="w-valor" hidden>Valor da venda (R$)<input id="n-valor" type="number" inputmode="decimal" min="0.01" step="0.01"></label>'
       + '<div class="err" id="n-err" role="alert"></div><div class="btns"><button class="btn" type="submit" id="n-btn">Lançar</button></div></form></div>'
       + '<div class="card"><div class="top"><h2>Lançamentos recentes</h2><div class="line">'
-      + '<select id="l-fclin" aria-label="Filtrar por clínica" style="width:auto"><option value="">Todas as clínicas</option>'+L.clin.map(c => '<option value="'+c.id+'"'+(String(c.id)===L.filtroClin?' selected':'')+'>'+esc(c.sigla)+'</option>').join('')+'</select>'
+      + '<select id="l-fclin" aria-label="Filtrar por clínica" style="width:auto">'+clinOpcoes(L.clin, L.filtroClin, 'Todas as clínicas')+'</select>'
       + '<select id="l-fdias" aria-label="Período" style="width:auto">'+[7,30,90].map(d => '<option value="'+d+'"'+(d===L.dias?' selected':'')+'>Últimos '+d+' dias</option>').join('')+'</select></div></div>'
       + '<div id="l-lista" style="margin-top:8px"><p class="sub">Carregando...</p></div></div>';
     $('#n-clin').addEventListener('change', e => { $('#n-prom').innerHTML = lancOpcPromotores(Number(e.target.value)); });
     $('#n-tipo').addEventListener('change', e => { const o = e.target.selectedOptions[0]; $('#w-valor').hidden = !(o && o.dataset.v === '1'); });
     $('#f-lanc').addEventListener('submit', lancarSalvar);
-    $('#l-fclin').addEventListener('change', e => { L.filtroClin = e.target.value; L.acao = null; lancLista(); });
+    $('#l-fclin').addEventListener('change', e => { if (clinSelectInat(e.target, L.clin, 'Todas as clínicas')) return; L.filtroClin = e.target.value; L.acao = null; lancLista(); });
     $('#l-fdias').addEventListener('change', e => { L.dias = Number(e.target.value); L.acao = null; lancLista(); });
     $('#l-lista').addEventListener('click', lancClique);
     lancLista();
@@ -1694,11 +1695,11 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     $('#r-corpo').innerHTML = '<p class="sub">% de fechamento = vendas de início ÷ visitas. Só entram lançamentos que continuam válidos.</p>'
       + '<div class="g3"><label class="field">De<input id="f-de" type="date" value="'+esc(f.de)+'"></label><label class="field">Até<input id="f-ate" type="date" value="'+esc(f.ate)+'"></label>'
       + '<label class="field">Campanha<select id="f-camp"><option value="">Todas</option>'+RP.camps.map(c => '<option value="'+c.id+'"'+(String(c.id)===f.camp?' selected':'')+'>'+esc(c.nome)+'</option>').join('')+'</select></label>'
-      + '<label class="field">Clínica<select id="f-clin"><option value="">Todas</option>'+RP.clin.map(c => '<option value="'+c.id+'"'+(String(c.id)===f.clin?' selected':'')+'>'+esc(c.sigla)+' · '+esc(c.nome)+'</option>').join('')+'</select></label>'
+      + '<label class="field">Clínica<select id="f-clin">'+clinOpcoes(RP.clin, f.clin, 'Todas')+'</select></label>'
       + '<label class="field">Agrupar por<select id="f-por"><option value="promotor"'+(f.por==='promotor'?' selected':'')+'>Promotor</option><option value="clinica"'+(f.por==='clinica'?' selected':'')+'>Clínica</option><option value="mes"'+(f.por==='mes'?' selected':'')+'>Mês</option></select></label></div>'
       + '<div class="btns" style="margin:10px 0"><button class="btn ghost sm" type="button" data-p="mes">Este mês</button><button class="btn ghost sm" type="button" data-p="ant">Mês passado</button><button class="btn ghost sm" type="button" data-p="90">Últimos 90 dias</button><button class="btn ghost sm" type="button" id="f-csv">Baixar planilha</button></div><div id="f-res"><p class="sub">Carregando...</p></div>';
     const ler = () => { f.de = $('#f-de').value; f.ate = $('#f-ate').value; f.camp = $('#f-camp').value; f.clin = $('#f-clin').value; f.por = $('#f-por').value; relFechamento(); };
-    ['f-de','f-ate','f-camp','f-clin','f-por'].forEach(id => $('#'+id).addEventListener('change', ler));
+    ['f-de','f-ate','f-camp','f-clin','f-por'].forEach(id => $('#'+id).addEventListener('change', () => { if (id === 'f-clin' && clinSelectInat($('#f-clin'), RP.clin, 'Todas')) return; ler(); }));
     $$('[data-p]').forEach(b => b.addEventListener('click', () => {
       const h = new Date(), d = n => new Date(h.getFullYear(), h.getMonth() + n, 1), iso = x => x.toLocaleDateString('sv-SE');
       if (b.dataset.p === 'mes'){ f.de = iso(d(0)); f.ate = hoje(); }
@@ -1764,16 +1765,37 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     if (!PER.sel) PER.sel = RP.clin.filter(c => c.ativa).map(c => c.id);
   }
 
+  /* listas de clínicas: só as ativas; as inativas entram quando a pessoa escolhe ver (ou se já estiverem escolhidas) */
+  const VER_INAT = { on: false };
+  const clinVis = (lista, sel) => lista.filter(c => c.ativa !== false || VER_INAT.on || (sel || []).includes(c.id));
+  const temInat = lista => lista.some(c => c.ativa === false);
+  function clinOpcoes(lista, atual, primeira){
+    return '<option value="">'+primeira+'</option>'+clinVis(lista, [Number(atual)]).map(c => '<option value="'+c.id+'"'+(String(c.id) === String(atual) ? ' selected' : '')+'>'+esc(c.sigla)+' · '+esc(c.nome)+(c.ativa === false ? ' (inativa)' : '')+'</option>').join('')
+      + (!VER_INAT.on && temInat(lista) ? '<option value="__inat">＋ Mostrar clínicas inativas…</option>' : '');
+  }
+  /* select de clínica: ao escolher "Mostrar inativas" a lista é refeita no lugar; devolve true quando foi isso */
+  function clinSelectInat(sel, lista, primeira){
+    if (sel.value !== '__inat') return false;
+    VER_INAT.on = true; sel.innerHTML = clinOpcoes(lista, '', primeira); sel.value = ''; return true;
+  }
+  /* menus (details) de escolha de clínicas fecham ao clicar fora ou apertar Esc */
+  document.addEventListener('click', e => { $$('details.pr-cs[open]').forEach(d => { if (!d.contains(e.target)) d.removeAttribute('open'); }); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') $$('details.pr-cs[open]').forEach(d => d.removeAttribute('open')); });
+
   /* seletor de clínicas (várias) */
   function perSeletor(id, ids){
     const txt = ids.length === 0 ? 'Nenhuma clínica' : ids.length === RP.clin.filter(c => c.ativa).length && ids.every(i => (RP.clin.find(c => c.id === i) || {}).ativa) ? 'Todas as ativas ('+ids.length+')' : ids.length === RP.clin.length ? 'Todas ('+ids.length+')' : ids.length <= 3 ? ids.map(clinNome).join(', ') : ids.length+' clínicas';
     return '<details class="pr-cs" data-cs="'+id+'"><summary class="btn ghost sm" aria-label="Escolher clínicas">'+esc(txt)+' ▾</summary><div class="pr-cs-m"><div class="btns" style="margin-bottom:6px"><button type="button" class="btn ghost sm" data-q="ativas">Todas as ativas</button><button type="button" class="btn ghost sm" data-q="todas">Todas</button><button type="button" class="btn ghost sm" data-q="nada">Limpar</button></div>'
-      + RP.clin.map(c => '<label class="chk"><input type="checkbox" value="'+c.id+'"'+(ids.includes(c.id) ? ' checked' : '')+'> '+esc(c.sigla)+' · '+esc(c.nome)+(c.ativa ? '' : ' <small>(inativa)</small>')+'</label>').join('')+'</div></details>';
+      + (temInat(RP.clin) ? '<label class="chk" style="border-bottom:1px solid var(--line);margin-bottom:4px;padding-bottom:6px"><input type="checkbox" data-vi'+(VER_INAT.on ? ' checked' : '')+'> Ver clínicas inativas</label>' : '')
+      + '<div data-lista>'+perLista(ids)+'</div></div></details>';
   }
+  const perLista = ids => clinVis(RP.clin, ids).map(c => '<label class="chk"><input type="checkbox" value="'+c.id+'"'+(ids.includes(c.id) ? ' checked' : '')+'> '+esc(c.sigla)+' · '+esc(c.nome)+(c.ativa ? '' : ' <small>(inativa)</small>')+'</label>').join('');
   function perLigaSeletor(raiz, aoMudar){
     $$('details.pr-cs', raiz).forEach(d => {
       const id = d.dataset.cs, set = v => { aoMudar(id, v); };
-      $$('input[type=checkbox]', d).forEach(i => i.addEventListener('change', () => set($$('input:checked', d).map(x => Number(x.value)))));
+      const liga = () => $$('[data-lista] input[type=checkbox]', d).forEach(i => i.addEventListener('change', () => set($$('[data-lista] input:checked', d).map(x => Number(x.value)))));
+      liga();
+      const vi = $('[data-vi]', d); if (vi) vi.addEventListener('change', () => { VER_INAT.on = vi.checked; const ids = $$('[data-lista] input:checked', d).map(x => Number(x.value)); $('[data-lista]', d).innerHTML = perLista(ids); liga(); });
       $$('[data-q]', d).forEach(b => b.addEventListener('click', () => set(b.dataset.q === 'ativas' ? RP.clin.filter(c => c.ativa).map(c => c.id) : b.dataset.q === 'todas' ? RP.clin.map(c => c.id) : [])));
     });
   }
@@ -1803,7 +1825,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     perComps(); perCalcula();
   }
   function relFiltrosPerTexto(){
-    $$('details.pr-cs').forEach(d => { const id = d.dataset.cs, ids = id === 'base' ? PER.sel : ((PER.comps.find(x => String(x.id) === id) || {}).sel || []), t = perSeletor(id, ids), tmp = document.createElement('div'); tmp.innerHTML = t; d.querySelector('summary').textContent = tmp.querySelector('summary').textContent; $$('input[type=checkbox]', d).forEach(i => { i.checked = ids.includes(Number(i.value)); }); });
+    $$('details.pr-cs').forEach(d => { const id = d.dataset.cs, ids = id === 'base' ? PER.sel : ((PER.comps.find(x => String(x.id) === id) || {}).sel || []), t = perSeletor(id, ids), tmp = document.createElement('div'); tmp.innerHTML = t; d.querySelector('summary').textContent = tmp.querySelector('summary').textContent; $$('[data-lista] input[type=checkbox]', d).forEach(i => { i.checked = ids.includes(Number(i.value)); }); });
   }
   function perComps(){
     const box = $('#pe-comps'); if (!box) return; const bt = $('#pe-comp'); if (bt) bt.textContent = PER.comps.length ? 'Remover comparativo' : '+ Comparativo';
@@ -2343,7 +2365,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   function msgDesenhar(){
     const f = MP.f, prog = MP.modo === 'programar';
     const alvo = '<div class="field"><span>Para quem</span><div class="sub" style="margin:0 0 4px">Escolha clínicas e/ou cargos. Deixe tudo desmarcado para enviar a todos. Só recebe quem já aceitou o convite.</div>'
-      + '<div class="sub" style="margin:6px 0 2px"><b>Clínicas</b></div><div class="mp-opts" id="mp-clin">'+MP.clin.map(c => '<label class="chk"><input type="checkbox" data-c="'+c.id+'"'+(f.clinicas.includes(c.id) ? ' checked' : '')+'><span>'+esc(c.sigla)+'</span></label>').join('')+'</div>'
+      + '<div class="sub" style="margin:6px 0 2px"><b>Clínicas</b></div><div class="mp-opts" id="mp-clin">'+clinVis(MP.clin, f.clinicas).map(c => '<label class="chk"><input type="checkbox" data-c="'+c.id+'"'+(f.clinicas.includes(c.id) ? ' checked' : '')+'><span>'+esc(c.sigla)+'</span></label>').join('')+'</div>'
       + '<div class="sub" style="margin:6px 0 2px"><b>Cargos</b></div><div class="mp-opts" id="mp-cargo">'+MP_CARGOS.map(g => '<label class="chk"><input type="checkbox" data-g="'+esc(g)+'"'+(f.cargos.includes(g) ? ' checked' : '')+'><span>'+esc(g)+'</span></label>').join('')+'</div>'
       + '<label class="field" for="mp-sorteio" style="margin-top:8px">Sortear só algumas pessoas (opcional)<input id="mp-sorteio" type="number" min="1" inputmode="numeric" placeholder="Ex.: 5" value="'+esc(f.sortear)+'"></label>'
       + '<div class="sub" id="mp-cont" style="margin:6px 0 0"></div></div>';
