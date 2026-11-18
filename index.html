@@ -162,6 +162,7 @@ table.tab tr.tot td{font-weight:700;border-top:2px solid var(--line);background:
 .pd-mes .mp-btn{width:auto;min-width:130px;padding:0 10px;font:700 14px var(--font-body);display:inline-flex;align-items:center;justify-content:center;gap:6px}.pd-mes .mp-btn:hover{background:var(--surface)}.pd-mes .mp-btn::after{content:'▾';font-size:11px;color:var(--muted)}.pd-mes .mp-btn span{display:inline-block}.pd-mes .mp-btn span::first-letter{text-transform:uppercase}
 .mp-pop{position:absolute;z-index:1000;width:244px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:10px}.mp-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.mp-top b{font:700 15px var(--font-body)}.mp-pop button{border:0;background:transparent;color:var(--ink);font:600 14px var(--font-body);border-radius:10px;cursor:pointer}.mp-top button{width:34px;height:34px;font-size:16px}.mp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.mp-grid button{height:38px;background:var(--surface-2)}.mp-pop button:hover:not(:disabled){background:var(--accent-soft)}.mp-grid button.on{background:var(--accent);color:var(--on-accent)}.mp-pop button:disabled{opacity:.35;cursor:default}
 .pd-mes b{min-width:130px;text-align:center;font-size:14px;display:inline-block}.pd-mes b::first-letter,.pd-bar .sub::first-letter{text-transform:uppercase}.pd-bar select{width:auto;min-width:200px}
+.pd-hero{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}.pd-hv{flex:1 1 220px;min-width:0;background:var(--surface);border-radius:18px;padding:14px 18px;box-shadow:var(--shadow);display:grid;gap:2px;border-left:6px solid var(--accent)}.pd-hv span{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.pd-hv b{font-size:42px;line-height:1.05;letter-spacing:-.03em;font-variant-numeric:tabular-nums}.pd-hv small{font-size:12px;color:var(--muted)}.pd-hv.cli{flex:0 1 260px;border-left-color:var(--muted)}.pd-hv.cli b{font-size:30px;color:var(--muted)}
 .pd-placar{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
 .pd-pc{background:var(--surface);border-radius:18px;padding:14px 16px;box-shadow:var(--shadow);display:grid;gap:6px;min-width:0}
 .pd-pc .k{font-size:12px;font-weight:600;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
@@ -671,6 +672,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.41.0', '2026-11-18', 'Planilha do mês: número grande de Vendas de início (ortodontia) no topo e o Clínico à parte. Divulgadores com parte clínica aparecem uma vez em Início e outra em Clínico, cada grupo com seu total; o clínico não entra mais na conta do início. Os avisos de conferência viram uma linha só quando está tudo certo.'],
     ['1.40.2', '2026-11-18', 'Listas de clínicas mostram só as ativas; as inativas aparecem quando você escolhe ver (Ver clínicas inativas). O menu de clínicas do relatório Por período fecha ao clicar fora ou apertar Esc.'],
     ['1.40.1', '2026-11-18', 'Relatório Por período: o gráfico fica sempre em colunas estilo holograma, uma coluna por clínica (sem somar), e os cards das clínicas ficam bem pequenos.'],
     ['1.40.0', '2026-11-18', 'Mapa: clínicas inativas que tiveram lançamento no mês escolhido aparecem como pontos tracejados, com visitas, vendas e fechamento, como as ativas (opção Incluir clínicas inativas). Várias clínicas na mesma cidade ficam lado a lado.'],
@@ -2073,12 +2075,16 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
 
   function planDesenhar(){
     const { M, lanc, C, pes, n } = PD.mapa, hj = hoje(), ehHj = d => pdIso(PD.ano, PD.mes, d) === hj, SEM = ['D','S','T','Q','Q','S','S'];
-    const div = pes.filter(p => ehDiv(p.cargo)), ou = pes.filter(p => !ehDiv(p.cargo));
+    pes.forEach(p => { if (ehDiv(p.cargo)) p.nome = p.nome.replace(/ \((orto|clínico)\)$/, ''); });   /* os grupos já dizem se é início ou clínico */
+    const div = pes.filter(p => p.cargo === 'Divulgador'), divC = pes.filter(p => p.cargo === DIV_CLIN), ou = pes.filter(p => !ehDiv(p.cargo));
     const ids = a => a.map(p => p.id), idsC = c => ids(pes.filter(p => p.cargo === c));
     const tdiv = pdSoma(ids(div), M, n), rua = pdSoma(idsC('Promotor').concat(idsC(TESTE), pes.filter(p => p.canal).map(p => p.id)), M, n), tele = pdSoma(idsC('Tele BH').concat(idsC('Tele interno')), M, n), todos = pdSoma(ids(ou), M, n);
     const mdiv = pdMetaDiv(pes, M, ids(div), n), rp = pdPct(rua.v, rua.s), tp = pdPct(tele.v, tele.s);
-    const cards = [['Eficiência da clínica', pdPct(todos.v, todos.s), mdiv, todos], ['Promotores, teste e fontes de visita', rp, 30, rua], ['Teles (BH e interno)', tp, 45, tele], ['Divulgadores', pdPct(tdiv.v, tdiv.s), mdiv, tdiv]];
-    const placar = '<div class="pd-placar">'+cards.map(c => '<div class="pd-pc"><div class="k"><span>'+c[0]+'</span>'+pdPill(c[1], c[2])+'</div><div class="v">'+pf1(c[1]).replace('%','')+'<small>%</small></div>'
+    const cards = [['Eficiência da clínica', pdPct(todos.v, todos.s), mdiv, todos], ['Promotores, teste e fontes de visita', rp, 30, rua], ['Teles (BH e interno)', tp, 45, tele], ['Divulgadores (início)', pdPct(tdiv.v, tdiv.s), mdiv, tdiv]];
+    const tcl = pdSoma(ids(divC), M, n);
+    const hero = '<div class="pd-hero"><div class="pd-hv ini"><span>Vendas de início (ortodontia)</span><b>'+todos.s+'</b><small>'+todos.v+' visitas · '+pf1(pdPct(todos.v, todos.s))+' de fechamento</small></div>'
+      + (divC.length ? '<div class="pd-hv cli"><span>Clínico</span><b>'+tcl.s+'</b><small>'+tcl.v+' visitas · '+pf1(pdPct(tcl.v, tcl.s))+' · fora da eficiência de início</small></div>' : '')+'</div>';
+    const placar = hero+'<div class="pd-placar">'+cards.map(c => '<div class="pd-pc"><div class="k"><span>'+c[0]+'</span>'+pdPill(c[1], c[2])+'</div><div class="v">'+pf1(c[1]).replace('%','')+'<small>%</small></div>'
       + '<div class="b" title="Escala de 0 a 60%"><i style="width:'+Math.min(100, (c[1] || 0) / 60 * 100)+'%"></i>'+(c[2] != null ? '<u style="left:calc('+Math.min(100, c[2] / 60 * 100)+'% - 1px)"></u>' : '')+'</div>'
       + '<div class="f">Meta '+(c[2] != null ? pf1(c[2]) : '—')+' · '+c[3].s+' vendas · '+c[3].v+' visitas</div></div>').join('')+'</div>';
 
@@ -2091,8 +2097,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       : '<span class="pl ok">Sem divergências</span> Planilha e corrida mostram os mesmos números neste mês.')+'</div>';
 
     const exd = {}; for (let d = 1; d <= n; d++){ if (!lanc[d]) continue; let a0 = 0, a1 = 0, b0 = 0, b1 = 0;
-      pes.forEach(p => { const x = (M[p.id] || {})[d]; if (!x) return; if (ehDiv(p.cargo)){ b0 += x[0]; b1 += x[1]; } else { a0 += x[0]; a1 += x[1]; } });
-      if (a0 !== b0 || a1 !== b1) exd[d] = 'Divulgadores: '+b0+' vis. / '+b1+' ven. · Promotores e teles: '+a0+' vis. / '+a1+' ven.'; }
+      pes.forEach(p => { const x = (M[p.id] || {})[d]; if (!x) return; if (p.cargo === 'Divulgador'){ b0 += x[0]; b1 += x[1]; } else if (p.cargo === DIV_CLIN){ /* clínico fica de fora desta conferência */ } else { a0 += x[0]; a1 += x[1]; } });
+      if (a0 !== b0 || a1 !== b1) exd[d] = 'Divulgadores (início): '+b0+' vis. / '+b1+' ven. · Promotores e teles: '+a0+' vis. / '+a1+' ven.'; }
     const nex = Object.keys(exd).length;
     const aviso2 = '<div class="pd-card pd-div">'+(nex ? '<details><summary><span class="pl no ex"><b>!</b> '+nex+' dia'+(nex === 1 ? '' : 's')+' com totais diferentes</span> Divulgadores e promotores/teles deveriam somar o mesmo. Corrija pelo Lançamento diário.</summary><ul>'
         + Object.keys(exd).map(d => '<li><b>'+pd2(d)+'/'+pd2(PD.mes + 1)+'</b>: '+esc(exd[d])+'</li>').join('')+'</ul></details>'
@@ -2117,22 +2123,23 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     if (teste.length){ const mt = {}; for (let d = 1; d <= n; d++){ let v = 0, s = 0, v2 = 0, s2 = 0, tem = false;
         teste.forEach(p => { const c = (M[p.id] || {})[d], cf = C[p.u+'|'+d]; if (c){ v += c[0]; s += c[1]; tem = true; } if (cf){ v2 += cf.visitas_corrida; s2 += cf.vendas_corrida; } });
         if (tem) mt[d] = [v, s]; CT[d] = { visitas_planilha: v, vendas_planilha: s, visitas_corrida: v2, vendas_corrida: s2 }; } M.teste = mt; }
-    h += grupo('Divulgadores', div, mdiv);
+    h += grupo('Divulgadores · início (orto)', div, mdiv);
     vis(div).forEach(p => { h += linha(p, pdMetaDiv(pes, M, [p.id], n), false); });
     ordemGrupos().forEach(cg => { const a = pes.filter(p => p.cargo === cg); if (!a.length) return; h += grupo(PD_ROT[cg] || cg, a, metaDe(cg)); vis(a).forEach(p => { h += linha(p, metaDe(cg), true); }); });
     if (teste.length){ h += linha({ id: 'teste', nome: 'Promotores de teste ('+teste.length+')', ativo: true }, 30, true);
       if (PD.testeMes) vis(teste).forEach(p => { h += linha(Object.assign({}, p, { sub: true }), 30, true); }); }
+    if (divC.length){ h += grupo('Divulgadores · clínico', divC, null); vis(divC).forEach(p => { h += linha(p, null, false); }); }
     const tot = (rot, arr) => { const t = pdSoma(ids(arr), M, n); let tds = '';
       for (let d = 1; d <= n; d++){ let v = 0, s = 0; arr.forEach(p => { const c = (M[p.id] || {})[d]; if (c){ v += c[0]; s += c[1]; } }); tds += '<td class="c'+(lanc[d] ? '' : ' z')+(new Date(PD.ano, PD.mes, d).getDay() === 0 ? ' dom' : '')+'">'+(lanc[d] ? v+' / '+s : '·')+'</td>'; }
       return '<tr class="tot"><td class="nm">'+rot+'</td>'+tds+'<td class="rt r1">'+t.v+'</td><td class="rt r2">'+t.s+'</td><td class="rt r3">'+pf0(pdPct(t.v, t.s))+'</td><td class="rt r4"></td></tr>'; };
-    h += tot('Total divulgadores', div)+tot('Total promotores e teles', ou);
+    h += tot('Total divulgadores (início)', div)+tot('Total promotores e teles', ou)+(divC.length ? tot('Total clínico', divC) : '');
     h += '<tr class="tot"><td class="nm">Meta do divulgador no dia</td>';
     for (let d = 1; d <= n; d++){ const m = pdMetaDia(pes, M, d); h += '<td class="c'+(m == null ? ' z' : '')+(new Date(PD.ano, PD.mes, d).getDay() === 0 ? ' dom' : '')+'">'+(m == null ? '·' : pf0(m))+'</td>'; }
     h += '<td class="rt r1"></td><td class="rt r2"></td><td class="rt r3"></td><td class="rt r4">'+pf0(mdiv)+'</td></tr></tbody></table>';
 
     $('#area').innerHTML = '<div class="pd-card" style="padding:16px 18px"><div class="pd-bar"><div><h2 style="margin:0">Planilha do mês</h2><p class="sub" style="margin:2px 0 0">Visitas / vendas de início de cada pessoa, dia a dia.</p></div>'
       + '<div class="grp">'+pdSelClin()+'<div class="pd-mes"><button type="button" id="pd-ant" aria-label="Mês anterior">‹</button><button type="button" class="mp-btn" id="pd-mesbtn" aria-haspopup="dialog" aria-expanded="false" title="Escolher mês"><span>'+new Date(PD.ano, PD.mes, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })+'</span></button><button type="button" id="pd-prox" aria-label="Próximo mês">›</button></div></div></div>'
-      + placar+aviso+aviso2+'<div class="pd-card"><div class="pd-scroll">'+h+'</div><div class="pd-leg"><label class="chk" for="pd-ver-in" style="min-height:0;padding:6px 12px"><input type="checkbox" id="pd-ver-in"'+(PD.inativos ? ' checked' : '')+'><span>Mostrar inativos (I)</span></label><span>"·" = dia sem lançamento</span><span>Vermelho = diferente da corrida</span><span>Inativos continuam somando no %</span><span>Promotores de teste somam numa linha só: clique na seta para ver cada um</span></div></div>';
+      + placar+((!dvs.length && !nex) ? '<div class="pd-card pd-div"><span class="pl ok">Tudo conferido</span> Planilha e corrida iguais, e divulgadores (início) somam o mesmo que promotores e teles.</div>' : aviso+aviso2)+'<div class="pd-card"><div class="pd-scroll">'+h+'</div><div class="pd-leg"><label class="chk" for="pd-ver-in" style="min-height:0;padding:6px 12px"><input type="checkbox" id="pd-ver-in"'+(PD.inativos ? ' checked' : '')+'><span>Mostrar inativos (I)</span></label><span>"·" = dia sem lançamento</span><span>Vermelho = diferente da corrida</span><span>Inativos continuam somando no %</span><span>Promotores de teste somam numa linha só: clique na seta para ver cada um</span></div></div>';
     const hojeD = hoje(); $('#pd-prox').disabled = PD.ano === Number(hojeD.slice(0, 4)) && PD.mes >= Number(hojeD.slice(5, 7)) - 1;
     $('#pd-clin').addEventListener('change', e => { PD.clin = Number(e.target.value); planCarregar(); });
     $('#pd-ant').addEventListener('click', () => { PD.mes--; if (PD.mes < 0){ PD.mes = 11; PD.ano--; } planCarregar(); });
