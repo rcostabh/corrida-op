@@ -162,16 +162,16 @@ table.tab tr.tot td{font-weight:700;border-top:2px solid var(--line);background:
 .pd-mes .mp-btn{width:auto;min-width:130px;padding:0 10px;font:700 14px var(--font-body);display:inline-flex;align-items:center;justify-content:center;gap:6px}.pd-mes .mp-btn:hover{background:var(--surface)}.pd-mes .mp-btn::after{content:'▾';font-size:11px;color:var(--muted)}.pd-mes .mp-btn span{display:inline-block}.pd-mes .mp-btn span::first-letter{text-transform:uppercase}
 .mp-pop{position:absolute;z-index:1000;width:244px;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:10px}.mp-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.mp-top b{font:700 15px var(--font-body)}.mp-pop button{border:0;background:transparent;color:var(--ink);font:600 14px var(--font-body);border-radius:10px;cursor:pointer}.mp-top button{width:34px;height:34px;font-size:16px}.mp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.mp-grid button{height:38px;background:var(--surface-2)}.mp-pop button:hover:not(:disabled){background:var(--accent-soft)}.mp-grid button.on{background:var(--accent);color:var(--on-accent)}.mp-pop button:disabled{opacity:.35;cursor:default}
 .pd-mes b{min-width:130px;text-align:center;font-size:14px;display:inline-block}.pd-mes b::first-letter,.pd-bar .sub::first-letter{text-transform:uppercase}.pd-bar select{width:auto;min-width:200px}
-.pd-hero{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}.pd-hv{flex:1 1 220px;min-width:0;background:var(--surface);border-radius:18px;padding:14px 18px;box-shadow:var(--shadow);display:grid;gap:2px;border-left:6px solid var(--accent)}.pd-hv span{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.pd-hv b{font-size:42px;line-height:1.05;letter-spacing:-.03em;font-variant-numeric:tabular-nums}.pd-hv small{font-size:12px;color:var(--muted)}.pd-hv.cli{flex:0 1 260px;border-left-color:var(--muted)}.pd-hv.cli b{font-size:30px;color:var(--muted)}
-.pd-placar{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
-.pd-pc{background:var(--surface);border-radius:18px;padding:14px 16px;box-shadow:var(--shadow);display:grid;gap:6px;min-width:0}
-.pd-pc .k{font-size:12px;font-weight:600;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
-.pd-pc .v{font-size:30px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
-.pd-pc .v small{font-size:14px;font-weight:600;color:var(--muted);margin-left:4px}
-.pd-pc .b{position:relative;height:8px;border-radius:4px;background:var(--surface-2)}
+.pd-hero{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}.pd-hv{flex:1 1 140px;min-width:0;background:var(--surface);border-radius:10px;padding:6px 10px;box-shadow:var(--shadow);display:grid;gap:1px;border-left:4px solid var(--accent)}.pd-hv span{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.pd-hv b{font-size:21px;line-height:1.05;letter-spacing:-.03em;font-variant-numeric:tabular-nums}.pd-hv small{font-size:9.5px;color:var(--muted)}.pd-hv.cli{flex:0 1 170px;border-left-color:#14b8a6}.pd-hv.cli b{font-size:16px;color:var(--muted)}
+.pd-placar{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px}
+.pd-pc{background:var(--surface);border-radius:10px;padding:7px 9px;box-shadow:var(--shadow);display:grid;gap:3px;min-width:0}
+.pd-pc .k{font-size:9.5px;font-weight:600;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.pd-pc .v{font-size:15px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
+.pd-pc .v small{font-size:8px;font-weight:600;color:var(--muted);margin-left:4px}
+.pd-pc .b{position:relative;height:4px;border-radius:2px;background:var(--surface-2)}
 .pd-pc .b i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent-2),var(--accent))}
-.pd-pc .b u{position:absolute;top:-4px;width:2px;height:16px;background:var(--ink);border-radius:1px}
-.pd-pc .f{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pd-pc .b u{position:absolute;top:-2px;width:2px;height:8px;background:var(--ink);border-radius:1px}
+.pd-pc .f{font-size:9px;color:var(--muted);font-variant-numeric:tabular-nums}
 .pl{display:inline-block;font-weight:700;font-size:12px;padding:2px 9px;border-radius:999px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .pl.ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
 .pl.no{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red)}
@@ -179,21 +179,26 @@ table.tab tr.tot td{font-weight:700;border-top:2px solid var(--line);background:
 .pd-scroll{overflow:auto;max-width:100%;border-radius:20px;max-height:76vh}
 table.pd{border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums;table-layout:fixed}
 table.pd th,table.pd td{padding:0;border-bottom:1px solid var(--line);text-align:center;white-space:nowrap}
-table.pd thead th{position:sticky;top:0;z-index:3;background:var(--surface);font-size:12px;font-weight:700;height:46px}
-table.pd thead th small{display:block;font-weight:600;color:var(--muted);font-size:10.5px}
+table.pd thead th{position:sticky;top:0;z-index:3;background:var(--surface);font-size:10.5px;font-weight:700;height:38px}
+table.pd thead th small{display:block;font-weight:600;color:var(--muted);font-size:9px}
 table.pd .dom{background:var(--surface-2)}
-table.pd td.c{height:40px;font-size:13px;font-weight:600}
+table.pd td.c{height:30px;font-size:11px;font-weight:600}
 table.pd td.c.z{color:var(--muted);opacity:.55;font-weight:500}
 table.pd td.c.hj,table.pd thead th.hj{box-shadow:inset 0 -2px 0 var(--accent)}
 table.pd td.c.dv{background:color-mix(in srgb,var(--red) 14%,transparent);color:var(--red);cursor:help}
-table.pd .nm{position:sticky;left:0;z-index:2;background:var(--surface);text-align:left;padding:0 12px;font-weight:600;border-right:1px solid var(--line);overflow:hidden;text-overflow:ellipsis}
+table.pd .nm{position:sticky;left:0;z-index:2;background:var(--surface);text-align:left;padding:0 8px;font-size:11.5px;font-weight:600;border-right:1px solid var(--line);overflow:hidden;text-overflow:ellipsis}
 table.pd thead th.nm{z-index:5}
 table.pd .rt{position:sticky;background:var(--surface);z-index:2;font-weight:700}
 table.pd thead th.rt{z-index:5}
 table.pd .r1{right:186px;border-left:1px solid var(--line)} table.pd .r2{right:132px} table.pd .r3{right:62px} table.pd .r4{right:0;color:var(--muted);font-weight:600}
-table.pd tr.gr td{background:var(--surface-2)!important;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;height:32px}
+table.pd tr.gr td{background:var(--surface-2)!important;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;height:26px}
 table.pd tr.in td.nm{color:var(--muted)}
-table.pd tr.tot td{font-weight:700}
+table.pd tr.tot td{font-weight:700;font-size:11px}
+table.pd .rt{font-size:11px}
+/* alça para arrastar a largura da coluna Pessoa */
+table.pd th.nm{position:sticky}.pd-rz{position:absolute;top:0;right:-3px;width:8px;height:100%;cursor:col-resize;z-index:6;touch-action:none}.pd-rz::after{content:"";position:absolute;left:3px;top:25%;height:50%;width:2px;border-radius:1px;background:var(--line)}.pd-rz:hover::after,.pd-rz.on::after{background:var(--accent)}
+/* área clínico (embaixo): fundo próprio */
+table.pd tr.cl td{background:color-mix(in srgb,#14b8a6 13%,var(--surface))!important}table.pd tr.cl.gr td{background:color-mix(in srgb,#14b8a6 24%,var(--surface))!important;color:color-mix(in srgb,#0f766e 80%,var(--ink))}table.pd tr.cl td.dv{background:color-mix(in srgb,var(--red) 18%,var(--surface))!important}
 .pd-tag{display:inline-block;font-size:10.5px;font-weight:700;border-radius:6px;padding:1px 6px;margin-right:6px;background:var(--surface-2);color:var(--muted)}
 .pd-tag.a{background:var(--accent-soft);color:var(--accent)}
 .pd-leg{display:flex;flex-wrap:wrap;gap:6px 18px;color:var(--muted);font-size:12.5px;padding:12px 16px;align-items:center}
@@ -672,6 +677,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.41.1', '2026-11-18', 'Planilha do mês: fontes menores, cards do topo com metade do tamanho, coluna Pessoa com largura ajustável (arraste a borda; duplo clique volta ao padrão) e fundo próprio na área Clínico.'],
     ['1.41.0', '2026-11-18', 'Planilha do mês: número grande de Vendas de início (ortodontia) no topo e o Clínico à parte. Divulgadores com parte clínica aparecem uma vez em Início e outra em Clínico, cada grupo com seu total; o clínico não entra mais na conta do início. Os avisos de conferência viram uma linha só quando está tudo certo.'],
     ['1.40.2', '2026-11-18', 'Listas de clínicas mostram só as ativas; as inativas aparecem quando você escolhe ver (Ver clínicas inativas). O menu de clínicas do relatório Por período fecha ao clicar fora ou apertar Esc.'],
     ['1.40.1', '2026-11-18', 'Relatório Por período: o gráfico fica sempre em colunas estilo holograma, uma coluna por clínica (sem somar), e os cards das clínicas ficam bem pequenos.'],
@@ -2104,7 +2110,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
         + Object.keys(exd).map(d => '<li><b>'+pd2(d)+'/'+pd2(PD.mes + 1)+'</b>: '+esc(exd[d])+'</li>').join('')+'</ul></details>'
       : '<span class="pl ok">Totais iguais</span> Divulgadores e promotores/teles somam o mesmo em todos os dias lançados.')+'</div>';
 
-    let h = '<table class="pd" style="width:'+(168 + n * 50 + 240)+'px"><colgroup><col style="width:168px">'+new Array(n + 1).join('<col style="width:50px">')+'<col style="width:54px"><col style="width:54px"><col style="width:70px"><col style="width:62px"></colgroup><thead><tr><th class="nm">Pessoa</th>';
+    if (!PD.nmW){ try { PD.nmW = Number(localStorage.getItem('pd_nmw')) || 0; } catch (e) {} } const nmW = Math.min(420, Math.max(110, PD.nmW || 168));
+    let h = '<table class="pd" id="pd-tab" style="width:'+(nmW + n * 50 + 240)+'px"><colgroup><col style="width:'+nmW+'px">'+new Array(n + 1).join('<col style="width:50px">')+'<col style="width:54px"><col style="width:54px"><col style="width:70px"><col style="width:62px"></colgroup><thead><tr><th class="nm">Pessoa<span class="pd-rz" id="pd-rz" role="separator" aria-label="Arrastar para mudar a largura da coluna Pessoa" title="Arraste para mudar a largura"></span></th>';
     for (let d = 1; d <= n; d++){ const w = new Date(PD.ano, PD.mes, d).getDay(); h += '<th class="'+(w === 0 ? 'dom' : '')+(ehHj(d) ? ' hj' : '')+'"'+(exd[d] ? ' title="'+esc(exd[d])+'"' : '')+'>'+d+(exd[d] ? '<b class="exm">!</b>' : '')+'<small>'+SEM[w]+'</small></th>'; }
     h += '<th class="rt r1">Vis.</th><th class="rt r2">Ven.</th><th class="rt r3">%</th><th class="rt r4">Meta</th></tr></thead><tbody>';
     const grupo = (tit, arr, meta) => { const t = pdSoma(ids(arr), M, n), pc = pdPct(t.v, t.s);
@@ -2128,11 +2135,11 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     ordemGrupos().forEach(cg => { const a = pes.filter(p => p.cargo === cg); if (!a.length) return; h += grupo(PD_ROT[cg] || cg, a, metaDe(cg)); vis(a).forEach(p => { h += linha(p, metaDe(cg), true); }); });
     if (teste.length){ h += linha({ id: 'teste', nome: 'Promotores de teste ('+teste.length+')', ativo: true }, 30, true);
       if (PD.testeMes) vis(teste).forEach(p => { h += linha(Object.assign({}, p, { sub: true }), 30, true); }); }
-    if (divC.length){ h += grupo('Divulgadores · clínico', divC, null); vis(divC).forEach(p => { h += linha(p, null, false); }); }
+    if (divC.length){ let hc = grupo('Divulgadores · clínico', divC, null); vis(divC).forEach(p => { hc += linha(p, null, false); }); h += hc.replace(/<tr class="/g, '<tr class="cl '); }
     const tot = (rot, arr) => { const t = pdSoma(ids(arr), M, n); let tds = '';
       for (let d = 1; d <= n; d++){ let v = 0, s = 0; arr.forEach(p => { const c = (M[p.id] || {})[d]; if (c){ v += c[0]; s += c[1]; } }); tds += '<td class="c'+(lanc[d] ? '' : ' z')+(new Date(PD.ano, PD.mes, d).getDay() === 0 ? ' dom' : '')+'">'+(lanc[d] ? v+' / '+s : '·')+'</td>'; }
       return '<tr class="tot"><td class="nm">'+rot+'</td>'+tds+'<td class="rt r1">'+t.v+'</td><td class="rt r2">'+t.s+'</td><td class="rt r3">'+pf0(pdPct(t.v, t.s))+'</td><td class="rt r4"></td></tr>'; };
-    h += tot('Total divulgadores (início)', div)+tot('Total promotores e teles', ou)+(divC.length ? tot('Total clínico', divC) : '');
+    h += tot('Total divulgadores (início)', div)+tot('Total promotores e teles', ou)+(divC.length ? tot('Total clínico', divC).replace('<tr class="', '<tr class="cl ') : '');
     h += '<tr class="tot"><td class="nm">Meta do divulgador no dia</td>';
     for (let d = 1; d <= n; d++){ const m = pdMetaDia(pes, M, d); h += '<td class="c'+(m == null ? ' z' : '')+(new Date(PD.ano, PD.mes, d).getDay() === 0 ? ' dom' : '')+'">'+(m == null ? '·' : pf0(m))+'</td>'; }
     h += '<td class="rt r1"></td><td class="rt r2"></td><td class="rt r3"></td><td class="rt r4">'+pf0(mdiv)+'</td></tr></tbody></table>';
@@ -2146,6 +2153,14 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     $('#pd-prox').addEventListener('click', () => { PD.mes++; if (PD.mes > 11){ PD.mes = 0; PD.ano++; } planCarregar(); });
     $('#pd-mesbtn').addEventListener('click', e => mesPicker(e.currentTarget, PD.ano, PD.mes, (a, m) => { PD.ano = a; PD.mes = m; planCarregar(); }));
     $('#pd-ver-in').addEventListener('change', e => { PD.inativos = e.target.checked; planDesenhar(); });
+    const rz = $('#pd-rz'), tb = $('#pd-tab');
+    if (rz && tb){
+      const col = tb.querySelector('colgroup col'), n0 = n, aplica = w => { w = Math.min(420, Math.max(110, Math.round(w))); col.style.width = w+'px'; tb.style.width = (w + n0 * 50 + 240)+'px'; PD.nmW = w; return w; };
+      rz.addEventListener('pointerdown', e => { e.preventDefault(); rz.setPointerCapture(e.pointerId); rz.classList.add('on'); const x0 = e.clientX, w0 = col.getBoundingClientRect().width;
+        const mv = ev => aplica(w0 + ev.clientX - x0), up = () => { rz.classList.remove('on'); rz.removeEventListener('pointermove', mv); rz.removeEventListener('pointerup', up); rz.removeEventListener('pointercancel', up); try { localStorage.setItem('pd_nmw', String(PD.nmW)); } catch (er) {} };
+        rz.addEventListener('pointermove', mv); rz.addEventListener('pointerup', up); rz.addEventListener('pointercancel', up); });
+      rz.addEventListener('dblclick', () => { aplica(168); try { localStorage.removeItem('pd_nmw'); } catch (er) {} });
+    }
     const ex = $('[data-teste=mes]'); if (ex) ex.addEventListener('click', () => { PD.testeMes = !PD.testeMes; planDesenhar(); });
   }
 
