@@ -1,0 +1,6 @@
+-- Aplicado no Supabase em 2026-11-19 (migration pontuacao_divulgador).
+-- Regra própria para divulgador/gerente por tipo de lançamento: a cada div_passo lançados
+-- (soma da campanha inteira) ganha div_pontos casas. Vazio = mesma regra dos demais.
+-- Divulgador/gerente = papel 'gerente' ou cargo/cargo extra começando por 'Divulgador'.
+-- v_pontos_promotor e v_pontos_clinica passaram a usar essa regra.
+-- Campanha 1: Venda de início para divulgador/gerente = a cada 2, 1 casa.
