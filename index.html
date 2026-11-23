@@ -677,6 +677,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.43.0', '2026-11-23', 'Agenda das teles: novo resultado Fechou com NUV, ao lado de Fechado. Conta como venda normal e marca também a venda do parceiro NUV. Os totais mostram Vendas com NUV, a legenda tem Com NUV (clique para ver os nomes) e o Excel traz a coluna. Num fechado dá para incluir ou tirar o NUV depois.'],
     ['1.41.1', '2026-11-18', 'Planilha do mês: fontes menores, cards do topo com metade do tamanho, coluna Pessoa com largura ajustável (arraste a borda; duplo clique volta ao padrão) e fundo próprio na área Clínico.'],
     ['1.41.0', '2026-11-18', 'Planilha do mês: número grande de Vendas de início (ortodontia) no topo e o Clínico à parte. Divulgadores com parte clínica aparecem uma vez em Início e outra em Clínico, cada grupo com seu total; o clínico não entra mais na conta do início. Os avisos de conferência viram uma linha só quando está tudo certo.'],
     ['1.40.2', '2026-11-18', 'Listas de clínicas mostram só as ativas; as inativas aparecem quando você escolhe ver (Ver clínicas inativas). O menu de clínicas do relatório Por período fecha ao clicar fora ou apertar Esc.'],
@@ -2574,12 +2575,13 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     AG.proj = { key, ven, dec: pj.dec, tot: pj.tot, proj: pj.proj == null ? 0 : pj.proj };
     $('#ag-proj').outerHTML = agProjTile(AG.proj);
   }
-  const agTotais = l => ({ n: l.length, conf: l.filter(agConf).length, aten: l.filter(agVis).length, fech: l.filter(g => g.status === 'fechado').length });
-  const agTxtTot = t => t.n+' agendamento'+(t.n === 1 ? '' : 's')+', '+t.conf+' confirmado'+(t.conf === 1 ? '' : 's')+', '+t.aten+' atendido'+(t.aten === 1 ? '' : 's')+', '+t.fech+' fechamento'+(t.fech === 1 ? '' : 's');
+  const agTotais = l => ({ n: l.length, conf: l.filter(agConf).length, aten: l.filter(agVis).length, fech: l.filter(g => g.status === 'fechado').length, nuv: l.filter(agNuv).length });
+  const agTxtTot = t => t.n+' agendamento'+(t.n === 1 ? '' : 's')+', '+t.conf+' confirmado'+(t.conf === 1 ? '' : 's')+', '+t.aten+' atendido'+(t.aten === 1 ? '' : 's')+', '+t.fech+' fechamento'+(t.fech === 1 ? '' : 's')+(t.nuv ? ' ('+t.nuv+' com NUV)' : '');
   const AG_CATS = [['todos', 'Agendamentos', 'ag0', '', 'Todos os agendamentos do período', g => true],
     ['conf', 'Confirmaram', 'ok', '✓ ', 'Confirmaram a visita (inclui quem já tem resultado)', g => agConf(g)],
     ['aten', 'Atendidos', 'at', '● ', 'Vieram à clínica (atendidos, fechados e não fechados). Retorno não conta como nova visita', agVis],
-    ['fech', 'Fecharam', 'fe', '★ ', 'Dos atendidos, fecharam a venda', g => g.status === 'fechado'],
+    ['fech', 'Fecharam', 'fe', '★ ', 'Dos atendidos, fecharam a venda (com ou sem NUV)', g => g.status === 'fechado'],
+    ['nuv', 'Com NUV', 'fe', '◆ ', 'Dos fechamentos, os que também venderam o parceiro NUV', g => agNuv(g)],
     ['nfech', 'Não fecharam', 'nf', '✕ ', 'Dos atendidos, não fecharam (com motivo)', g => g.status === 'nao_fechou' && !agNC(g) && g.tipo !== 'retorno'],
     ['nc', 'Não compareceram', 'nc', '⊘ ', 'Agendados que não vieram à clínica (inclui o automático, 1 hora depois do horário)', g => agNC(g) || g.status === 'faltou'],
     ['na', 'Não aptos', 'na', '⊗ ', 'Pacientes que vieram mas não estão aptos ao tratamento; não entram nas visitas nem nas taxas', g => g.status === 'nao_apto']];
@@ -2596,6 +2598,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     return '<div class="ag-cl">'+cs.map(c => '<span style="--c:'+esc(c.cor || '#5b9bff')+'"><b>'+esc(c.sigla)+'</b> <em>'+esc(agTxtTot(agTotais(its.filter(g => g.clinica_id === c.id))))+'</em></span>').join('')+'</div>';
   }
   const agChip = st => '<span class="ag-st '+agStCls(st)+'">'+(AG_ST[st] || 'Agendado')+'</span>';
+  const agNuv = g => g.status === 'fechado' && !!g.nuv;
+  const agChipG = g => agChip(agKey(g))+(agNuv(g) ? ' <span class="ag-st fe">+ NUV</span>' : '');
   const hhm = h => h ? String(h).slice(0, 5) : '';
   const nlin = (a, b) => b.length ? a+' de '+b : a;
   async function agendaCarregar(){
@@ -2669,6 +2673,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       + tile('Agendamentos', nAg, r.data.filter(g => g.status !== 'agendado').length+' confirmados ou com resultado')
       + tile('Visitas', vis, pct(vis, nAg)+' dos agendamentos')
       + tile('Vendas', ven, pct(ven, vis)+' das visitas')
+      + tile('Vendas com NUV', tt.nuv, pct(tt.nuv, ven)+' das vendas')
       + pjh()
       + tile('Agendamento → venda', pct(ven, nAg), 'vendas ÷ agendamentos')
       + '</div><p class="sub ag-nota">Visitas = pacientes atendidos (vieram à clínica); vendas = agendamentos fechados. Contam os agendamentos do período e dos filtros. Projeção = vendas do mês ÷ dias úteis já trabalhados × dias úteis do mês (seg–sáb, sem feriados nacionais). Muda só com a tele e a clínica escolhidas, nunca com as datas.</p></div>'; agMin('t', !!AG.minT); agProjCarregar();
@@ -2745,7 +2750,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   function agHtmlDia(its){
     const cols = AG.clinicas.filter(c => AG.clin ? String(c.id) === String(AG.clin) : (c.ativa || its.some(g => g.clinica_id === c.id))), nomeT = agNomeT();
     if (!cols.length) return '<div class="empty">Nenhuma clínica para mostrar.</div>';
-    let n = 0; const card = g => '<button type="button" class="ag-c '+agStCls(agKey(g))+'" data-g="'+g.id+'" style="--c:'+esc(agCor(g.clinica_id))+';--i:'+(n++)+'"><b>'+agIco(agKey(g))+(hhm(g.hora) ? hhm(g.hora)+' · ' : '')+esc(g.paciente)+'</b><small>'+esc(nomeT[g.tele_id] || 'Tele')+(g.status !== 'agendado' ? ' · '+AG_ST[agKey(g)].toLowerCase() : '')+esc(agTag(g))+'</small></button>';
+    let n = 0; const card = g => '<button type="button" class="ag-c '+agStCls(agKey(g))+'" data-g="'+g.id+'" style="--c:'+esc(agCor(g.clinica_id))+';--i:'+(n++)+'"><b>'+agIco(agKey(g))+(hhm(g.hora) ? hhm(g.hora)+' · ' : '')+esc(g.paciente)+'</b><small>'+esc(nomeT[g.tele_id] || 'Tele')+(g.status !== 'agendado' ? ' · '+AG_ST[agKey(g)].toLowerCase()+(agNuv(g) ? ' + NUV' : '') : '')+esc(agTag(g))+'</small></button>';
     const semHora = its.filter(g => !g.hora), linhas = (semHora.length ? [['Sem horário', semHora]] : []).concat(agHoras(its, AG.dia).map(h => [h, its.filter(g => g.hora && agHorario(g.hora) === h)]));
     return '<div class="ag-gw"><div class="ag-g" style="grid-template-columns:52px repeat('+cols.length+', minmax(calc(118px * var(--z,1)), 1fr))"><div class="ag-h"></div>'
       + cols.map(c => '<div class="ag-h" style="--c:'+esc(c.cor || '#5b9bff')+'"><b>'+esc(c.sigla)+'</b><small>'+esc(c.nome)+'</small><span class="ag-ht">'+esc(agTxtTot(agTotais(its.filter(g => g.clinica_id === c.id))))+'</span></div>').join('')
@@ -2817,7 +2822,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     alvo.innerHTML = '<div class="card ag-sm"><h2>'+(ct ? esc(ct[1])+' no período' : 'Agendamentos do período')+' <span class="chip" style="vertical-align:middle">'+lst.length+(lst.length !== base.length ? ' de '+base.length : '')+'</span> <button type="button" class="btn ghost sm" id="ag-xls" style="vertical-align:middle;margin-left:6px" title="Baixar planilha de Excel com os totais e os nomes">⬇ Exportar Excel</button></h2>'
       + agLegenda()
       + (lst.length ? '<div class="ag-gt"><table class="ag-g"><thead><tr>'+th('paciente', 'Paciente')+th('clinica', 'Clínica')+th('tel', 'Telefone')+th('data', 'Data e hora')+th('tele', 'Tele')+th('status', 'Status')+th('motivo', 'Motivo')+'<th style="cursor:default"></th></tr>'+filt+'</thead><tbody>'
-        + lst.slice(0, 500).map(g => '<tr><td><b>'+esc(g.paciente)+'</b>'+(agTag(g) ? ' <small>'+esc(agTag(g))+'</small>' : '')+'</td><td>'+esc(sig[g.clinica_id] || '')+'</td><td>'+esc(fmtTel(g.telefone))+'</td><td>'+dBR(g.data_agendamento)+(g.hora ? ' '+hhm(g.hora) : '')+'</td><td>'+esc(nomeT[g.tele_id] || 'Tele')+'</td><td>'+agChip(agKey(g))+'</td><td class="mot">'+(g.status === 'nao_fechou' && !agNC(g) ? esc(agMotivo(g)) : '')+'</td><td><button type="button" class="btn ghost" data-g="'+g.id+'">Abrir</button></td></tr>').join('')
+        + lst.slice(0, 500).map(g => '<tr><td><b>'+esc(g.paciente)+'</b>'+(agTag(g) ? ' <small>'+esc(agTag(g))+'</small>' : '')+'</td><td>'+esc(sig[g.clinica_id] || '')+'</td><td>'+esc(fmtTel(g.telefone))+'</td><td>'+dBR(g.data_agendamento)+(g.hora ? ' '+hhm(g.hora) : '')+'</td><td>'+esc(nomeT[g.tele_id] || 'Tele')+'</td><td>'+agChipG(g)+'</td><td class="mot">'+(g.status === 'nao_fechou' && !agNC(g) ? esc(agMotivo(g)) : '')+'</td><td><button type="button" class="btn ghost" data-g="'+g.id+'">Abrir</button></td></tr>').join('')
         + '</tbody></table></div>'
         : '<div class="empty">Nenhum agendamento neste filtro.'+(AG.gq || AG.gcl || AG.gmo || AG.gtl || AG.gst ? ' <button type="button" class="btn ghost sm" id="ag-glimpa2">Limpar filtros do grid</button>' : '')+'</div>')
       + '</div>';
@@ -2838,10 +2843,10 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const nomeT = Object.fromEntries(AG.teles.map(t => [t.id, t.nome])), c = AG.clinicas.find(x => x.id === g.clinica_id) || {};
     const quando = t => new Date(t).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
     const dh = o => o ? dBR(o.data)+(o.hora ? ' às '+hhm(o.hora) : '') : '';
-    const rot = l => l.acao === 'confirmar' ? (l.depois && l.depois.status === 'confirmado' ? 'Confirmado pelo paciente' : 'Confirmação desfeita') : l.acao === 'criar' ? 'Agendamento criado' : l.acao === 'alterar' ? 'Alterado de '+dh(l.antes)+' para '+dh(l.depois) : l.acao === 'conversa' ? 'Nova conversa incluída' : l.acao === 'retorno' ? 'Retorno marcado' : l.acao === 'acompanhante' ? 'Acompanhante adicionado' : l.acao === 'faltou' ? 'Não compareceu (automático, 1 hora após o horário)' : l.acao === 'resultado' ? (l.depois && l.depois.corrigido ? 'Status corrigido para '+(AG_ST[l.depois.rotulo] || l.depois.status)+(l.depois.rotulo === 'nao_fechou' ? ' — '+((l.depois.motivo || '')+(l.depois.obs ? ' ('+l.depois.obs+')' : '')) : '') : l.depois && l.depois.status === 'nao_fechou' ? 'Não fechou — '+((l.depois.motivo || '')+(l.depois.obs ? ' ('+l.depois.obs+')' : '')) : l.depois && l.depois.status === 'fechado' ? 'Fechou o contrato' : l.depois && l.depois.status === 'nao_apto' ? 'Marcado como Não apto' : l.depois && l.depois.status === 'atendido' ? (l.antes && l.antes.status === 'atendido' ? 'Atendido' : l.antes && (l.antes.status === 'fechado' || l.antes.status === 'nao_fechou') ? 'Resultado desfeito (voltou a atendido)' : 'Paciente atendido') : 'Resultado desfeito') : 'Agendamento excluído';
+    const rot = l => l.acao === 'confirmar' ? (l.depois && l.depois.status === 'confirmado' ? 'Confirmado pelo paciente' : 'Confirmação desfeita') : l.acao === 'criar' ? 'Agendamento criado' : l.acao === 'alterar' ? 'Alterado de '+dh(l.antes)+' para '+dh(l.depois) : l.acao === 'conversa' ? 'Nova conversa incluída' : l.acao === 'retorno' ? 'Retorno marcado' : l.acao === 'acompanhante' ? 'Acompanhante adicionado' : l.acao === 'faltou' ? 'Não compareceu (automático, 1 hora após o horário)' : l.acao === 'resultado' ? (l.depois && l.depois.corrigido ? 'Status corrigido para '+(AG_ST[l.depois.rotulo] || l.depois.status)+(l.depois.rotulo === 'nao_fechou' ? ' — '+((l.depois.motivo || '')+(l.depois.obs ? ' ('+l.depois.obs+')' : '')) : '') : l.depois && l.depois.status === 'nao_fechou' ? 'Não fechou — '+((l.depois.motivo || '')+(l.depois.obs ? ' ('+l.depois.obs+')' : '')) : l.depois && l.depois.status === 'fechado' ? (l.depois.nuv ? 'Fechou o contrato com NUV' : 'Fechou o contrato') : l.depois && l.depois.status === 'nao_apto' ? 'Marcado como Não apto' : l.depois && l.depois.status === 'atendido' ? (l.antes && l.antes.status === 'atendido' ? 'Atendido' : l.antes && (l.antes.status === 'fechado' || l.antes.status === 'nao_fechou') ? 'Resultado desfeito (voltou a atendido)' : 'Paciente atendido') : 'Resultado desfeito') : 'Agendamento excluído';
     const m = document.createElement('div'); m.className = 'ag-modal'; m.setAttribute('role', 'dialog');
     m.innerHTML = '<div class="cx"><div class="line" style="justify-content:space-between"><b style="font-size:17px">'+esc(g.paciente)+esc(agTag(g))+'</b><button type="button" class="btn ghost" data-x>Fechar</button></div>'
-      + '<p class="meta">'+esc(fmtTel(g.telefone))+' · '+esc(c.sigla || '')+' · '+dBR(g.data_agendamento)+(g.hora ? ' às '+hhm(g.hora) : '')+' · lançado por '+esc(nomeT[g.tele_id] || 'Tele')+' · '+agChip(agKey(g))+'</p>'
+      + '<p class="meta">'+esc(fmtTel(g.telefone))+' · '+esc(c.sigla || '')+' · '+dBR(g.data_agendamento)+(g.hora ? ' às '+hhm(g.hora) : '')+' · lançado por '+esc(nomeT[g.tele_id] || 'Tele')+' · '+agChipG(g)+'</p>'
       + (g.status === 'nao_fechou' ? '<p class="meta"><b>Motivo:</b> '+esc(agMotivo(g))+'</p>' : '')
       + agResultadoHtml(g) + agCorrigirHtml(g)
       + (urls.filter(Boolean).length ? urls.filter(Boolean).map(u => '<img src="'+esc(u)+'" alt="Print da conversa">').join('') : '<div class="empty">Sem prints.</div>')
@@ -2975,7 +2980,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       const sel = L.filter(g => o.cats.some(k => (AG_CATS.find(c => c[0] === k) || [])[5](g)));
       const cab = ['Clínica', 'Tele', 'Paciente', 'Telefone', 'Data', 'Hora', 'Status', 'Motivo'];
       const ord = (a, b) => cmp(a.data_agendamento+' '+(a.hora || ''), b.data_agendamento+' '+(b.hora || '')) || (a.id - b.id);
-      const linha = g => [sig[g.clinica_id] || '', nomeT[g.tele_id] || 'Tele', g.paciente || '', fmtTel(g.telefone), dBR(g.data_agendamento), hhm(g.hora), AG_ST[agKey(g)] || '', g.status === 'nao_fechou' ? agMotivo(g) : ''];
+      const linha = g => [sig[g.clinica_id] || '', nomeT[g.tele_id] || 'Tele', g.paciente || '', fmtTel(g.telefone), dBR(g.data_agendamento), hhm(g.hora), (AG_ST[agKey(g)] || '')+(agNuv(g) ? ' + NUV' : ''), g.status === 'nao_fechou' ? agMotivo(g) : ''];
       const grupos = {}; sel.forEach(g => { (grupos[o.sep === 'nada' ? 'Pacientes' : gDe(g)] = grupos[o.sep === 'nada' ? 'Pacientes' : gDe(g)] || []).push(g); });
       const ks = Object.keys(grupos).sort(cmp); if (!ks.length) ks.push('Pacientes');
       ks.forEach(k => { const rows = [cab].concat((grupos[k] || []).slice().sort(ord).map(linha)), ws = X.utils.aoa_to_sheet(rows); colW(ws, [8, 22, 30, 16, 11, 7, 16, 40]);
@@ -2988,11 +2993,12 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   function agResultadoHtml(g){
     const des = '<button type="button" class="btn ghost" data-desfaz>Desfazer</button>';
     if (g.status === 'nao_apto') return '<div class="ag-rs"><p class="meta"><b>Não apto.</b> Para mudar, desfaça o resultado.</p><div class="btns">'+des+'</div><div class="err" data-err role="alert"></div></div>';
-    if (g.status === 'fechado' || g.status === 'nao_fechou') return '<div class="ag-rs"><div class="btns">'+des+'</div><div class="err" data-err role="alert"></div></div>';
+    if (g.status === 'fechado') return '<div class="ag-rs">'+(agNuv(g) ? '<p class="meta"><b>Fechado com NUV.</b></p>' : '')+'<div class="btns">'+(agNuv(g) ? '<button type="button" class="btn ghost" data-fechou>Tirar NUV (só fechou)</button>' : '<button type="button" class="btn ghost" data-fnuv>Também vendeu NUV</button>')+des+'</div><div class="err" data-err role="alert"></div></div>';
+    if (g.status === 'nao_fechou') return '<div class="ag-rs"><div class="btns">'+des+'</div><div class="err" data-err role="alert"></div></div>';
     if (g.data_agendamento > hoje()) return '<div class="ag-rs"><p class="meta">O atendimento poderá ser marcado a partir de '+dBR(g.data_agendamento)+'.</p></div>';
     const nf = '<div class="form" data-nf hidden><label class="field">Motivo<select data-mot><option value="">Escolha...</option>'+AG.motivos.filter(x => x.nome !== 'Paciente não compareceu').map(x => '<option value="'+x.id+'" data-o="'+(x.exige_obs ? 1 : 0)+'">'+esc(x.nome)+'</option>').join('')+'</select></label>'
       + '<label class="field">Observação <small data-oh>(opcional)</small><textarea data-obs rows="2" maxlength="300"></textarea></label><button type="button" class="btn" data-salvar-nf>Salvar</button></div>';
-    if (g.status === 'atendido') return '<div class="ag-rs"><b>Atendido. E o contrato?</b><div class="btns"><button type="button" class="btn" data-fechou>Fechado</button><button type="button" class="btn ghost" data-nao>Não fechou</button><button type="button" class="btn ghost" data-na>Não apto</button>'+des.replace('Desfazer', 'Desfazer atendimento')+'</div>'+nf+'<div class="err" data-err role="alert"></div></div>';
+    if (g.status === 'atendido') return '<div class="ag-rs"><b>Atendido. E o contrato?</b><div class="btns"><button type="button" class="btn" data-fechou>Fechado</button><button type="button" class="btn" data-fnuv>Fechou com NUV</button><button type="button" class="btn ghost" data-nao>Não fechou</button><button type="button" class="btn ghost" data-na>Não apto</button>'+des.replace('Desfazer', 'Desfazer atendimento')+'</div>'+nf+'<div class="err" data-err role="alert"></div></div>';
     return '<div class="ag-rs"><b>Atendimento</b>'+(g.status === 'faltou' ? '<p class="meta">Marcado automaticamente como Não compareceu, 1 hora depois do horário. Se o paciente chegou, marque aqui.</p>' : '')+'<div class="btns"><button type="button" class="btn" data-ate>Atendido</button><button type="button" class="btn ghost" data-na>Não apto</button>'+(g.status === 'faltou' ? '' : '<button type="button" class="btn ghost" data-nc>Não compareceu</button>')+'</div><div class="err" data-err role="alert"></div></div>';
   }
   function agResultadoLiga(m, g){
@@ -3004,7 +3010,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       m.remove(); agendaDados();
     };
     const on = (q, fn) => { const e = m.querySelector(q); if (e) e.addEventListener('click', fn); };
-    on('[data-ate]', () => envia('atendido')); on('[data-na]', () => envia('nao_apto')); on('[data-fechou]', () => envia('fechado')); on('[data-desfaz]', () => envia('desfazer'));
+    on('[data-ate]', () => envia('atendido')); on('[data-na]', () => envia('nao_apto')); on('[data-fechou]', () => envia('fechado')); on('[data-fnuv]', () => envia('fechado_nuv')); on('[data-desfaz]', () => envia('desfazer'));
     on('[data-nc]', () => { const id = agMotNC(); if (!id) return erro('Motivo "Paciente não compareceu" não encontrado.'); envia('nao_fechou', id); });
     on('[data-nao]', () => { const bx = m.querySelector('[data-nf]'); bx.hidden = !bx.hidden; });
     const sel = m.querySelector('[data-mot]'); if (sel) sel.addEventListener('change', () => { const o = sel.selectedOptions[0]; const h = m.querySelector('[data-oh]'); if (h) h.textContent = o && o.dataset.o === '1' ? '(obrigatória)' : '(opcional)'; });
