@@ -1,0 +1,3 @@
+-- Fechou com NUV (migration agendamento_fechado_nuv)
+-- agendamentos.nuv boolean default false; gatilho zera nuv quando status <> 'fechado';
+-- definir_resultado aceita 'fechado_nuv' (status fechado + nuv true) e permite trocar fechado <-> fechado com NUV.
