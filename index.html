@@ -86,7 +86,9 @@ input[type=checkbox],input[type=radio]{width:20px;height:20px;min-height:0;paddi
 .g2{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
 .picks{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
 .rrow{display:grid;gap:8px 10px;grid-template-columns:minmax(170px,1.3fr) minmax(150px,1fr) 100px 100px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
-.rrow.off .r-modo,.rrow.off .r-passo,.rrow.off .r-pts{opacity:.45}
+.rrow.off .r-modo,.rrow.off .r-passo,.rrow.off .r-pts,.rrow.off .r-div{opacity:.45}
+.r-div{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-size:13px;color:var(--muted)}
+.r-div input{width:80px}
 @media (max-width:700px){.rrow{grid-template-columns:1fr 1fr}.rrow .chk,.rrow .r-modo{grid-column:1/-1}}
 .prow{display:grid;gap:8px;grid-template-columns:100px minmax(0,1fr) 150px auto;align-items:center}
 @media (max-width:700px){.prow{grid-template-columns:1fr 1fr}.prow .p-premio{grid-column:1/-1}}
@@ -677,6 +679,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.42.0', '2026-11-19', 'Corrida: cada tipo de lançamento pode ter uma regra própria para divulgadores e gerentes (ex.: venda de início vale meia casa — a cada 2 vendas, 1 casa). A conta soma a campanha inteira, então o que sobra num dia fica guardado para os próximos, como já acontece com as visitas.'],
     ['1.41.1', '2026-11-18', 'Planilha do mês: fontes menores, cards do topo com metade do tamanho, coluna Pessoa com largura ajustável (arraste a borda; duplo clique volta ao padrão) e fundo próprio na área Clínico.'],
     ['1.41.0', '2026-11-18', 'Planilha do mês: número grande de Vendas de início (ortodontia) no topo e o Clínico à parte. Divulgadores com parte clínica aparecem uma vez em Início e outra em Clínico, cada grupo com seu total; o clínico não entra mais na conta do início. Os avisos de conferência viram uma linha só quando está tudo certo.'],
     ['1.40.2', '2026-11-18', 'Listas de clínicas mostram só as ativas; as inativas aparecem quando você escolhe ver (Ver clínicas inativas). O menu de clínicas do relatório Por período fecha ao clicar fora ou apertar Esc.'],
@@ -1209,7 +1212,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       voltas: c ? c.voltas_max !== 1 : true, limite: c && c.voltas_max > 1 ? c.voltas_max : '', confirma: false,
       clinicas: new Set(C.cc.filter(x => x.campanha_id === id).map(x => x.clinica_id)),
       promotores: new Set(C.cp.filter(x => x.campanha_id === id).map(x => x.usuario_id)),
-      regras: Object.fromEntries(C.rg.filter(r => r.campanha_id === id).map(r => [r.tipo_id, { modo: r.modo, passo: Number(r.passo), pontos: r.pontos }])),
+      regras: Object.fromEntries(C.rg.filter(r => r.campanha_id === id).map(r => [r.tipo_id, { modo: r.modo, passo: Number(r.passo), pontos: r.pontos, dpasso: r.div_passo == null ? '' : Number(r.div_passo), dpts: r.div_pontos == null ? '' : r.div_pontos }])),
       premios: C.cs.filter(x => x.campanha_id === id).map(x => ({ casa: x.casa, premio_id: x.premio_id, para: x.para })) };
   }
 
@@ -1222,7 +1225,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     ed.regras = {};
     $$('.rrow[data-tipo]').forEach(r => {
       if (!$('.r-on', r).checked) return;
-      ed.regras[r.dataset.tipo] = { modo: $('.r-modo', r).value, passo: $('.r-passo', r).value, pontos: $('.r-pts', r).value };
+      ed.regras[r.dataset.tipo] = { modo: $('.r-modo', r).value, passo: $('.r-passo', r).value, pontos: $('.r-pts', r).value, dpasso: $('.r-dpasso', r).value, dpts: $('.r-dpts', r).value };
     });
     ed.premios = $$('.prow').map(r => ({ casa: $('.p-casa', r).value, premio_id: Number($('.p-premio', r).value) || null, para: $('.p-para', r).value }));
   }
@@ -1251,7 +1254,8 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
           return '<div class="rrow'+(r?'':' off')+'" data-tipo="'+t.id+'"><label class="chk"><input class="r-on" type="checkbox"'+(r?' checked':'')+'><span>'+esc(t.nome)+'</span></label>'
           + '<select class="r-modo" aria-label="Como pontua">'+Object.keys(MODOS).filter(k => k !== 'valor' || t.usa_valor).map(k => '<option value="'+k+'"'+(k===m?' selected':'')+'>'+MODOS[k]+'</option>').join('')+'</select>'
           + '<input class="r-passo" type="number" min="0.01" step="0.01" inputmode="decimal" aria-label="N" placeholder="N"'+(m==='ocorrencia'?' disabled':'')+' value="'+(r && m !== 'ocorrencia' ? esc(r.passo) : '')+'">'
-          + '<input class="r-pts" type="number" min="0" step="1" inputmode="numeric" aria-label="Pontos" placeholder="pontos" value="'+(r ? esc(r.pontos) : '')+'"></div>'; }).join('')
+          + '<input class="r-pts" type="number" min="0" step="1" inputmode="numeric" aria-label="Pontos" placeholder="pontos" value="'+(r ? esc(r.pontos) : '')+'">'
+          + '<div class="r-div"><span>Divulgador e gerente: a cada</span><input class="r-dpasso" type="number" min="0.01" step="0.01" inputmode="decimal" aria-label="Divulgador e gerente: a cada N" placeholder="N" value="'+(r && r.dpasso != null ? esc(r.dpasso) : '')+'"><span>ganha</span><input class="r-dpts" type="number" min="0" step="1" inputmode="numeric" aria-label="Divulgador e gerente: casas" placeholder="casas" value="'+(r && r.dpts != null ? esc(r.dpts) : '')+'"><span>casa(s). Vazio = igual aos demais. Soma a campanha toda: o que sobra fica guardado.</span></div></div>'; }).join('')
       + '</div>'
       + '<div class="sec"><div class="top"><div><h2>5. Prêmios nas casas</h2><p class="sub" style="margin:0">Ouro: só o primeiro que passar leva. Prata: todos que passarem levam.</p></div><button class="btn ghost sm" type="button" id="e-addp">Adicionar casa premiada</button></div>'
       + (ed.premios.map((p, i) => '<div class="prow"><input class="p-casa" type="number" min="1" inputmode="numeric" aria-label="Número da casa" placeholder="Casa" value="'+esc(p.casa)+'"><select class="p-premio" aria-label="Prêmio"><option value="">Prêmio...</option>'+C.premios.filter(x => x.ativo || x.id === p.premio_id).map(x => '<option value="'+x.id+'"'+(x.id===p.premio_id?' selected':'')+'>'+esc(x.nome)+' ('+x.tipo+')</option>').join('')+'</select><select class="p-para" aria-label="Quem ganha"><option value="promotor"'+(p.para==='promotor'?' selected':'')+'>Promotor</option><option value="clinica"'+(p.para==='clinica'?' selected':'')+'>Clínica</option></select><button type="button" class="btn ghost sm" data-delp="'+i+'">Remover</button></div>').join('') || '<div class="empty">Nenhuma casa premiada ainda.</div>')+'</div>'
@@ -1304,7 +1308,10 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       const t = C.tipos.find(x => x.id === Number(tid)), pts = Number(r.pontos), passo = r.modo === 'ocorrencia' ? 1 : Number(r.passo);
       if (r.pontos === '' || !Number.isInteger(pts) || pts < 0) return falha('Informe os pontos de "'+t.nome+'" (número inteiro).');
       if (!(passo > 0)) return falha('Informe o N de "'+t.nome+'" (maior que zero).');
-      regras.push({ tipo_id: Number(tid), modo: r.modo, passo, pontos: pts });
+      const dp = r.dpasso === '' || r.dpasso == null ? null : Number(r.dpasso), dt = r.dpts === '' || r.dpts == null ? null : Number(r.dpts);
+      if ((dp == null) !== (dt == null)) return falha('Na regra de divulgador e gerente de "'+t.nome+'", preencha os dois campos ou deixe os dois vazios.');
+      if (dp != null && (!(dp > 0) || !Number.isInteger(dt) || dt < 0)) return falha('Regra de divulgador e gerente de "'+t.nome+'": N maior que zero e casas em número inteiro.');
+      regras.push({ tipo_id: Number(tid), modo: r.modo, passo, pontos: pts, div_passo: dp, div_pontos: dt });
     }
     if (!regras.length) return falha('Marque pelo menos um tipo de lançamento na pontuação.');
     const vistos = new Set(), casasP = [];
@@ -1328,7 +1335,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
       for (const r of regras){
         const ex = at.find(x => x.tipo_id === r.tipo_id);
         if (!ex) novos.push(Object.assign({ campanha_id: id }, r));
-        else if (ex.modo !== r.modo || Number(ex.passo) !== r.passo || ex.pontos !== r.pontos){ const u = await sb.from('regras_pontuacao').update({ modo: r.modo, passo: r.passo, pontos: r.pontos }).eq('id', ex.id); if (u.error){ er = u.error; break; } }
+        else if (ex.modo !== r.modo || Number(ex.passo) !== r.passo || ex.pontos !== r.pontos || (ex.div_passo == null ? null : Number(ex.div_passo)) !== r.div_passo || (ex.div_pontos == null ? null : ex.div_pontos) !== r.div_pontos){ const u = await sb.from('regras_pontuacao').update({ modo: r.modo, passo: r.passo, pontos: r.pontos, div_passo: r.div_passo, div_pontos: r.div_pontos }).eq('id', ex.id); if (u.error){ er = u.error; break; } }
       }
       at.forEach(x => { if (!regras.some(r => r.tipo_id === x.tipo_id)) rem.push(x.id); });
       if (!er && novos.length){ const i = await sb.from('regras_pontuacao').insert(novos); er = i.error; }
