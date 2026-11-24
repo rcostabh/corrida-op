@@ -394,7 +394,13 @@ table.pd tr.cl td{background:color-mix(in srgb,#14b8a6 13%,var(--surface))!impor
 .ag-gt{overflow-x:auto}
 table.ag-g{width:100%;border-collapse:collapse;font-size:11.5px}
 .ag-ms{position:relative}.ag-ms>button{width:100%;min-height:24px;font-size:11px;padding:1px 6px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ag-msp{position:absolute;z-index:30;top:calc(100% + 4px);left:0;min-width:180px;display:grid;gap:4px;padding:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);font-weight:500;color:var(--ink)}.ag-msp[hidden]{display:none}.ag-msp .chk{font-size:12px}
+.ag-msp{position:absolute;z-index:30;top:calc(100% + 4px);left:0;min-width:180px;display:grid;gap:4px;padding:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.18);font-weight:500;color:var(--ink)}.ag-msp[hidden]{display:none}
+table.ag-g tr.fl .ag-msp .chk{display:flex;align-items:center;gap:7px;min-height:0;padding:3px 4px;background:none;border-radius:6px;font-size:12px;font-weight:500;white-space:nowrap;cursor:pointer}
+table.ag-g tr.fl .ag-msp .chk:hover{background:var(--surface-2)}
+table.ag-g tr.fl .ag-msp input[type=checkbox]{width:14px;height:14px;min-height:0;min-width:14px;margin:0;padding:0;flex:none;accent-color:var(--accent)}
+table.ag-g tr.fl .ag-msp{gap:0;padding:6px;min-width:160px}
+table.ag-g tr.fl .ag-msp .ag-mst{margin-top:4px;padding:5px 4px 0;border-top:1px solid var(--line);font-size:12px;font-weight:500;color:var(--muted)}.ag-mst b,.ag-ms>button b{color:var(--accent);font-weight:800}
+table.ag-g tr.fl .ag-msp .btn{margin-top:4px;min-height:26px;font-size:11.5px}
 table.ag-g th{position:sticky;top:0;background:var(--surface-2);text-align:left;font-weight:700;font-size:10.5px;color:var(--muted);padding:4px 7px;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none}
 table.ag-g th:hover{color:var(--ink)}
 table.ag-g tr.fl th{position:static;cursor:default;padding:2px 4px;background:var(--surface)}
@@ -681,6 +687,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   /* controle de versão: a mais nova primeiro; o número aparece abaixo do logo */
   const VERSOES = [
+    ['1.44.1', '2026-11-24', 'Agenda das teles: a lista do filtro de Status ficou compacta, com a caixinha pequena ao lado de cada status, e mostra sempre o total filtrado (ex.: Total 12).'],
     ['1.44.0', '2026-11-24', 'Agenda das teles: na lista Agendamentos do período, o filtro de Status aceita vários status ao mesmo tempo (ex.: Confirmado + Agendado). Clique no filtro, marque os que quiser; "Todos" limpa.'],
     ['1.43.0', '2026-11-23', 'Agenda das teles: novo resultado Fechou com NUV, ao lado de Fechado. Conta como venda normal e marca também a venda do parceiro NUV. Os totais mostram Vendas com NUV, a legenda tem Com NUV (clique para ver os nomes) e o Excel traz a coluna. Num fechado dá para incluir ou tirar o NUV depois.'],
     ['1.42.0', '2026-11-19', 'Corrida: cada tipo de lançamento pode ter uma regra própria para divulgadores e gerentes (ex.: venda de início vale meia casa — a cada 2 vendas, 1 casa). A conta soma a campanha inteira, então o que sobra num dia fica guardado para os próximos, como já acontece com as visitas.'],
@@ -2825,7 +2832,7 @@ body.em-app .wrap{max-width:none;margin:0;gap:0}
     const filt = '<tr class="fl"><th><input id="ag-gq" type="search" placeholder="Nome ou telefone" value="'+esc(AG.gq || '')+'" autocomplete="off" aria-label="Buscar por nome ou telefone"></th>'
       + '<th><select id="ag-gcl" aria-label="Filtrar clínica"><option value="">Todas</option>'+AG.clinicas.map(c => '<option value="'+c.id+'"'+(String(c.id) === AG.gcl ? ' selected' : '')+'>'+esc(c.sigla)+'</option>').join('')+'</select></th><th></th><th></th>'
       + '<th><select id="ag-gtl" aria-label="Filtrar tele"><option value="">Todas</option>'+optT+'</select></th>'
-      + '<th><div class="ag-ms"><button type="button" id="ag-gst" aria-haspopup="true" aria-expanded="false" aria-label="Filtrar status (pode marcar vários)">'+(AG.gst.length ? (AG.gst.length === 1 ? esc(AG_ST[AG.gst[0]]) : AG.gst.length+' status') : 'Todos')+' ▾</button><div class="ag-msp" hidden>'+optS+'<button type="button" class="btn ghost sm" data-gst-limpa>Todos</button></div></div></th>'
+      + '<th><div class="ag-ms"><button type="button" id="ag-gst" aria-haspopup="true" aria-expanded="false" aria-label="Filtrar status (pode marcar vários)">'+(AG.gst.length ? 'Total <b>'+lst.length+'</b>' : 'Todos')+' ▾</button><div class="ag-msp" hidden>'+optS+'<div class="ag-mst">Total <b>'+lst.length+'</b></div><button type="button" class="btn ghost sm" data-gst-limpa>Todos</button></div></div></th>'
       + '<th><select id="ag-gmo" aria-label="Filtrar motivo">'+motOpts+'</select></th>'
       + '<th>'+(AG.gq || AG.gcl || AG.gmo || AG.gtl || AG.gst.length ? '<button type="button" class="btn ghost" id="ag-glimpa">Limpar</button>' : '')+'</th></tr>';
     const foco = document.activeElement && document.activeElement.id === 'ag-gq';
