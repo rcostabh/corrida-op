@@ -262,7 +262,7 @@ li:first-child>.ag-i{border-top:0}
   };
   const guarda = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k, v){ try { localStorage.setItem(k, v); } catch(e){} } };
 
-  const VERSAO = '2026-11-23 · Fechou com NUV';
+  const VERSAO = '2026-11-24 · números iguais aos da agenda';
   if ('serviceWorker' in navigator){
     navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(reg => { reg.update(); }).catch(() => {});
     let recarregou = false;
@@ -374,7 +374,16 @@ li:first-child>.ag-i{border-top:0}
   async function inicioCarregar(){
     $('#main').innerHTML = '<div class="card"><p class="sub">Carregando...</p></div>';
     const agora = new Date(), a = agora.getFullYear(), m = agora.getMonth();
-    const r = await sb.rpc('resumo_mes', { p_ini: ymd(a, m, 1) });
+    // teles e gerente: mesmos números da Agenda das teles do painel (visitas = atendidos, vendas = fechados)
+    const daAgenda = ehTele() || eu.papel === 'gerente';
+    let r;
+    if (daAgenda){
+      await motivosCarregar();
+      let q = sb.from('agendamentos').select('status,tipo,motivo_id').is('excluido_em', null).gte('data_agendamento', ymd(a, m, 1)).lte('data_agendamento', ymd(a, m, new Date(a, m + 1, 0).getDate())).limit(5000);
+      q = eu.papel === 'gerente' ? q.in('clinica_id', minhasClin.length ? minhasClin : [0]) : q.eq('tele_id', eu.id);
+      r = await q;
+      if (!r.error) r = { data: [agNumeros(r.data || [])] };
+    } else r = await sb.rpc('resumo_mes', { p_ini: ymd(a, m, 1) });
     if (aba !== 'inicio') return;
     const du = diasUteis(a, m, agora.getDate()), linha = r.data && r.data[0] ? r.data[0] : { visitas: 0, vendas: 0 };
     const vis = Number(linha.visitas) || 0, ven = Number(linha.vendas) || 0;
@@ -420,6 +429,7 @@ li:first-child>.ag-i{border-top:0}
   const opHoras = (sel, dia) => { const l = horasDia(dia); if (dia && !l.length) return '<option value="">Sem atendimento aos domingos</option>'; return '<option value="">Escolha...</option>'+l.map(h => '<option value="'+h+'"'+(h === sel ? ' selected' : '')+'>'+h+'</option>').join(''); };
   const ligaHoras = (inpData, selHora) => { if (!inpData || !selHora) return; inpData.addEventListener('change', () => { const ant = selHora.value; selHora.innerHTML = opHoras(horasDia(inpData.value).includes(ant) ? ant : '', inpData.value); }); };
   const hh = h => h ? String(h).slice(0, 5) : '';
+  const agNumeros = l => ({ visitas: l.filter(g => g.tipo !== 'retorno' && (g.status === 'atendido' || g.status === 'fechado' || (g.status === 'nao_fechou' && !ehNC(g)))).length, vendas: l.filter(g => g.status === 'fechado').length });
   const ehNC = g => g.status === 'nao_fechou' && (MOTIVOS.find(x => x.id === g.motivo_id) || {}).nome === 'Paciente não compareceu';
   const tipoTag = g => g.tipo === 'retorno' ? ' <span class="ncc" style="color:#5b3fb5">↩ Retorno</span>' : g.tipo === 'acompanhante' ? ' <span class="ncc" style="color:#5b3fb5">+ Acompanhante</span>' : '';
   const stChip = g => g.status === 'faltou' ? '<span class="ncc">⊘ Não compareceu</span>' : g.status === 'nao_apto' ? '<span class="ncc" style="color:#4d3f86">⊗ Não apto</span>' : ehNC(g) ? '<span class="ncc">⊘ Não compareceu</span>' : g.status === 'confirmado' ? '<span class="okc">✓ Confirmado</span>' : g.status === 'atendido' ? '<span class="atc">● Atendido</span>' : g.status === 'fechado' ? '<span class="okc fe">★ Fechado'+(g.nuv ? ' + NUV' : '')+'</span>' : g.status === 'nao_fechou' ? '<span class="nfc">✕ Não fechou</span>' : 'Agendado';
@@ -725,7 +735,8 @@ li:first-child>.ag-i{border-top:0}
   }
   async function gAgendaDados(){
     if (!$('#g-tot')) return;
-    let q = sb.from('agendamentos').select('id,status').is('excluido_em', null).gte('data_agendamento', GA.ini).lte('data_agendamento', GA.fim).limit(5000);
+    await motivosCarregar();
+    let q = sb.from('agendamentos').select('id,status,tipo,motivo_id').is('excluido_em', null).gte('data_agendamento', GA.ini).lte('data_agendamento', GA.fim).limit(5000);
     let pl = sb.from('planilha_diaria').select('visitas,vendas').gte('data_ref', GA.ini).lte('data_ref', GA.fim).limit(5000);
     if (GA.tele){ q = q.eq('tele_id', Number(GA.tele)); pl = pl.eq('usuario_id', Number(GA.tele)); } else pl = pl.in('usuario_id', GA.teles.map(t => t.id));
     if (GA.clin){ q = q.eq('clinica_id', Number(GA.clin)); pl = pl.eq('clinica_id', Number(GA.clin)); }
@@ -733,7 +744,7 @@ li:first-child>.ag-i{border-top:0}
     if (!$('#g-tot')) return;
     const er = r.error || rp.error;
     if (er){ $('#g-tot').innerHTML = '<div class="card"><div class="err">'+esc(msgErro(er))+'</div></div>'; return; }
-    const nAg = r.data.length, vis = rp.data.reduce((t, x) => t + (x.visitas || 0), 0), ven = rp.data.reduce((t, x) => t + (x.vendas || 0), 0);
+    const nAg = r.data.length, nn = agNumeros(r.data), vis = nn.visitas, ven = nn.vendas;
     const pct = (a, b) => b > 0 ? Math.round(a / b * 100)+'%' : '—';
     const tl = (rot, val, nota) => '<div class="tl"><span class="tl-r">'+rot+'</span><b class="tl-v">'+val+'</b><span class="tl-n">'+nota+'</span></div>';
     $('#g-tot').innerHTML = '<div class="tiles gt">'+tl('Agendamentos', nAg, r.data.filter(g => g.status !== 'agendado').length+' confirmados ou com resultado')+tl('Visitas', vis, pct(vis, nAg)+' dos agend.')+tl('Vendas', ven, pct(ven, vis)+' das visitas')+tl('Agend. → venda', pct(ven, nAg), 'vendas ÷ agend.')+'</div>';
